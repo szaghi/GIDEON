@@ -17,5 +17,18 @@ builds with nvfortran.
 fobis fetch && fobis build --mode tests-gnu && bash scripts/run_tests.sh
 ```
 
-Documentation: https://szaghi.github.io/GIDEON. License: your choice of GPL-3.0-or-later, BSD-2-Clause,
-BSD-3-Clause or MIT.
+Documentation: https://szaghi.github.io/GIDEON.
+
+## Authors
+
+**[Stefano Zaghi](https://github.com/szaghi)** · stefano.zaghi@gmail.com
+> *Chief Yak Shaver & Keeper of the Stencils*: tests everything twice, the second time upside down
+
+**[Claude](https://claude.ai)** (Anthropic)
+> *Tireless Rubber Duck & Professional Fleece Wetter*: AI pair programmer; derives the coefficients in exact rationals
+> so humans don't have to, and trusts no fraction written in floating point
+
+## License
+
+GIDEON is available under your choice of license: GPL-3.0-or-later, BSD-2-Clause, BSD-3-Clause or MIT
+(`LICENSE.gpl3.md`, `LICENSE.bsd-2.md`, `LICENSE.bsd-3.md`, `LICENSE.mit.md`).
