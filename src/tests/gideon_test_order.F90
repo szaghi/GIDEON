@@ -17,7 +17,12 @@ program gideon_test_order
 !< whatever the function (truncation over round-off depends on the wavenumber times h alone): R8P resolves 96 of the
 !< 243 kernels, R4P 11. The quadruple-precision build (tests-gnu-r16, host only) resolves all 243: that is where the
 !< orders of the compiled kernels are observed, every one. The generator measures the rows themselves at 100 digits.
-use penf, only : I4P, R_P
+!<
+!< Report mode (scripts/run_report.sh, the documentation's data): with the environment variable GIDEON_REPORT_DIR set,
+!< the test also writes order-rNN.csv (every kernel, every step: h, e(h), the round-off floor, resolved or not) and
+!< order-summary-rNN.csv (every kernel: the plateau and its two observed orders) into that directory, NN the bits of
+!< the working kind. The test itself is unchanged.
+use penf, only : I4P, R8P, R_P
 use gideon_test_registry
 use gideon_test_functions, only : data_generic, target_generic
 implicit none
@@ -25,15 +30,32 @@ integer(I4P), parameter :: KMAX = 20
 real(R_P)    :: q(-WMAX:WMAX), r, t, h, e(KMAX), noise(KMAX), p(KMAX)
 logical      :: ok(KMAX)
 integer(I4P) :: id, k, kbest, fails, unresolved
+integer(I4P) :: ksteps
+character(4096) :: report_dir
+integer      :: ulen, ust, usum, ios
+logical      :: report
 
+call get_environment_variable('GIDEON_REPORT_DIR', report_dir, length=ulen)
+report = ulen > 0
+if (report) then
+   open(newunit=ust, file=trim(report_dir)//'/order-r'//kind_tag()//'.csv', action='write', status='replace', &
+        iostat=ios)
+   if (ios /= 0) error stop 'gideon_test_order: cannot write into GIDEON_REPORT_DIR'
+   write(ust, '(A)') 'kernel,design,k,h,e,floor,resolved'
+   open(newunit=usum, file=trim(report_dir)//'/order-summary-r'//kind_tag()//'.csv', action='write', &
+        status='replace')
+   write(usum, '(A)') 'kernel,design,status,kbest,p1,p2'
+endif
 fails = 0 ; unresolved = 0
 do id=1, NK
    ok = .false.
    e = 0._R_P
+   ksteps = 0
    do k=1, KMAX
       h = 0.5_R_P**k
       ! the step's scales 1/h^(n+1) must fit the working kind (R4P: 2^127), or a trapping build stops on overflow
       if (k*(kn(id) + 1) > 0.8_R_P*maxexponent(1._R_P)) exit
+      ksteps = k
       call data_generic(id, h, q)
       call apply(id, q, h, r)
       t = target_generic(id, h)
@@ -52,6 +74,18 @@ do id=1, NK
          if (abs(p(k) - p(k+1)) <= 0.25_R_P) kbest = k
       endif
    enddo
+   if (report) then
+      do k=1, ksteps
+         write(ust, '(A,",",I0,",",I0,",",ES16.8E4,",",ES16.8E4,",",ES16.8E4,",",L1)') trim(kname(id)), korder(id), &
+            k, real(0.5_R_P**k, R8P), real(e(k), R8P), real(noise(k), R8P), ok(k)
+      enddo
+      if (kbest == 0) then
+         write(usum, '(A,",",I0,",unresolved,0,,")') trim(kname(id)), korder(id)
+      else
+         write(usum, '(A,",",I0,",measured,",I0,",",F0.4,",",F0.4)') trim(kname(id)), korder(id), kbest, &
+            real(p(kbest), R8P), real(p(kbest+1), R8P)
+      endif
+   endif
    if (kbest == 0) then
       unresolved = unresolved + 1
       print '(A,A,A,I0,A)', 'unresolved in this precision: ', trim(kname(id)), ' (order ', korder(id), ')'
@@ -63,8 +97,19 @@ do id=1, NK
                                           ', design ', korder(id), ' at h = ', 0.5_R_P**kbest
    endif
 enddo
+if (report) then
+   close(ust) ; close(usum)
+endif
 print '(A,I0,A,I0,A,I0,A,I0)', 'gideon_test_order: ', NK, ' kernels, ', NK - unresolved, ' measured, ', unresolved, &
                                ' unresolved in this precision, failures ', fails
 if (fails > 0) error stop 'gideon_test_order: failed'
 print '(A)', 'gideon_test_order: ok'
+contains
+   function kind_tag() result(tag)
+   !< The bits of the working kind, the suffix of the report files: 32, 64 or 128.
+   character(:), allocatable :: tag
+   character(8)              :: buf
+   write(buf, '(I0)') storage_size(1._R_P)
+   tag = trim(buf)
+   endfunction kind_tag
 endprogram gideon_test_order

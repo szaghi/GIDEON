@@ -105,6 +105,8 @@ def main() -> int:
     files = run(['git', 'ls-files'], repo).stdout.split() + run(['git', 'ls-files', '--others', '--exclude-standard'],
                                                                 repo).stdout.split()
     for f in files:
+        if not (repo / f).exists():  # tracked but deleted in the working tree (a page moved, not yet committed)
+            continue
         dst = work / f
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(repo / f, dst)

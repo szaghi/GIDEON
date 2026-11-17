@@ -14,6 +14,9 @@ program gideon_test_adam
 !< - within 64 eps of the scale: the right-side d2-d5 and face derivatives, which ADAM sums farthest cell first;
 !< - ADAM's defects, reproduced (not equivalence: GIDEON is exact where ADAM is not): the left-side face value and d1
 !<   for s >= 2 miss a linear function, its d1 a quadratic one (audit A); a row ADAM has not got returns 0 (audit C).
+!<
+!< Report mode (scripts/run_report.sh): with GIDEON_REPORT_DIR set, every comparison is also written to adam.csv in
+!< that directory (the operator, s, the class: bitwise, tolerance, defect or absent, and |ADAM - GIDEON|).
 use penf, only : I4P, R8P
 use gideon
 use adam_fdv_operators_library
@@ -24,8 +27,16 @@ real(R8P)    :: q(-12:12), lin(-12:12), cube(-5:5,-5:5,-5:5), vcube(3,-5:5,-5:5,
 real(R8P)    :: a, g, a3(3), g3(3), tol
 integer(I4P) :: s, n, o, fails, bitwise, tolerant, defects, absent
 integer, allocatable :: seed(:)
-integer      :: ns
+integer      :: ns, urep, rlen
+character(4096) :: report_dir
+logical      :: report
 
+call get_environment_variable('GIDEON_REPORT_DIR', report_dir, length=rlen)
+report = rlen > 0
+if (report) then
+   open(newunit=urep, file=trim(report_dir)//'/adam.csv', action='write', status='replace')
+   write(urep, '(A)') 'operator,s,class,difference'
+endif
 call random_seed(size=ns)
 allocate(seed(ns)) ; seed = 271828 ; call random_seed(put=seed)
 call random_number(q) ; q = 2*q - 1
@@ -136,9 +147,17 @@ enddo
 print '(A,I0,A,I0,A,I0,A,I0,A,I0)', 'gideon_test_adam: bitwise ', bitwise, ', within tolerance ', tolerant, &
                                     ', ADAM defects reproduced ', defects, ', rows ADAM has not (returns 0) ', absent, &
                                     ', failures ', fails
+if (report) close(urep)
 if (fails > 0) error stop 'gideon_test_adam: failed'
 print '(A)', 'gideon_test_adam: ok'
 contains
+   subroutine log_row(what, cls, d)
+   !< One comparison into the report (report mode only).
+   character(*), intent(in) :: what, cls
+   real(R8P),    intent(in) :: d
+   if (report) write(urep, '(A,",",I0,",",A,",",ES10.3E3)') what, s, cls, d
+   endsubroutine log_row
+
    subroutine same(what, a, g)
    character(*), intent(in) :: what
    real(R8P),    intent(in) :: a, g
@@ -147,6 +166,7 @@ contains
       print '(A,A,A,I0,A,I0,2ES25.17)', 'NOT BITWISE ', what, ' s=', s, ' n=', n, a, g
    else
       bitwise = bitwise + 1
+      call log_row(what, 'bitwise', 0._R8P)
    endif
    endsubroutine same
 
@@ -158,6 +178,7 @@ contains
       print '(A,A,A,I0,A,I0,3ES12.4)', 'NOT CLOSE ', what, ' s=', s, ' n=', n, a, g, tol
    else
       tolerant = tolerant + 1
+      call log_row(what, 'tolerance', abs(a - g))
    endif
    endsubroutine close
 
@@ -169,6 +190,7 @@ contains
       print '(A,A,A,I0,A,I0,ES12.4)', 'ADAM NOT ZERO ', what, ' s=', s, ' n=', n, a
    else
       absent = absent + 1
+      call log_row(what, 'absent', 0._R8P)
    endif
    endsubroutine zero
 
@@ -181,6 +203,7 @@ contains
       print '(A,A,A,I0,3ES12.4)', 'DEFECT NOT AS DOCUMENTED ', what, ' s=', s, a, g, exact
    else
       defects = defects + 1
+      call log_row(what, 'defect', abs(a - g))
    endif
    endsubroutine defect
 

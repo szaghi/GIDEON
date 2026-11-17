@@ -21,10 +21,14 @@ proves by solving them independently and comparing.
 Usage:
     python3 scripts/gen_gideon.py --check     derive, verify and cross-check; write nothing
     python3 scripts/gen_gideon.py             also (re)write the generated Fortran sources
+    python3 scripts/gen_gideon.py --check --json FILE
+                                              also write the derived rows, windows, orders and findings as JSON (the
+                                              data of the documentation's figures and tables, docs/scripts)
 """
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass, field
@@ -483,14 +487,17 @@ def kernel_error(k: Kernel, h: Decimal) -> Decimal:
     return abs(acc - t)
 
 
-def check_orders(ks: list[Kernel]) -> list[str]:
-    """Observed order of every row between h = 2^-11 and 2^-12; frozen bound: >= design - 0.25."""
+def check_orders(ks: list[Kernel], observed: dict[str, float] | None = None) -> list[str]:
+    """Observed order of every row between h = 2^-11 and 2^-12; frozen bound: >= design - 0.25. The observed orders
+    are also stored into `observed` (by kernel name) when it is given."""
     getcontext().prec = 100
     out = []
     worst = None
     for k in ks:
         e1, e2 = kernel_error(k, Decimal(2) ** -11), kernel_error(k, Decimal(2) ** -12)
         p = float((e1 / e2).ln() / Decimal(2).ln())
+        if observed is not None:
+            observed[k.name] = p
         if worst is None or p - k.order < worst[0]:
             worst = (p - k.order, k.name, p)
         if p < k.order - 0.25:
@@ -1068,6 +1075,27 @@ def write_sources(ks: list[Kernel]) -> list[str]:
     return written
 
 
+def emit_json(ks: list[Kernel], findings: list[str], observed: dict[str, float]) -> str:
+    """The derived rows as data for the documentation (docs/scripts): every kernel with its window, its weights by
+    offset as exact fractions (the full operator: left-side rows mirrored, cell derivatives as flux differences),
+    its design order, its order observed at 100 digits, its exact leading error; the 3-D operators; the findings."""
+    out = {
+        'generator': 'scripts/gen_gideon.py',
+        'findings': findings,
+        'kernels': [{
+            'name': k.name, 'family': k.family, 'data': k.data, 'op': k.op, 'bias': k.bias, 'n': k.n, 's': k.s,
+            'order': k.order, 'lo': k.lo, 'hi': k.hi, 'dispatcher': dispatcher_name(k),
+            'weights': {str(o): str(w) for o, w in sorted(k.full.items())}, 'sumabs': str(k.sumabs),
+            'leading_error': str(leading_error(k)), 'observed_order': observed[k.name],
+        } for k in ks],
+        'operators_3d': [{'name': name, 'data': data, 'op': op, 'order': order, 's': s}
+                         for name, data, op, order, s in kernels_3d(ks)],
+        'dispatchers': [{'name': name, 'orders': [k.order for k in g], 'window': list(window_expr(g)),
+                         'nan_order': bad_order(g)} for name, g in groups(ks).items()],
+    }
+    return json.dumps(out, indent=1) + '\n'
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1075,9 +1103,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--check', action='store_true', help='derive and verify only; write nothing')
     ap.add_argument('--list', action='store_true', help='list the kernels')
+    ap.add_argument('--json', type=Path, metavar='FILE', help='write the rows, windows, orders and findings as JSON')
     args = ap.parse_args()
     ks = build()
-    findings = cross_check_adam(ks) + check_orders(ks)
+    observed: dict[str, float] = {}
+    findings = cross_check_adam(ks) + check_orders(ks, observed)
     if args.list:
         for k in ks:
             print(f'{k.name:28s} {k.family:12s} n={k.n} s={k.s} order={k.order} window={k.lo}:{k.hi}')
@@ -1087,6 +1117,10 @@ def main() -> int:
     bad = [f for f in findings if f.startswith(('MISMATCH', 'NOT GENERATED', 'ORDER'))]
     if bad:
         return 1
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(emit_json(ks, findings, observed))
+        print(f'written {args.json}')
     if not args.check:
         for w in write_sources(ks):
             print(f'written {w}')

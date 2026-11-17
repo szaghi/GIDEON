@@ -71,3 +71,13 @@ main = "gideon_test_golden.F90"
 name = "gideon_test_device"
 source-dir = "src/tests"
 main = "gideon_test_device.F90"
+
+[[test]]
+name = "gideon_test_spectral"
+source-dir = "src/tests"
+main = "gideon_test_spectral.F90"
+
+[[test]]
+name = "gideon_vv_advection"
+source-dir = "src/tests"
+main = "gideon_vv_advection.F90"

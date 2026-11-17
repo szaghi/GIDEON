@@ -1,0 +1,24 @@
+baseline green in /tmp/claude-1000/-home-stefano-fortran/8e62fc38-323f-4339-b2a7-1a14c50f57bd/scratchpad/mutants
+row-fd-d1-c6                 killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_tables
+row-fd-d1-c10-tail           killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_tables
+row-fv-face-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_tables
+row-fv-uface-3               killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+row-fv-point-c6              killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+pair-sign-fd-d2-c4           killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+pair-offset-fd-face-c8       killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+pair-sign-fd-average-c6      killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+flux-face-offset-fv-d1-c6    killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+scale-fd-d3-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties
+scale-fv-d2-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties
+scale-fv-d6-ur2              killed by gideon_test_golden, gideon_test_properties
+mirror-fv-face-ul3           killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+mirror-sign-fv-face-d1-ul2   killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+difference-order-fv-d2-ul2   killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+face-offset-fv-d1-ur3        killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+dispatch-wrong-kernel        killed by gideon_test_adam, gideon_test_dispatch
+dispatch-no-nan              killed by gideon_test_dispatch
+nan-constant                 killed by gideon_test_dispatch, gideon_test_operators_3d
+curl-component               killed by gideon_test_adam, gideon_test_operators_3d
+divergence-step              killed by gideon_test_adam, gideon_test_operators_3d
+laplacian-direction          killed by gideon_test_adam, gideon_test_operators_3d
+22 of 22 mutants killed
