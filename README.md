@@ -13,6 +13,11 @@ conventions of SETH. Gideon's fleece, a test and its mirrored control, is the ru
 left-upwind operator generated as the mirror of its right twin. Tested with gfortran, nvfortran and ifx; OpenACC
 builds with nvfortran.
 
+**Inside**: 243 kernels (FD centred face and d1–d6; FV centred face, face d1–d5 and cell-average d1–d6; FV upwind
+on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values), the gradient,
+divergence, curl and Laplacian in 3-D, and a run-time order dispatcher for each. Bitwise equal to ADAM where ADAM is
+right, fixed where it is not (`notes/adam-fdv-audit.md`), at 0.17–0.82 of its cost on a GPU and a CPU core.
+
 ```bash
 fobis fetch && fobis build --mode tests-gnu && bash scripts/run_tests.sh
 ```

@@ -15,5 +15,6 @@ upwind operator generated as the mirror of its twin.
 
 ## Status
 
-The repository is being seeded: the build, the tests and the CI are in place, and the operators are being rebuilt
-from ADAM's (`notes/adam-fdv-audit.md`).
+The first release's operators are in place (roadmap issue #1): ADAM's FD and FV operators, fixed (audit items A–F in
+`notes/adam-fdv-audit.md`), with the upwind branch kept and extended to stencils of 9 cells and the sixth derivative;
+bitwise equal to ADAM where ADAM is right, and 0.17–0.82 of its cost.

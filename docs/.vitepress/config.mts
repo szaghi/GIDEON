@@ -4,7 +4,7 @@ export default withMermaid({
   title: 'GIDEON',
   description: 'Generated Interpolations and Derivatives, Exact to Order N: finite-difference and finite-volume stencil operators for HPC',
   base: '/GIDEON/',
-  srcExclude: ['ford.md'],
+  srcExclude: ['ford.md', 'guide/_operators-table.md'],
 
   markdown: {
     math: true,
@@ -33,6 +33,17 @@ export default withMermaid({
             { text: 'About',        link: '/guide/' },
             { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start',  link: '/guide/quickstart' },
+          ],
+        },
+        {
+          text: 'Library',
+          items: [
+            { text: 'Conventions',  link: '/guide/conventions' },
+            { text: 'Operators',    link: '/guide/operators' },
+            { text: 'API',          link: '/guide/api' },
+            { text: 'Verification', link: '/guide/verification' },
+            { text: 'Performance',  link: '/guide/performance' },
+            { text: 'Sources',      link: '/guide/sources' },
           ],
         },
         {

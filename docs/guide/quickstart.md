@@ -1,10 +1,14 @@
 # Quick Start
 
 ```fortran
-use gideon, only : I4P, R_P   ! the working kinds, re-exported from PENF
+use gideon
+real(R_P) :: u(-2:102), du
+integer   :: i
+call gideon_fd_d1_c6(u(i-3:i+3), 0.01_R_P, du)        ! d1 at node i, centred, order 6
+call gideon_fd_d1_c(6, u(i-3:i+3), 0.01_R_P, du)      ! the same, the order chosen at run time
 ```
 
-The operators are being rebuilt from ADAM's; this page follows them.
+Names, windows and conventions: [Conventions](./conventions); every kernel: [Operators](./operators).
 
 ## Tests
 
