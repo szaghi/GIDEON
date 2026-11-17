@@ -51,7 +51,16 @@ returns 0 (`S_MAX = 5` cannot hold its 6-cell row). Pure, device-callable code w
 meaning, and its docstring says `FV1_UR` gives q at i+1/2 from cells i…i+s−1; the row [3, −1]/2 on cells (i, i+1) is
 the value at i−1/2. The same face-labelling confusion as A.
 
-## 3. Rules GIDEON adopts so that A–E cannot recur
+**F. The upwind names flip between d1 and d2–d5.** ADAM's `compute_derivative1_fv_rupwind` reads the cells on the
+right of the cell (i..i+s), its `compute_derivative{2..5}_fv_rupwind` those on the left (i−s..i); `lupwind` the
+reverse. Found while mapping the windows for the equivalence test (`src/tests/gideon_test_adam.F90`); GIDEON names
+the side the stencil lies on (`ur`: right side, `ul`: left side) for every operator.
+
+**A, refined.** On a linear function the left-side d1 is right: both faces err by the same amount and the difference
+cancels it. The defect shows from degree 2 (a quadratic: −4 instead of 0 at s = 2), which is why it converges at
+first order instead of order s.
+
+## 3. Rules GIDEON adopts so that A–F cannot recur
 
 1. **One generator, checked by meaning.** Every row derived in exact rationals (Fornberg's weights on the node set for
    point values; the derivatives of the primitive function for cell averages) and checked as exact on polynomials up
@@ -69,6 +78,19 @@ the value at i−1/2. The same face-labelling confusion as A.
 7. **Run-time order through a dispatch layer** (PRISM's `fdv_order`): one `select case` per call over the per-order
    kernels, uniform across cells.
 8. **Equivalence with ADAM**: bitwise where ADAM is correct, documented deviations where it is fixed (A, B).
+
+## 5. Equivalence, measured (2026-11-17, `gideon_test_adam`, gfortran 16.2 and nvfortran 26.9, debug and optimised)
+
+| ADAM | GIDEON | Result |
+|---|---|---|
+| FD centred face, d1–d6; FV centred face, face d1–d5, cell d1–d6; deconvolution; FNL and CPU 3-D operators | `gideon_fd_*_c*`, `gideon_fv_*_c*`, `gideon_fv_point_c*`, `gideon_fd_average_c*`, `gideon_{fd,fv}_{gradient,divergence,curl,laplacian}_c*` | bitwise |
+| `compute_reconstruction_r_fv_rupwind`, `compute_derivative1_fv_rupwind` (window `[0:1+s]`, cell at `q(1)`) | `gideon_fv_face_ur*`, `gideon_fv_d1_ur*` | bitwise |
+| `compute_derivative{2..5}_fv_rupwind`, `compute_reconstruction_r_fv_rupwind_d{1..4}` | `gideon_fv_d*_ul*`, `gideon_fv_face_d*_ul*` (left side, audit F) | bitwise |
+| `compute_derivative{2..5}_fv_lupwind`, `compute_reconstruction_r_fv_lupwind_d{1..4}` | `gideon_fv_d*_ur*`, `gideon_fv_face_d*_ur*` (right side, audit F) | within 64 eps: ADAM sums the farthest cell first |
+| `compute_reconstruction_r_fv_lupwind`, `compute_derivative1_fv_lupwind`, s ≥ 2 | `gideon_fv_face_ul*`, `gideon_fv_d1_ul*` | ADAM wrong (A), GIDEON exact |
+| zero rows (FD d3–d6, FV face d2–d5, cell d3–d6 at small s; upwind d6) | absent kernels; `gideon_fv_d6_u*` from 6 cells | ADAM returns 0 (C) |
+
+Totals: 279 bitwise, 20 within tolerance, 8 defect cases reproduced, 43 ADAM zero rows.
 
 ## 4. Relation to SETH (owner decisions, 2026-11-17)
 

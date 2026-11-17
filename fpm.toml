@@ -56,3 +56,8 @@ main = "gideon_test_dispatch.F90"
 name = "gideon_test_operators_3d"
 source-dir = "src/tests"
 main = "gideon_test_operators_3d.F90"
+
+[[test]]
+name = "gideon_test_adam"
+source-dir = "src/tests"
+main = "gideon_test_adam.F90"

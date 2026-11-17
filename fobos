@@ -238,6 +238,8 @@ preproc = -D_R_P_IS_R4P
 [template-r4-tests]
 template  = template-r4
 build_dir = exe-r4/
+# ADAM's code and the comparison with it are R8P only
+exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
 
 [template-tests]
 src       = src/lib/ src/tests/
