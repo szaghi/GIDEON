@@ -700,6 +700,101 @@ def leading_error(k: Kernel) -> Fr:
     return e
 
 
+def dispatcher_name(k: Kernel) -> str:
+    """The run-time order dispatcher of a kernel: its name without the order."""
+    return re.sub(r'\d+$', '', k.name)
+
+
+def _fit(pairs: list[tuple[int, int]]) -> str | None:
+    """`order/2 + c` or `order + c` matching every (order, value) pair, or None."""
+    for a in (2, 1):
+        cs = {v - o // a for o, v in pairs}
+        if len(cs) == 1:
+            c = cs.pop()
+            return ('order/2' if a == 2 else 'order') + (f'+{c}' if c > 0 else f'{c}' if c < 0 else '')
+    return None
+
+
+def _eval(expr: str, order: int) -> int:
+    """Evaluate a bound expression as Fortran does (integer division truncates; orders are positive)."""
+    return eval(expr.replace('order/2', f'({order}//2)').replace('order', str(order)))  # noqa: S307
+
+
+def window_expr(group: list[Kernel]) -> tuple[str, str]:
+    """Window bounds of a dispatcher as expressions of `order`, verified against every kernel of the group."""
+    if len({k.hi for k in group}) == 1:  # left-side upwind: the upper bound fixed, the lower one grows
+        hi = str(group[0].hi)
+        f = _fit([(k.order, -k.lo) for k in group])
+        lo = f'-({f})' if f else None
+    else:
+        hi = _fit([(k.order, k.hi) for k in group])
+        if hi is None:
+            lo = None
+        elif all(k.lo == -k.hi for k in group):
+            lo = f'-({hi})'
+        elif all(k.lo == 1 - k.hi for k in group):
+            lo = f'1-({hi})'
+        elif len({k.lo for k in group}) == 1:
+            lo = str(group[0].lo)
+        else:
+            lo = None
+    if hi is None or lo is None:
+        raise AssertionError(f'no window formula for {dispatcher_name(group[0])}')
+    for k in group:
+        if (_eval(lo, k.order), _eval(hi, k.order)) != (k.lo, k.hi):
+            raise AssertionError(f'{k.name}: window {k.lo}:{k.hi} is not {lo}:{hi}')
+    return lo, hi
+
+
+def groups(ks: list[Kernel]) -> dict[str, list[Kernel]]:
+    out: dict[str, list[Kernel]] = {}
+    for k in ks:
+        out.setdefault(dispatcher_name(k), []).append(k)
+    return out
+
+
+def bad_order(group: list[Kernel]) -> int:
+    """An order with no kernel whose window stays narrow (the dispatch test's NaN case)."""
+    return max(k.order for k in group) + (2 if group[0].bias == 'c' else 1)
+
+
+def emit_dispatch(ks: list[Kernel]) -> str:
+    """Run-time order dispatchers: one select case per operator, the whole window passed to the kernel."""
+    title = '!< GIDEON, the run-time order dispatchers: the order chosen when the program runs.'
+    out = [HEADER + title, 'module gideon_dispatch', title, '!<',
+           '!< `gideon_<data>_<op>_<bias>(order, q, [ds,] r)` calls `gideon_<data>_<op>_<bias><order>`: one select',
+           '!< case per call, uniform across cells when the order is (no divergence on a GPU). The window bounds are',
+           '!< expressions of order, so the whole window is passed to the kernel. An order without a kernel returns',
+           '!< GIDEON_NAN, a quiet NaN (error stop is not device code; a silent 0 is what ADAM returned).',
+           'use penf, only : I4P, R_P', 'use gideon_kind_parameters, only : GIDEON_NAN',
+           'use gideon_fd_centred', 'use gideon_fv_centred', 'use gideon_fv_upwind', 'use gideon_deconvolution',
+           'implicit none', 'private']
+    gs = groups(ks)
+    out += [f'public :: {name}' for name in gs]
+    out.append('contains')
+    for name, group in gs.items():
+        lo, hi = window_expr(group)
+        k0 = group[0]
+        has_ds = k0.n >= 1
+        res = {'face': 'f', 'point': 'v', 'average': 'v'}.get(k0.op, 'd')
+        args = f'(order, q, ds, {res})' if has_ds else f'(order, q, {res})'
+        orders = ', '.join(str(k.order) for k in group)
+        out += [f'   pure subroutine {name}{args}',
+                f'   !< Run-time order dispatch to {name}<order>, order in {{{orders}}}.',
+                '   integer(I4P), intent(in)  :: order !< Order of accuracy.',
+                f'   real(R_P),    intent(in)  :: q({lo}:{hi}) !< Data by offset, the window of that order.']
+        if has_ds:
+            out.append('   real(R_P),    intent(in)  :: ds    !< Grid step.')
+        out += [f'   real(R_P),    intent(out) :: {res}     !< Result; GIDEON_NAN for an order without a kernel.',
+                '   !$acc routine seq', '   !$omp declare target', '   select case(order)']
+        for k in group:
+            call = f'call {k.name}(q, ds, {res})' if has_ds else f'call {k.name}(q, {res})'
+            out.append(f'   case({k.order}) ; {call}')
+        out += [f'   case default ; {res} = GIDEON_NAN', '   endselect', f'   endsubroutine {name}', '']
+    out.append('endmodule gideon_dispatch')
+    return '\n'.join(out) + '\n'
+
+
 def emit_registry(ks: list[Kernel]) -> str:
     """Test registry: metadata of every kernel and one routine that applies kernel `id` to a wide window."""
     nk = len(ks)
@@ -717,7 +812,7 @@ def emit_registry(ks: list[Kernel]) -> str:
            'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
            'public :: NK, WMAX, kname, kdata, kbias, kgeom, ktarget, kn, korder, klo, khi, kdegree, ksumabs',
            'public :: kzero_const, kerror',
-           'public :: kmirror, apply',
+           'public :: kmirror, apply, apply_dispatch, apply_dispatch_bad',
            f'integer(I4P), parameter :: NK = {nk} !< Number of kernels.',
            'integer(I4P), parameter :: WMAX = 16 !< Half-width of the windows the tests pass.']
 
@@ -763,8 +858,24 @@ def emit_registry(ks: list[Kernel]) -> str:
     for i, k, *_ in meta:
         call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
         out.append(f'   case({i}) ; {call}')
-    out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply',
-            'endmodule gideon_test_registry']
+    out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply', '']
+    gs = groups(ks)
+    for bad in (False, True):
+        sub = 'apply_dispatch_bad' if bad else 'apply_dispatch'
+        what = ('its dispatcher with an order that has no kernel (window of that order)' if bad
+                else 'its run-time order dispatcher')
+        out += [f'   subroutine {sub}(id, q, ds, r)', f'   !< Apply kernel `id` through {what}.',
+                '   integer(I4P), intent(in)  :: id', '   real(R_P),    intent(in)  :: q(-WMAX:WMAX)',
+                '   real(R_P),    intent(in)  :: ds', '   real(R_P),    intent(out) :: r', '   select case(id)']
+        for i, k, *_ in meta:
+            name = dispatcher_name(k)
+            lo, hi = window_expr(gs[name])
+            order = bad_order(gs[name]) if bad else k.order
+            sec = f'q({_eval(lo, order)}:{_eval(hi, order)})'
+            call = (f'call {name}({order}, {sec}, ds, r)' if k.n >= 1 else f'call {name}({order}, {sec}, r)')
+            out.append(f'   case({i}) ; {call}')
+        out += ["   case default ; error stop 'no such kernel'", '   endselect', f'   endsubroutine {sub}', '']
+    out.append('endmodule gideon_test_registry')
     return '\n'.join(out) + '\n'
 
 
@@ -799,6 +910,7 @@ def write_sources(ks: list[Kernel]) -> list[str]:
     files = {ROOT / 'src/lib/gideon_tables.F90': emit_tables(ks)}
     for mod in MODULES:
         files[ROOT / f'src/lib/{mod}.F90'] = emit_module(mod, ks)
+    files[ROOT / 'src/lib/gideon_dispatch.F90'] = emit_dispatch(ks)
     files[ROOT / 'src/tests/gideon_test_registry.F90'] = emit_registry(ks)
     back = parse_emitted_tables(files[ROOT / 'src/lib/gideon_tables.F90'])
     for k in ks:

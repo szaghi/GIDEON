@@ -9,6 +9,7 @@ module gideon
 !<
 !<    call gideon_fd_d1_c6(q(i-3:i+3), ds, d)      ! first derivative at node i, centred, order 6, point values
 !<    call gideon_fv_face_ul3(q(i-2:i), f)         ! value at the face i+1/2 from the three cells on its left
+!<    call gideon_fd_d1_c(order, q(i-order/2:i+order/2), ds, d)  ! d1 at node i, the order chosen at run time
 use penf, only : I4P, I8P, R4P, R8P
 use gideon_kind_parameters
 use gideon_tables
@@ -16,6 +17,7 @@ use gideon_fd_centred
 use gideon_fv_centred
 use gideon_fv_upwind
 use gideon_deconvolution
+use gideon_dispatch
 implicit none
 public
 endmodule gideon
