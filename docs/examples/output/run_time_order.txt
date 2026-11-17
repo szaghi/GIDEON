@@ -1,0 +1,16 @@
+gideon_fd_d1_c(order, u(i-s:i+s), h, d), s = order/2, d/dx exp(sin x), 64 nodes
+order  window        max error
+    1  q(0:0)        no kernel: GIDEON_NAN
+    2  q(-1:1)       6.512E-03
+    3  q(-1:1)       no kernel: GIDEON_NAN
+    4  q(-2:2)       7.590E-05
+    5  q(-2:2)       no kernel: GIDEON_NAN
+    6  q(-3:3)       1.577E-06
+    7  q(-3:3)       no kernel: GIDEON_NAN
+    8  q(-4:4)       4.818E-08
+    9  q(-4:4)       no kernel: GIDEON_NAN
+   10  q(-5:5)       2.115E-09
+   11  q(-5:5)       no kernel: GIDEON_NAN
+   12  q(-6:6)       no kernel: GIDEON_NAN
+gideon_fd_d1_c(6, ...) == gideon_fd_d1_c6: 64 of 64
+select case outside the loop == dispatcher:  64 of 64

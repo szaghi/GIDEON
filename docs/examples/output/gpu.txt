@@ -1,0 +1,5 @@
+order 6, sin x sin y sin z on a periodic grid of n^3 nodes, max error
+     n   Laplacian    gradient   parallel loop == host loop (64 eps)
+    32   3.051E-07   4.063E-07           T
+    64   4.789E-09   6.383E-09           T
+observed orders, log2(e(32) / e(64)):  5.99  5.99

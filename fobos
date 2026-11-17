@@ -38,6 +38,7 @@ modes = static-gnu shared-gnu
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
         tests-gnu-r16
         bench-nvf-oac bench-nvf bench-gnu
+        examples-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -148,6 +149,12 @@ template  = template-bench template-nvf template-release
 [bench-gnu]
 help      = Benchmark against ADAM, gfortran, one CPU core
 template  = template-bench template-gnu template-release
+
+# ── documentation examples: every program of docs/examples/src into exe-examples/, run and checked against
+# docs/examples/output by scripts/run_examples.sh ──
+[examples-gnu]
+help      = Documentation examples, gfortran, optimised (scripts/run_examples.sh)
+template  = template-examples template-gnu template-release
 
 # ── single precision (R4P): PENF's R_P chosen by -D_R_P_IS_R4P for GIDEON and PENF alike ──
 # Own build directories and library name, so that an R4P build never mixes with the R8P one.
@@ -271,6 +278,10 @@ build_dir = exe-bench/
 target    = src/bench/gideon_bench_adam.F90
 output    = gideon_bench_adam
 
+[template-examples]
+src       = src/lib/ docs/examples/src/
+build_dir = exe-examples/
+
 [template-r4]
 preproc = -D_R_P_IS_R4P
 
@@ -311,4 +322,4 @@ rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
 
 [rule-clean]
 help = Remove build products and documentation artefacts
-rule = rm -rf exe/ exe-r4/ exe-r16/ exe-bench/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
+rule = rm -rf exe/ exe-r4/ exe-r16/ exe-bench/ exe-examples/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json

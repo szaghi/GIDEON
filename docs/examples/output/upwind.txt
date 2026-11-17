@@ -1,0 +1,14 @@
+mirror identity, bitwise, over 1000 windows
+  face value:  ul3(q) ==  ur3(reversed q)  1000
+  d1 average:  ul3(q) == -ur3(reversed q)  1000
+  d2 average:  ul3(q) ==  ur3(reversed q)  1000
+residual of u_t + a u_x = 0, u = exp(sin x), order-3 upwind faces, max error
+     n     a = +1      a = -1
+    16   1.308E-01   1.308E-01
+    32   1.939E-02   1.939E-02
+    64   2.534E-03   2.534E-03
+   128   3.203E-04   3.203E-04
+observed orders, log2(e(n/2) / e(n))
+    32        2.75        2.75
+    64        2.94        2.94
+   128        2.98        2.98
