@@ -26,3 +26,18 @@ generated tables, sumi-style theme), SELAH (tutorials whose code is compiled exa
 Guide (about, installation, quickstart, conventions, operators, precision, API, generator, performance, sources),
 Tutorials (compiled examples), Cookbook (recipes), Verification (case pages per gate, figures, animations), Regression
 (golden, mutation, CI), API reference (formal).
+
+## Closure (end of the night)
+
+Every gap above has its page: windows figures (conventions), the spectral view (A3, with the advection cast), the
+dispatcher's cost and its hoisting (cookbook run-time-order), the 3-D operators and the stencil gather (tutorial
+operators-3d), the rows (API, generated table), precision (guide), the generator and a new operator (guide, cookbook),
+case pages C1-C6 and A1-A3, regression (golden, mutation, CI), performance figure, installation with every mode, and
+the ADAM migration recipe. Coverage is now a check, not this table: `scripts/check_docs.py` (in CI's
+makecoverage-analysis rule, with `scripts/gen_gideon.py --check` and `scripts/run_examples.sh`).
+
+What no check proves:
+- the ADAM "before" calls of cookbook/from-adam: the routine names are checked against ADAM's verbatim copy
+  (check_docs, adam), the windows and arguments are not compiled (their equivalence is gideon_test_adam's);
+- the prose: that a sentence describes what the code does is read, not tested;
+- the GPU tutorial (T6) builds outside the fobos modes (no examples-nvf-oac mode): its output is the host run's.

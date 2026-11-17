@@ -20,21 +20,14 @@ measures the row's exact degree $K$ on the monomials beyond the window; the orde
 third-order upwind-biased face value (two cells left of the face, one right), which this release does not have, and
 its mirror:
 
-```python
-import sys; sys.path.insert(0, 'scripts')
-from gen_gideon import derive
-r = derive('fv', 'face', 'point', 0, [-1, 0, 1])   # fv face: cell o spans [o-1, o], the face at x = 0
-print({o: str(w) for o, w in r.weights.items()}, 'exact degree', r.exact_degree, 'order', r.order)
-r = derive('fv', 'face', 'point', 0, [0, 1, 2])
-print({o: str(w) for o, w in r.weights.items()}, 'exact degree', r.exact_degree, 'order', r.order)
-```
+<<< @/examples/src/cookbook_new_operator.py{python}
 
 ```text
-{-1: '-1/6', 0: '5/6', 1: '1/3'} exact degree 2 order 3
-{0: '1/3', 1: '5/6', 2: '-1/6'} exact degree 2 order 3
+<!--@include: ../examples/output/cookbook_new_operator.txt-->
 ```
 
-(run from the repository root with any Python 3.10+; the generator needs no package beyond the standard library).
+(any Python 3.10+, from any directory; the generator needs no package beyond the standard library; the program
+and its output are checked by `scripts/run_examples.sh`).
 The samplers and targets cover the four geometries of the release (`fd` node, `fd` face, `fv` face, `fv` cell); a new
 geometry is a new branch of `sampler` and `target`, and of the test data (step 5).
 

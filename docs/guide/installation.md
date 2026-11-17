@@ -73,6 +73,7 @@ The OpenACC modes compile for compute capability 8.9 (an RTX 40xx) by default; `
 |---|---|
 | `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | `src/bench/gideon_bench_adam.F90` into `exe-bench/`: GIDEON's kernels against ADAM's on the GPU (`-acc -gpu=$GPU_CC`, no `-Kieee`) and on one CPU core ([Performance](/guide/performance)) |
 | `examples-gnu` | every program of `docs/examples/src/` into `exe-examples/`, checked against `docs/examples/output/` by `scripts/run_examples.sh` |
+| `examples-gnu-r4` | the same programs in R4P into `exe-examples-r4/`, for the outputs `docs/examples/output/<name>-r4.txt` ([Precision](/cookbook/precision)); `scripts/run_examples.sh` builds it when such an output exists |
 | `fobis rule --ex makecoverage` | clean, build `tests-gnu-coverage`, run the tests |
 | `fobis rule --ex makecoverage-analysis` | the above, the coverage badge into `docs/public/coverage.json`, then `tests-gnu-r16` and its tests (what `ci.yml` runs) |
 | `fobis rule --ex makedoc` | this site: `npm install` and `npm run docs:build` in `docs/` |

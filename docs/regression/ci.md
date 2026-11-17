@@ -7,7 +7,7 @@ container images with the compilers installed; they are managed by `fobis scaffo
 
 | Workflow | When | What runs | Where |
 |---|---|---|---|
-| [`ci.yml`](https://github.com/szaghi/GIDEON/blob/main/.github/workflows/ci.yml) | push, pull request | `fobis fetch`, then `fobis rule --ex makecoverage-analysis`: the tests with coverage, the coverage badge, then the R16P tests | `linux-gnu` image |
+| [`ci.yml`](https://github.com/szaghi/GIDEON/blob/main/.github/workflows/ci.yml) | push, pull request | `fobis fetch`, then `fobis rule --ex makecoverage-analysis`: the tests with coverage, the coverage badge, the R16P tests, the generator check, the examples, the docs check | `linux-gnu` image |
 | [`matrix.yml`](https://github.com/szaghi/GIDEON/blob/main/.github/workflows/matrix.yml) | push, pull request | [`scripts/ci/matrix.sh`](https://github.com/szaghi/GIDEON/blob/main/scripts/ci/matrix.sh): `fobis fetch`, `fobis build --mode tests-$TOOLCHAIN_FAMILY`, `bash scripts/run_tests.sh` | `linux-gnu`, `linux-nvhpc`, `linux-oneapi` images |
 | [`fpm.yml`](https://github.com/szaghi/GIDEON/blob/main/.github/workflows/fpm.yml) | push, pull request | `fpm test` and `fpm build --profile release` (the tests listed in `fpm.toml`) | `linux-gnu` image |
 | [`docs.yml`](https://github.com/szaghi/GIDEON/blob/main/.github/workflows/docs.yml) | a successful CI run on the default branch, or by hand | the formal API and the VitePress site, with CI's coverage badge, deployed to GitHub Pages | `linux-gnu` image |
@@ -23,12 +23,18 @@ rule_1 = fobis rule --ex makecoverage           # clean, build tests-gnu-coverag
 rule_2 = bash scripts/compute-coverage.sh       # gcov over the .gcda files: docs/public/coverage.json
 rule_3 = fobis build --mode tests-gnu-r16       # then the tests in quadruple precision
 rule_4 = bash scripts/run_tests.sh --exe-dir exe-r16
+rule_5 = python3 scripts/gen_gideon.py --check  # the rows (C1) and the generated sources up to date
+rule_6 = bash scripts/run_examples.sh           # the tutorials' and the cookbook's programs, R8P and R4P outputs
+rule_7 = python3 scripts/check_docs.py          # the pages against the code
 ```
 
 The coverage is the line coverage of the library and the tests summed by `gcov` (`scripts/compute-coverage.sh`); the
 badge of the site reads the `coverage.json` of the last run on the default branch. The quadruple-precision build is in
 the same rule because it is where the orders of every kernel are observed ([A1](/verification/orders)): a change
-that breaks the order of a wide stencil passes every R8P test and fails here.
+that breaks the order of a wide stencil passes every R8P test and fails here. The last three rules hold the
+documentation to the code: a row or a generated source edited by hand, an example whose output changed, a page that
+names a procedure the library does not have, or a public entity no page names, fails CI
+([From the data to the pages](/verification/#from-the-data-to-the-pages)).
 
 ## The matrix and its floating-point flags
 

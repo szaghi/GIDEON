@@ -109,3 +109,27 @@ The programs and the page of each:
 | `gideon_test_spectral`, `gideon_vv_advection` | [A3 Spectral properties](./spectral) | every |
 | `gideon_test_golden` | [Golden values](/regression/golden) | every (one golden file per kind) |
 | `gideon_test_kinds` | the kinds reach a client through `use gideon` | every |
+
+## From the data to the pages
+
+No number of this section is typed. `scripts/run_report.sh` builds the test programs (R8P, R16P, R4P, and with
+`--gpu` the OpenACC build), runs each with `GIDEON_REPORT_DIR` set so that it writes its data (CSV files, the frames of
+the advection), keeps every output, and then draws the pages from them with the scripts of `docs/scripts`:
+
+| Script | Reads | Writes |
+|---|---|---|
+| `make_tables.py` | the generator's JSON, the test outputs and CSV files, the golden files, the recorded mutation run (`notes/mutation-run-*.txt`), the benchmark data (`notes/bench-data`) | `docs/verification/_tables`, `docs/regression/_tables` |
+| `make_figures.py` | the same | every figure of `docs/public/guide`, `docs/public/verification`, `docs/public/regression`, light and dark |
+| `make_animations.py` | the frames of `gideon_vv_advection` | `docs/public/verification/casts`: WebM, MP4 and a poster per theme (needs ffmpeg) |
+| `make_cookbook_tables.py` | `src/lib/*.F90` only (`--check`: exit 1 when a table is stale) | the tables of the cookbook and of the [API](/guide/api) |
+
+The figures share two modules: `figure_theme.py`, the light (washi) and dark (silver ink) styles, a verbatim copy of
+SETH's and ADAM's, which draws every figure a second time as `<name>-dark.png` for the dark theme; and
+`gideon_palette.py`, the colours of the data. The Python needs numpy and matplotlib (`GIDEON_DOCS_PYTHON`, else
+`exe/.docs-venv/bin/python`, else `python3`).
+
+What the pages say about the code is checked too: `scripts/check_docs.py` fails when a public entity, a module, a test
+program, an example, a fobos mode, a script or a figure is named on no page, when a page names a `gideon_*` procedure
+or an ADAM routine that does not exist, or when an image, a link, an include or a snippet does not resolve. The code of
+the tutorials and the cookbook is compiled and run by `scripts/run_examples.sh`, each output compared with the one the
+page shows.

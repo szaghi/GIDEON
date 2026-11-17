@@ -36,18 +36,11 @@ With the R8P library (`lib/gnu/static`):
 <!--@include: ../examples/output/cookbook_precision.txt-->
 ```
 
-The same source, compiled with `-I lib/gnu/static-r4/mod` and linked with `lib/gnu/static-r4/libgideon_r4.a`:
+The same source, compiled with `-I lib/gnu/static-r4/mod` and linked with `lib/gnu/static-r4/libgideon_r4.a` (mode
+`examples-gnu-r4`, checked by `scripts/run_examples.sh` as the R8P run is):
 
 ```text
-R_P: 32 bits, 6 digits, epsilon  1.19E-07
-GIDEON_NAN is a NaN: T
-gideon_fd_d1_c8 on sin(x) at x = 0.5: error, and its round-off scale eps sum|c| max|q| / h
-  h = 2^-1    5.13E-06  4.95E-07
-  h = 2^-3    1.19E-07  1.67E-06
-  h = 2^-5    4.17E-07  4.65E-06
-  h = 2^-7    5.96E-07  1.61E-05
-  h = 2^-9    4.17E-06  6.18E-05
-  h = 2^-11   4.15E-05  2.45E-04
+<!--@include: ../examples/output/cookbook_precision-r4.txt-->
 ```
 
 In R8P the eighth-order error falls by $2^{16}$ per two halvings until it meets round-off at $h = 2^{-5}$; in R4P it

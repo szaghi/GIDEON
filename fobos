@@ -38,7 +38,7 @@ modes = static-gnu shared-gnu
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
         tests-gnu-r16
         bench-nvf-oac bench-nvf bench-gnu
-        examples-gnu
+        examples-gnu examples-gnu-r4
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -155,6 +155,12 @@ template  = template-bench template-gnu template-release
 [examples-gnu]
 help      = Documentation examples, gfortran, optimised (scripts/run_examples.sh)
 template  = template-examples template-gnu template-release
+
+# the same programs in single precision, for the outputs docs/examples/output/<name>-r4.txt (scripts/run_examples.sh)
+[examples-gnu-r4]
+help      = Documentation examples, gfortran, optimised, R4P (scripts/run_examples.sh, outputs <name>-r4.txt)
+template  = template-examples template-gnu template-release template-r4
+build_dir = exe-examples-r4/
 
 # ── single precision (R4P): PENF's R_P chosen by -D_R_P_IS_R4P for GIDEON and PENF alike ──
 # Own build directories and library name, so that an R4P build never mixes with the R8P one.
@@ -309,12 +315,16 @@ rule_2 = fobis build --mode tests-gnu-coverage
 rule_3 = bash scripts/run_tests.sh
 
 [rule-makecoverage-analysis]
-help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
+help   = What CI runs: coverage (the badge JSON docs/public/coverage.json), R16P tests, generator, examples, docs check
 rule_1 = fobis rule --ex makecoverage
 rule_2 = bash scripts/compute-coverage.sh
 # then the tests in quadruple precision: the orders of every kernel, observed (gideon_test_order)
 rule_3 = fobis build --mode tests-gnu-r16
 rule_4 = bash scripts/run_tests.sh --exe-dir exe-r16
+# then what the documentation shows: the generated sources up to date, the examples' outputs, the pages against the code
+rule_5 = python3 scripts/gen_gideon.py --check
+rule_6 = bash scripts/run_examples.sh
+rule_7 = python3 scripts/check_docs.py
 
 [rule-makedoc]
 help   = Build the documentation: formal API + VitePress
@@ -322,4 +332,4 @@ rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
 
 [rule-clean]
 help = Remove build products and documentation artefacts
-rule = rm -rf exe/ exe-r4/ exe-r16/ exe-bench/ exe-examples/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
+rule = rm -rf exe/ exe-r4/ exe-r16/ exe-bench/ exe-examples/ exe-examples-r4/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
