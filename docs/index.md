@@ -5,6 +5,10 @@ hero:
   name: GIDEON
   text: Generated Interpolations and Derivatives, Exact to Order N
   tagline: The FD and FV stencil operators of ADAM, one pure kernel each, exact to order N, on every CPU and GPU. Finite-difference and finite-volume operators for HPC, in modern Fortran.
+  image:
+    light: /logo.svg
+    dark: /logo-dark.svg
+    alt: GIDEON, an ensō touched once by its tangent, the G seal in gold
   actions:
     - theme: brand
       text: Quick start
@@ -29,27 +33,57 @@ hero:
       link: https://github.com/szaghi/GIDEON
 
 features:
-  - title: Every operator, one kernel each
+  - icon:
+      light: /icons/stencils.svg
+      dark: /icons/stencils-dark.svg
+      width: 44
+      height: 44
+    title: Every operator, one kernel each
     details: 243 kernels. FD centred face values and node derivatives d1–d6; FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values. 45 run-time order dispatchers on top.
     link: /guide/operators
     linkText: Operators
-  - title: Called from inside your loops
+  - icon:
+      light: /icons/derivatives.svg
+      dark: /icons/derivatives-dark.svg
+      width: 44
+      height: 44
+    title: Called from inside your loops
     details: Every kernel is pure, acc routine seq and omp declare target; the rows are compile-time constants, so nothing is set up or copied to the device. 0.17–0.82 of ADAM's cost, on an RTX 4070 and on one CPU core.
     link: /guide/performance
     linkText: Performance
-  - title: Exact coefficients, bitwise ADAM
+  - icon:
+      light: /icons/exact.svg
+      dark: /icons/exact-dark.svg
+      width: 44
+      height: 44
+    title: Exact coefficients, bitwise ADAM
     details: Every row derived from what it must compute, in exact rationals, its order measured at 100 digits; ADAM's 93 non-zero rows agree. Bitwise equal to ADAM where ADAM is right, its defects (audit items A–F) fixed where it is not.
     link: /verification/adam
     linkText: Equivalence with ADAM
-  - title: Every upwind operator with its mirror
+  - icon:
+      light: /icons/faces.svg
+      dark: /icons/faces-dark.svg
+      width: 44
+      height: 44
+    title: Every upwind operator with its mirror
     details: Gideon's fleece, a test and its reversed control. Each left-side kernel reads the right-side row mirrored, bitwise. The 3-D gradient, divergence, curl and Laplacian, FD and FV, orders 2–10, over directional stencils.
     link: /verification/properties
     linkText: Mirrors and symmetries
-  - title: Verification you can read
+  - icon:
+      light: /icons/verified.svg
+      dark: /icons/verified-dark.svg
+      width: 44
+      height: 44
+    title: Verification you can read
     details: Eleven programs, also the test suite. Rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 243 kernels observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, golden values.
     link: /verification/
     linkText: Verification
-  - title: Three compilers, CPU and GPU
+  - icon:
+      light: /icons/kernels.svg
+      dark: /icons/kernels-dark.svg
+      width: 44
+      height: 44
+    title: Three compilers, CPU and GPU
     details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; single, double and quadruple precision; built with FoBiS or fpm. A mutation run catches 22 of 22 planted defects; the tutorials' code is compiled and run in CI.
     link: /guide/installation
     linkText: Installation

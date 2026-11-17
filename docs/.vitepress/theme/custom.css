@@ -1,10 +1,11 @@
-/* GIDEON: the Sumi family tokens of SETH (washi light, silver-ink dark), copied with the seth- prefix renamed. GIDEON's own identity (mark, ink) is the owner's decision; until then it wears SETH's Neon Moegi ink. Below: the SETH header, unchanged. */
-/* SETH · Ōgi 扇 in Neon Moegi 萌葱 — Sumi family tokens for VitePress (the identity bundle seth-identity.zip,
-   2026-11-15; it replaces the ADAM vermilion/amber inks adopted on the same day). Identity rules first, then
-   SETH's own layout rules (not identity).
-   Washi is :root, silver ink is .dark. Every text pair is at least 4.5:1 on its ground.
-   Acid sprout green #a6ff2e is the night ink; on washi it deepens to #4a7a06 (the shock,
-   the seal) and #3d6505 (links, primary button). */
+/* GIDEON · Ensō to sessen · Kogane 黄金: the Sumi family tokens for VitePress, from the identity bundle
+   gideon-identity-bundle.zip (2026-11-17; source of record in docs/brand: tokens.json, BRAND.md, the generator).
+   It replaces SETH's Neon Moegi ink, which GIDEON wore until it had its own. Identity rules first, then layout rules
+   (not identity).
+   Washi is :root, smoked bronze is .dark. Every text pair is at least 4.5:1 on its ground (contrasts in tokens.json).
+   Gold is the accent: #855f00 on washi (fills: buttons, the seal), #765400 for links; #f2c14e and #f3c861 at night.
+   Tokens the bundle does not set (gutter, text-3, button borders and hover text, alt-button border, code-block ground)
+   are its own values: divider, muted, the button fill, the mesh, the alt ground. */
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
@@ -23,24 +24,24 @@
   --vp-c-text-1: #1d1b18;
   --vp-c-text-2: #5f5a52;
   --vp-c-text-3: #5f5a52;
-  /* moegi: links, active nav, primary button */
-  --vp-c-brand-1: #3d6505;
-  --vp-c-brand-2: #2f5004;
-  --vp-c-brand-3: #3d6505;
-  --vp-c-brand-soft: rgba(74, 122, 6, 0.14);
-  --vp-button-brand-bg: #3d6505;
-  --vp-button-brand-border: #3d6505;
+  /* kogane: links (brand-1), the accent, the primary button */
+  --vp-c-brand-1: #765400;
+  --vp-c-brand-2: #855f00;
+  --vp-c-brand-3: #855f00;
+  --vp-c-brand-soft: rgba(133, 95, 0, 0.14);
+  --vp-button-brand-bg: #855f00;
+  --vp-button-brand-border: #855f00;
   --vp-button-brand-text: #ffffff;
-  --vp-button-brand-hover-bg: #2f5004;
-  --vp-button-brand-hover-border: #2f5004;
+  --vp-button-brand-hover-bg: #6b4c00;
+  --vp-button-brand-hover-border: #6b4c00;
   --vp-button-brand-hover-text: #ffffff;
-  --vp-button-brand-active-bg: #2f5004;
-  --vp-button-brand-active-border: #2f5004;
+  --vp-button-brand-active-bg: #6b4c00;
+  --vp-button-brand-active-border: #6b4c00;
   --vp-button-brand-active-text: #ffffff;
   --vp-button-alt-border: #6f6a62;
-  /* the shock and the seal: fills only, never text */
-  --gideon-shock: #4a7a06;
-  --gideon-seal: #4a7a06;
+  /* the seal and the AMR mesh of the mark: fills and strokes only, never text */
+  --gideon-seal: #855f00;
+  --gideon-mesh: #6f6a62;
   --gideon-focus: #1d1b18;
   --vp-home-hero-name-color: #1d1b18;
   --vp-code-block-bg: #ebe3d3;
@@ -51,38 +52,37 @@
 
 .dark {
   /* ground */
-  --vp-c-bg: #0e1116;
-  --vp-c-bg-alt: #0a0d11;
-  --vp-c-bg-elv: #141820;
-  --vp-c-bg-soft: #0a0d11;
-  --vp-c-divider: #222831;
-  --vp-c-gutter: #222831;
-  --vp-c-border: #8b949e;
+  --vp-c-bg: #11100c;
+  --vp-c-bg-alt: #0c0b08;
+  --vp-c-bg-elv: #1b1913;
+  --vp-c-bg-soft: #1b1913;
+  --vp-c-divider: #2e2a1f;
+  --vp-c-gutter: #2e2a1f;
+  --vp-c-border: #948c79;
   /* ink */
-  --vp-c-text-1: #e8ecf0;
-  --vp-c-text-2: #a9b1bb;
-  --vp-c-text-3: #a9b1bb;
-  /* moegi: links, active nav, primary button */
-  --vp-c-brand-1: #c0ff6a;
-  --vp-c-brand-2: #a6ff2e;
-  --vp-c-brand-3: #a6ff2e;
-  --vp-c-brand-soft: rgba(166, 255, 46, 0.14);
-  --vp-button-brand-bg: #a6ff2e;
-  --vp-button-brand-border: #a6ff2e;
-  --vp-button-brand-text: #0e1116;
-  --vp-button-brand-hover-bg: #8fe01a;
-  --vp-button-brand-hover-border: #8fe01a;
-  --vp-button-brand-hover-text: #0e1116;
-  --vp-button-brand-active-bg: #8fe01a;
-  --vp-button-brand-active-border: #8fe01a;
-  --vp-button-brand-active-text: #0e1116;
-  --vp-button-alt-border: #8b949e;
-  /* the shock and the seal: fills only */
-  --gideon-shock: #a6ff2e;
-  --gideon-seal: #a6ff2e;
-  --gideon-focus: #a6ff2e;
-  --vp-home-hero-name-color: #e8ecf0;
-  --vp-code-block-bg: #0a0d11;
+  --vp-c-text-1: #efe9da;
+  --vp-c-text-2: #bab29e;
+  --vp-c-text-3: #bab29e;
+  /* kogane */
+  --vp-c-brand-1: #f3c861;
+  --vp-c-brand-2: #f2c14e;
+  --vp-c-brand-3: #f2c14e;
+  --vp-c-brand-soft: rgba(242, 193, 78, 0.16);
+  --vp-button-brand-bg: #f2c14e;
+  --vp-button-brand-border: #f2c14e;
+  --vp-button-brand-text: #1a1204;
+  --vp-button-brand-hover-bg: #c99a2e;
+  --vp-button-brand-hover-border: #c99a2e;
+  --vp-button-brand-hover-text: #1a1204;
+  --vp-button-brand-active-bg: #c99a2e;
+  --vp-button-brand-active-border: #c99a2e;
+  --vp-button-brand-active-text: #1a1204;
+  --vp-button-alt-border: #948c79;
+  --gideon-seal: #f2c14e;
+  --gideon-mesh: #948c79;
+  --gideon-focus: #f3c861;
+  --vp-home-hero-name-color: #efe9da;
+  --vp-code-block-bg: #0c0b08;
 }
 
 /* names in the display face, tracked wide */

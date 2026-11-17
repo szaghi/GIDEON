@@ -13,8 +13,13 @@ export default withMermaid({
   srcExclude: ['ford.md', 'brand/**', '**/_tables/**', 'guide/_operators-table.md', 'examples/**'],
 
   head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/GIDEON/favicon.svg', media: '(prefers-color-scheme: light)' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/GIDEON/favicon-dark.svg', media: '(prefers-color-scheme: dark)' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/GIDEON/favicon-32.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/GIDEON/favicon-16.png' }],
+    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/GIDEON/apple-touch-icon.png' }],
     ['meta', { name: 'theme-color', content: '#f3ede1', media: '(prefers-color-scheme: light)' }],
-    ['meta', { name: 'theme-color', content: '#0e1116', media: '(prefers-color-scheme: dark)' }],
+    ['meta', { name: 'theme-color', content: '#11100c', media: '(prefers-color-scheme: dark)' }],
     // the theme-aware videos of the pages: <video class="light-only"> / <video class="dark-only">
     ['style', {}, '.dark-only{display:none}.dark .dark-only{display:block}.dark .light-only{display:none}'],
   ],
@@ -31,6 +36,7 @@ export default withMermaid({
   },
 
   themeConfig: {
+    logo: { light: '/logo-nav.svg', dark: '/logo-nav-dark.svg', alt: 'GIDEON' },
     siteTitle: 'GIDEON',
     nav: [
       { text: 'Start',        link: '/guide/' },
