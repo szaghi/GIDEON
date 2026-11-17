@@ -1,0 +1,10 @@
+d/dx sin(2 pi x), sixth-order centred kernels, max error over the cells
+     n  fd on points  fv on averages  fd on averages
+    16    1.567E-04       1.557E-04       3.968E-02
+    32    2.540E-06       2.536E-06       1.004E-02
+    64    4.006E-08       4.004E-08       2.520E-03
+   128    6.274E-10       6.274E-10       6.306E-04
+observed orders, log2(e(n/2) / e(n))
+    32         5.95            5.94            1.98
+    64         5.99            5.98            1.99
+   128         6.00            6.00            2.00

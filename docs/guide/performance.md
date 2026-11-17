@@ -13,6 +13,8 @@ not by FP64 throughput.
 
 ## Ratio GIDEON / ADAM (median of the four runs' medians; range in brackets)
 
+![Time of GIDEON's kernel over ADAM's for nine cases on the RTX 4070, one core with gfortran and one core with nvfortran, all below 1; right: the run-time dispatcher fd_d1_c(6) over the kernel fd_d1_c6, 1.09 to 1.18](/guide/performance.png)
+
 | Case | RTX 4070 | one core, gfortran | one core, nvfortran |
 |---|---|---|---|
 | fd d1 c2 | 0.380 (0.375–0.384) | 0.423 (0.423–0.430) | 0.363 (0.355–0.373) |
@@ -42,3 +44,4 @@ of the loop. Recorded, not edited. What it means for a caller: an order known at
 a run-time order (PRISM's `fdv_order`) pays 9–22 % over the kernel, and still about 0.45–0.65 of ADAM's run-time-`s`
 path (1.093 x 0.532 on the GPU, 1.183 x 0.425 with gfortran). A faster dispatch would hoist the choice out of the
 loop: one loop per order in the caller, or a procedure pointer chosen once (not device code). Left to the owner.
+The first, as code: [A run-time order, fast](/cookbook/run-time-order).

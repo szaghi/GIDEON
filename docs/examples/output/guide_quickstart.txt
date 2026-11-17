@@ -1,0 +1,2 @@
+gideon_fd_d1_c6, max error:  4.063E-07
+gideon_fd_d1_c(6, ...) gives the same values, bitwise: T

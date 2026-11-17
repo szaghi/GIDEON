@@ -1,0 +1,11 @@
+fd d1 at node i                    1.00000000    1.00000000
+fd d3 at node i                    6.00000000    6.00000000
+fd value at face i+1/2            -0.94237500   -0.94237500
+fv d2 over cell i                  6.00000000    6.00000000
+fv d1*h at face i+1/2              0.13075000    0.13075000
+fv point value at cell i          -1.00000000   -1.00000000
+fv d1 over cell i, right side      1.00250000    1.00250000
+fv d1 over cell i, left side       1.00250000    1.00250000
+fv d2 over cell i, left side       6.00000000    6.00000000
+fv d2 over cell i, right side      6.00000000    6.00000000
+fd gradient, x component           1.00000000    1.00000000

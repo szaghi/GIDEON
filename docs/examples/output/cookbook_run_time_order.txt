@@ -1,0 +1,6 @@
+order 2: dispatched = hoisted bitwise T, max error  6.512E-03
+order 3: no kernel (GIDEON_NAN), refused before the loop
+order 4: dispatched = hoisted bitwise T, max error  7.590E-05
+order 6: dispatched = hoisted bitwise T, max error  1.577E-06
+order 8: dispatched = hoisted bitwise T, max error  4.818E-08
+order 10: dispatched = hoisted bitwise T, max error  2.115E-09

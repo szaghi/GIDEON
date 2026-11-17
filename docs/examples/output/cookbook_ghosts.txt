@@ -1,0 +1,3 @@
+nodes: halo 3 + 3, max error of d1  2.553E-06
+faces: halo 3 + 3, max error of the face values  1.883E-03
+flux difference of the left-side faces = gideon_fv_d1_ul3, bitwise, in cells: 32 of 32

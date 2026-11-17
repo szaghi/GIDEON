@@ -1,0 +1,9 @@
+R_P: 64 bits, 15 digits, epsilon  2.22E-16
+GIDEON_NAN is a NaN: T
+gideon_fd_d1_c8 on sin(x) at x = 0.5: error, and its round-off scale eps sum|c| max|q| / h
+  h = 2^-1    5.08E-06  9.23E-16
+  h = 2^-3    8.27E-11  3.11E-15
+  h = 2^-5    3.22E-15  8.66E-15
+  h = 2^-7    9.99E-16  3.00E-14
+  h = 2^-9    3.33E-15  1.15E-13
+  h = 2^-11   6.00E-15  4.56E-13

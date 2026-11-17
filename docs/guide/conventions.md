@@ -45,8 +45,25 @@ All in units of the grid step; the window is an explicit-shape dummy `q(LO:HI)`,
 | upwind cell, right side | `q(0:S)` |
 | upwind cell, left side | `q(-S:0)` |
 
-A wrong window is a bounds error at the call site in a checked build (`-fcheck=bounds`), never a silent shift (audit
-item B).
+The window bounds are the caller's responsibility. The explicit-shape dummy names them in the interface, but a
+section of the wrong length is not an error when its bounds are run-time expressions: the dummy is associated with
+the section's elements in order, so a section two elements short (`u(i-3:i+3)` for `gideon_fd_d1_c8`, whose window is
+`q(-4:4)`) is read from `u(i-3)` as offset −4 and returns the derivative at node `i+1`, silently, even with gfortran
+16.2's `-fcheck=all`. Only a section of constant wrong length fails, at compile time. What a checked build does catch
+is a section that leaves the caller's array (`-fcheck=bounds`, `-C`, `-check all`): a halo too thin at the last point
+of a loop. (ADAM's audit item B, a read past the end of an assumed-shape window, was caught inside the kernel: an
+assumed-shape dummy carries the section's length, an explicit-shape one does not.) Write the section as
+`u(i+LO:i+HI)` with the kernel's own `LO` and `HI`, as listed in [Operators](/guide/operators#every-kernel); for a
+dispatcher, with the bounds of its window as expressions of the order ([API](/guide/api#run-time-order-dispatchers)).
+The ghost cells a loop needs follow from the window: [Ghost cells for a window](/cookbook/ghosts).
+
+The windows drawn, offsets on the axis, the data each kernel reads and the point of its result:
+
+![The windows of gideon_fd_d1_c4, q(-2:2) with node 0 at offset 0, and of gideon_fd_face_c4, q(-1:2) with the points at x = o - 1/2 around the face x = 0, each weight above its offset](/guide/windows-fd.png)
+
+![The windows of gideon_fv_face_c4, q(-1:2) with cell o on [o - 1, o] and the face between cells 0 and 1, and of gideon_fv_d1_c4, q(-2:2) with cell o on [o - 1/2, o + 1/2] and the average over cell 0](/guide/windows-fv.png)
+
+![The windows of the upwind FV operators of three cells: gideon_fv_face_ur3, q(1:3), and its mirror gideon_fv_face_ul3, q(-2:0), at the face x = 0; gideon_fv_d1_ur3, q(0:3), and gideon_fv_d1_ul3, q(-3:0), over cell 0](/guide/windows-upwind.png)
 
 ## Arithmetic
 
@@ -71,4 +88,5 @@ silent 0 is what audit item C fixes.
 The kernels compute in PENF's `R_P`, chosen when GIDEON (and PENF, compiled by the same mode) is built:
 `-D_R_P_IS_R4P` or nothing (R8P). One precision per build. R16P (`-DPENF_R16P -D_R_P_IS_R16P`, mode `tests-gnu-r16`)
 is a host-only verification kind: there the orders of every kernel are observed, which double precision's round-off
-hides for the widest stencils. An OpenACC build refuses it.
+hides for the widest stencils. An OpenACC build refuses it. The builds and what each verifies:
+[Precision](/guide/precision).
