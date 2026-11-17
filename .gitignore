@@ -27,3 +27,5 @@
 
 # Python bytecode of the docs scripts
 __pycache__/
+/docs/brand/generator/out/
+/docs/brand/generator/__pycache__/

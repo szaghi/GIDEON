@@ -13,7 +13,8 @@ Coverage (the code -> the pages):
   examples   every program of docs/examples/src is included by a page, and its output too
   modes      every fobos mode is named on a page
   scripts    every script of scripts/ and docs/scripts/ is named on a page
-  figures    every file of docs/public is referenced by a page (a -dark twin through its light figure)
+  figures    every file of docs/public is referenced by a page or config.mts (a -dark twin through its light figure),
+             or, for the identity's assets, catalogued in docs/brand/BRAND.md
   redirects  every static page of docs/public (a moved page's old URL) leads to a page that exists
   pages      every page is in the sidebar (the reading order); every sidebar entry is a page
 
@@ -51,7 +52,7 @@ def report(check: str, total: int, missing: list[str], verbose: bool) -> None:
 
 def pages() -> list[Path]:
     """Every hand-written page and included table (not docs/ford.md, the API generator's project file)."""
-    skip = {'api', 'node_modules', '.vitepress', 'public', 'examples'}
+    skip = {'api', 'node_modules', '.vitepress', 'public', 'examples', 'brand'}
     return sorted(p for p in DOCS.rglob('*.md') if not skip & set(p.relative_to(DOCS).parts) and p.name != 'ford.md')
 
 
@@ -167,6 +168,13 @@ def check_scripts(text: str, verbose: bool) -> None:
 
 
 def check_figures(text: str, verbose: bool) -> None:
+    # the identity's assets are referenced by config.mts (favicons, navbar logo) or catalogued in docs/brand/BRAND.md
+    text += (DOCS / '.vitepress' / 'config.mts').read_text(encoding='utf-8')
+    brand = DOCS / 'brand' / 'BRAND.md'
+    if brand.is_file():
+        catalogue = brand.read_text(encoding='utf-8')
+        text += '\n'.join('/' + m + suffix for m in re.findall(r'`((?:icons/)?[\w.-]+?)(?:\.svg|\.png)?`', catalogue)
+                           for suffix in ('.svg', '-dark.svg', '.png'))
     files = [p for p in PUBLIC.rglob('*') if p.is_file() and p.name != 'coverage.json' and p.suffix != '.html']
     missing = []
     for f in files:
