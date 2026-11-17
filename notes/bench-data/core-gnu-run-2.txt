@@ -1,0 +1,12 @@
+# GIDEON vs ADAM, one CPU core, ns per point, median of 20 passes, N = 2^24
+# case                   GIDEON     ADAM      ratio
+fd d1 c2                    1.0393    2.4197     0.430
+fd d1 c4                    1.1779    2.7483     0.429
+fd d1 c6                    1.3309    3.1428     0.423
+fd d1 c10                   1.5467    3.5511     0.436
+fd d2 c6                    1.6186    3.4043     0.475
+fv face c6                  1.3104    2.9903     0.438
+fv d1 c6                    1.6073    4.8839     0.329
+fv d2 c6                    1.7121    5.0150     0.341
+fv face ur3                 1.0963    1.9660     0.558
+     dispatch fd_d1_c(6)    1.5784    1.3294     1.187   (against gideon_fd_d1_c6)

@@ -1,0 +1,12 @@
+# GIDEON vs ADAM, OpenACC (GPU), ns per point, median of 20 passes, N = 2^24
+# case                   GIDEON     ADAM      ratio
+fd d1 c2                    0.0429    0.1146     0.375
+fd d1 c4                    0.0509    0.1126     0.452
+fd d1 c6                    0.0609    0.1132     0.538
+fd d1 c10                   0.0762    0.1203     0.633
+fd d2 c6                    0.0679    0.1139     0.597
+fv face c6                  0.0341    0.1008     0.339
+fv d1 c6                    0.0886    0.1111     0.797
+fv d2 c6                    0.0944    0.1144     0.825
+fv face ur3                 0.0344    0.0995     0.346
+     dispatch fd_d1_c(6)    0.0648    0.0593     1.093   (against gideon_fd_d1_c6)

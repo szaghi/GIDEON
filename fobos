@@ -36,6 +36,7 @@ modes = static-gnu shared-gnu
         tests-intel tests-intel-debug
         static-gnu-r4 shared-gnu-r4 static-nvf-r4 shared-nvf-r4 static-intel-r4 shared-intel-r4
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
+        bench-nvf-oac bench-nvf bench-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
@@ -122,6 +123,21 @@ template  = template-tests template-intel-release template-intel
 [tests-intel-debug]
 help      = Tests, ifx, all checks on
 template  = template-tests template-intel template-debug
+
+# ── benchmark modes: src/bench/gideon_bench_adam.F90 into exe-bench/ (not a test: scripts/run_tests.sh ignores it) ──
+[bench-nvf-oac]
+help      = Benchmark against ADAM, nvfortran, OpenACC on the GPU of compute capability $GPU_CC (set CUDA_VISIBLE_DEVICES)
+template  = template-bench template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-nvf]
+help      = Benchmark against ADAM, nvfortran, one CPU core
+template  = template-bench template-nvf template-release
+
+[bench-gnu]
+help      = Benchmark against ADAM, gfortran, one CPU core
+template  = template-bench template-gnu template-release
 
 # ── single precision (R4P): PENF's R_P chosen by -D_R_P_IS_R4P for GIDEON and PENF alike ──
 # Own build directories and library name, so that an R4P build never mixes with the R8P one.
@@ -232,6 +248,12 @@ target    = src/lib/gideon.F90
 mklib     = shared
 output    = libgideon.so
 
+[template-bench]
+src       = src/lib/ src/bench/ src/tests/
+build_dir = exe-bench/
+target    = src/bench/gideon_bench_adam.F90
+output    = gideon_bench_adam
+
 [template-r4]
 preproc = -D_R_P_IS_R4P
 
@@ -263,4 +285,4 @@ rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
 
 [rule-clean]
 help = Remove build products and documentation artefacts
-rule = rm -rf exe/ exe-r4/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
+rule = rm -rf exe/ exe-r4/ exe-bench/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
