@@ -43,6 +43,9 @@ modes = static-gnu shared-gnu
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
 $STD_GNU = -std=f2018
 $STD_INT = -standard-semantics -std18
+# ifx's default fp-model (fast=1) reassociates inlined arithmetic: the pair form's exact symmetries and the bitwise
+# equality with ADAM (7 curl values 1 ulp off) need the operations as written
+$FP_INT  = -fp-model=precise
 # NVIDIA compute capability of the OpenACC modes; override with --varset (e.g. --varset cc90)
 $GPU_CC = cc89
 
@@ -86,7 +89,7 @@ build_dir = lib/intel/static/
 [shared-intel]
 help      = Shared library, ifx, optimised
 template  = template-lib-shared template-intel
-cflags    = -c -fPIC -O3 $STD_INT
+cflags    = -c -fPIC -O3 $STD_INT $FP_INT
 build_dir = lib/intel/shared/
 
 # ── test modes: every program of src/tests into exe/, run by scripts/run_tests.sh ──
@@ -177,7 +180,7 @@ output    = libgideon_r4.a
 [shared-intel-r4]
 help      = Shared library, ifx, single precision (R_P = R4P)
 template  = template-r4 template-lib-shared template-intel
-cflags    = -c -fPIC -O3 $STD_INT
+cflags    = -c -fPIC -O3 $STD_INT $FP_INT
 build_dir = lib/intel/shared-r4/
 output    = libgideon_r4.so
 
@@ -232,7 +235,7 @@ cflags   = -c
 [template-intel]
 template = template-base
 compiler = intel_nextgen
-cflags   = -c $STD_INT
+cflags   = -c $STD_INT $FP_INT
 
 [template-release]
 build_profile = release
@@ -240,7 +243,7 @@ build_profile = release
 # ifx without the release profile: its -ipo writes IR objects that the link (FoBiS passes no -ipo to it) and a plain
 # ar archive cannot read
 [template-intel-release]
-cflags = -c -O3 $STD_INT
+cflags = -c -O3 $STD_INT $FP_INT
 
 [template-debug]
 build_profile = debug

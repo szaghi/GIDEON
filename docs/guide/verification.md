@@ -1,8 +1,9 @@
 # Verification
 
-What each check proves, where it lives, and what it measured on 2026-11-17 (gfortran 16.2 and nvfortran 26.9, debug
-and optimised, R8P and R4P; gfortran in R16P, the quadruple-precision verification build; the device test on an RTX
-4070).
+What each check proves, where it lives, and what it measured on 2026-11-17 (gfortran 16.2, nvfortran 26.9 and ifx
+2026.2, debug and optimised, R8P and R4P; gfortran in R16P, the quadruple-precision verification build; the device test
+on an RTX 4070). The Intel modes compile with `-fp-model=precise`: ifx's default model reassociates inlined arithmetic,
+which costs the bitwise equality with ADAM (7 curl values 1 ulp off) and the exactness of the pair form's symmetries.
 
 ## In the generator (`scripts/gen_gideon.py --check`)
 
