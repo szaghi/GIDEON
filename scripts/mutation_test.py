@@ -29,6 +29,7 @@ from pathlib import Path
 # in code, never in a comment: a mutated comment is an equivalent mutant.
 T = 'src/lib/gideon_tables.F90'
 FDC = 'src/lib/gideon_fd_centred.F90'
+FDU = 'src/lib/gideon_fd_upwind.F90'
 FVC = 'src/lib/gideon_fv_centred.F90'
 FVU = 'src/lib/gideon_fv_upwind.F90'
 DEC = 'src/lib/gideon_deconvolution.F90'
@@ -69,6 +70,16 @@ MUTANTS = [
      'call gideon_fd_d1_c4(vy_y, dxyz(1), dy)'),
     ('laplacian-direction', O3D, 'pure subroutine gideon_fv_laplacian_c6', 'call gideon_fv_d2_c6(qz, dxyz(3), dz)',
      'call gideon_fv_d2_c6(qy, dxyz(3), dz)'),
+    # phase 2: FD face derivatives, one-sided and biased FD face values (each mirror mutant reads inside its window)
+    ('row-fd-face-d1-c4', T, 'FD_FACE_D1_S2(1:2)', '9._R_P/8._R_P', '1.1251_R_P'),
+    ('row-fd-uface-3', T, 'FD_UFACE_S3(1:3)', '-5._R_P/4._R_P', '-1.2501_R_P'),
+    ('row-fd-bface-5-tail', T, 'FD_BFACE_S2(-1:3)', '-5._R_P/128._R_P', '-5._R_P/127._R_P'),
+    ('pair-sign-fd-face-d2-c4', FDC, 'pure subroutine gideon_fd_face_d2_c4', '(q(m) + q(1-m))', '(q(m) - q(1-m))'),
+    ('scale-fd-face-d2-c4', FDC, 'pure subroutine gideon_fd_face_d2_c4', 'd = d/ds/ds', 'd = d/ds'),
+    ('mirror-fd-face-ul3', FDU, 'pure subroutine gideon_fd_face_ul3', 'q(1-m)', 'q(m-3)'),
+    ('mirror-fd-face-bl5', FDU, 'pure subroutine gideon_fd_face_bl5', 'q(1-m)', 'q(m-1)'),
+    ('dispatch-wrong-kernel-bl', DIS, 'pure subroutine gideon_fd_face_bl(', 'case(5) ; call gideon_fd_face_bl5',
+     'case(5) ; call gideon_fd_face_bl3'),
 ]
 
 
