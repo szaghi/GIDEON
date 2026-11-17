@@ -21,12 +21,21 @@ order dispatchers, 40 3-D operators and their 8 dispatchers. Bitwise equal to AD
 of its cost on an RTX 4070 and on one CPU core ([Performance](/guide/performance)). Tested with gfortran 16.2,
 nvfortran 26.9 (also on the GPU, OpenACC) and ifx, in single and double precision, and with gfortran in quadruple.
 
-## This documentation
+## How to read this documentation
 
-| Section | What it holds |
-|---|---|
-| Guide | [installation](/guide/installation), a [quick start](/guide/quickstart), the [conventions](/guide/conventions) (names, windows, arithmetic), the [operators](/guide/operators), [precision](/guide/precision), the [API](/guide/api), [the generator](/guide/generator), [performance](/guide/performance), [sources](/guide/sources) |
-| [Tutorials](/tutorials/) | complete programs, compiled and run, from a first derivative to the GPU |
-| [Cookbook](/cookbook/) | recipes: choosing an operator, ghost cells, migrating from ADAM, averages and point values, a run-time order, other precisions, a new operator |
-| [Verification](/verification/) | the contracts every kernel meets and the accuracy measured, one page per test |
-| [Regression](/regression/) | golden values, mutation testing, continuous integration |
+The sidebar is the reading order, and the **Next** link at the foot of every page follows it: read straight through,
+or stop where you have what you need.
+
+1. **Start here**: [installation](/guide/installation), a [quick start](/guide/quickstart) (one derivative, compiled
+   and run), and the [conventions](/guide/conventions): how a kernel is named and which window of your array it
+   reads. These four pages are all a first use needs.
+2. **[Tutorials](/tutorials/)**: six complete programs, from a first derivative to the GPU, each compiled and run
+   with the output on the page. Read them in order; each adds one idea.
+3. **[Cookbook](/cookbook/)**: one recipe per task (choose an operator and its order, size the ghost cells, convert
+   averages and point values, a fast run-time order, another precision, replace ADAM's calls, add an operator).
+   Read the one you need.
+4. **Reference**: every [operator](/guide/operators) with its window and order, the [API](/guide/api),
+   [precision](/guide/precision), [the generator](/guide/generator) and [performance](/guide/performance); the
+   module pages generated from the sources are under [API](/api/) in the top bar.
+5. **[Verification](/verification/)** and **[Regression](/regression/)**: what is proved about every kernel and how,
+   one page per test, and what keeps it from changing.

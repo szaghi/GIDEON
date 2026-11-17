@@ -14,7 +14,8 @@ Coverage (the code -> the pages):
   modes      every fobos mode is named on a page
   scripts    every script of scripts/ and docs/scripts/ is named on a page
   figures    every file of docs/public is referenced by a page (a -dark twin through its light figure)
-  pages      every page is in the sidebar or linked from a page; every sidebar entry is a page
+  redirects  every static page of docs/public (a moved page's old URL) leads to a page that exists
+  pages      every page is in the sidebar (the reading order); every sidebar entry is a page
 
 Accuracy (the pages -> the code):
   names      every gideon_* name on a page is a procedure, module or program, or one of their families written with a
@@ -166,7 +167,7 @@ def check_scripts(text: str, verbose: bool) -> None:
 
 
 def check_figures(text: str, verbose: bool) -> None:
-    files = [p for p in PUBLIC.rglob('*') if p.is_file() and p.name != 'coverage.json']
+    files = [p for p in PUBLIC.rglob('*') if p.is_file() and p.name != 'coverage.json' and p.suffix != '.html']
     missing = []
     for f in files:
         rel = '/' + f.relative_to(PUBLIC).as_posix()
@@ -176,16 +177,26 @@ def check_figures(text: str, verbose: bool) -> None:
     report('figures', len(files), missing, verbose)
 
 
+def check_redirects(verbose: bool) -> None:
+    """Every static page of docs/public (a moved page's old URL) sends the reader to a page that exists."""
+    stubs = sorted(PUBLIC.rglob('*.html'))
+    missing = []
+    for stub in stubs:
+        rel = stub.relative_to(PUBLIC).as_posix()
+        targets = set(re.findall(r'url=/GIDEON(/[^"\s]*)"', stub.read_text(encoding='utf-8')))
+        if len(targets) != 1 or page_of_link(next(iter(targets))) is None:
+            missing.append(f'docs/public/{rel}: redirect to {sorted(targets)} (no such page)')
+        if (DOCS / rel.replace('.html', '.md')).is_file():
+            missing.append(f'docs/public/{rel}: shadows the page {rel.replace(".html", ".md")}')
+    report('redirects', len(stubs), missing, verbose)
+
+
 def check_pages(verbose: bool) -> None:
-    all_pages = [p for p in pages() if not p.name.startswith('_') and '_tables' not in p.parts]
+    """Every page is in the sidebar: the sidebar is the reading order and the chain of the Previous / Next links."""
+    all_pages = [p for p in pages() if not p.name.startswith('_') and '_tables' not in p.parts and p.parent != DOCS]
     sidebar = sidebar_links()
     reached = {page_of_link(link) for link in sidebar} - {None}
-    linked = set()
-    for p in all_pages:
-        for link in re.findall(r'\]\((/[^)\s]*)\)', p.read_text(encoding='utf-8')):
-            linked.add(page_of_link(link))
-    missing = [str(p.relative_to(ROOT)) for p in all_pages if p not in reached | linked and p.name != 'index.md'
-               or (p.name == 'index.md' and p not in reached | linked and p.parent != DOCS)]
+    missing = [f'{p.relative_to(ROOT)} (not in the sidebar)' for p in all_pages if p not in reached]
     missing += [f'sidebar link {link} (no page)' for link in sidebar if page_of_link(link) is None
                 and not link.startswith('/api')]
     report('pages', len(all_pages), missing, verbose)
@@ -288,6 +299,7 @@ def main() -> int:
     check_modes(text, args.verbose)
     check_scripts(text, args.verbose)
     check_figures(text, args.verbose)
+    check_redirects(args.verbose)
     check_pages(args.verbose)
     check_names(text, args.verbose)
     check_adam(text, args.verbose)

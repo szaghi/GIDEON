@@ -7,11 +7,14 @@ hero:
   tagline: Finite-difference and finite-volume stencil operators for HPC, in modern Fortran, on every CPU and GPU
   actions:
     - theme: brand
-      text: Guide
+      text: Start here
       link: /guide/
     - theme: alt
       text: Tutorials
       link: /tutorials/
+    - theme: alt
+      text: Cookbook
+      link: /cookbook/
     - theme: alt
       text: Verification
       link: /verification/
