@@ -1,5 +1,11 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)"  srcset="docs/public/logo-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/public/logo.svg">
+  <img src="docs/public/logo.svg" alt="GIDEON, an ensō touched once by its tangent, the G seal in gold" width="320">
+</picture>
+
 #### *the FD and FV stencil operators of ADAM, one pure kernel each, exact to order N, on every CPU and GPU*
 
 ### **G**enerated **I**nterpolations and **D**erivatives, **E**xact to **O**rder **N**
