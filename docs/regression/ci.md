@@ -47,19 +47,22 @@ need a flag for them to hold, and the test modes set it (`fobos`, `[common-varia
 # ifx's default fp-model (fast=1) reassociates inlined arithmetic: the pair form's exact symmetries and the bitwise
 # equality with ADAM (7 curl values 1 ulp off) need the operations as written
 $FP_INT  = -fp-model=precise
-# nvfortran's -fast vectorises for the host it runs on: on another CPU (the CI runner) it reorders the longer sums and
-# the bitwise equality with ADAM breaks at s = 4, 5. The test modes add -Kieee (strict IEEE); the libraries and the
-# benchmarks keep -fast alone.
-$IEEE_NVF = -Kieee
+# nvfortran's -fast vectorises for the CPU that compiles (-tp=host): the CI runners are a mix of CPUs, and on some the
+# longer sums are reordered and the bitwise equality with ADAM breaks at s = 4, 5 (-Kieee alone fixed one runner, not
+# all: 2026-11-17, 27 values off on a runner the developer's AVX2 CPU never reproduced). The test modes therefore use
+# strict IEEE and a fixed target, haswell (AVX2 + FMA, every x86-64 CI runner has it), so that every machine compiles
+# the same code; the libraries and the benchmarks keep -fast alone, tuned for their host.
+$FP_NVF = -Kieee -tp=haswell
 ```
 
 - **ifx, `-fp-model=precise`**, in every Intel mode, libraries included: GIDEON's results are defined by the order
   of the operations in the generated code. With the default model, ifx reassociates the pair form after inlining, and
   the bitwise contracts break.
-- **nvfortran, `-Kieee`**, in the test modes only: the libraries and the benchmarks keep `-fast`, whose
-  vectorisation depends on the CPU that compiles. On the CI runner, a CPU other than the developer's, the equality
-  with ADAM broke at the widest stencils (the record in `fobos`, above). The tests use strict IEEE so that what they
-  assert does not depend on the machine.
+- **nvfortran, `-Kieee -tp=haswell`**, in the test modes only: the libraries and the benchmarks keep `-fast`, whose
+  vectorisation depends on the CPU that compiles. The CI runners are a mix of CPUs: on some the equality with ADAM
+  broke at the widest stencils, first with `-fast` alone, then, on another runner, with `-Kieee` too (the record in
+  `fobos`, above). The tests use strict IEEE and a fixed target, so that every machine compiles, and the tests assert,
+  the same code.
 - **gfortran** needs no flag: `-O3` (the release profile) keeps the operations as written.
 
 ## What CI does not run

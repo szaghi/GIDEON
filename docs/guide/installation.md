@@ -53,16 +53,16 @@ Every program of `src/tests/` into `exe/` (`exe-r4/`, `exe-r16/` for the other k
 | `tests-gnu` | the default suite (CI matrix: family gnu) | `-std=f2018 -O3 -funroll-loops` |
 | `tests-gnu-debug` | all run-time checks | debug profile: `-O0 -g -fcheck=all -fbacktrace -ffpe-trap=invalid,zero,overflow -Wall -Wextra` |
 | `tests-gnu-coverage` | coverage instrumentation (rule `makecoverage`) | coverage profile: `-O0 -g --coverage` |
-| `tests-nvf` | the suite, nvfortran, CPU (CI matrix: family nvf) | `-O4 -fast -Kieee` |
-| `tests-nvf-debug` | all run-time checks | debug profile: `-O0 -g -C -traceback -Minfo=all`, `-Kieee` |
-| `tests-nvf-oac` | the suite with the device test on the GPU | `-acc -gpu=cc89 -Minfo=accel -Kieee` |
+| `tests-nvf` | the suite, nvfortran, CPU (CI matrix: family nvf) | `-O4 -fast -Kieee -tp=haswell` |
+| `tests-nvf-debug` | all run-time checks | debug profile: `-O0 -g -C -traceback -Minfo=all`, `-Kieee -tp=haswell` |
+| `tests-nvf-oac` | the suite with the device test on the GPU | `-acc -gpu=cc89 -Minfo=accel -Kieee -tp=haswell` |
 | `tests-intel` | the suite, ifx (CI matrix: family intel) | `-O3 -standard-semantics -std18 -fp-model=precise` |
 | `tests-intel-debug` | all run-time checks | debug profile: `-O0 -g -check all -traceback -warn all`, `-fp-model=precise` |
 | `tests-gnu-r4`, `tests-gnu-debug-r4`, `tests-nvf-r4`, `tests-nvf-oac-r4`, `tests-intel-r4` | the same in single precision, into `exe-r4/` (without the ADAM comparison) | `-D_R_P_IS_R4P` |
 | `tests-gnu-r16` | quadruple precision, host only, into `exe-r16/`: the orders of every kernel | `-DPENF_R16P -D_R_P_IS_R16P` |
 
-Why `-Kieee` and `-fp-model=precise`: the tests compare values bitwise, and both compilers otherwise reorder the
-arithmetic ([Single and quadruple precision](/cookbook/precision#the-flags-of-the-bitwise-checks)).
+Why `-Kieee -tp=haswell` and `-fp-model=precise`: the tests compare values bitwise, and both compilers otherwise
+reorder the arithmetic, nvfortran differently on each CPU that compiles ([Single and quadruple precision](/cookbook/precision#the-flags-of-the-bitwise-checks)).
 
 The OpenACC modes compile for compute capability 8.9 (an RTX 40xx) by default; `--varset cc80` (A100) or
 `--varset cc90` (H100) picks another: `fobis build --mode tests-nvf-oac --varset cc90`.
@@ -71,7 +71,7 @@ The OpenACC modes compile for compute capability 8.9 (an RTX 40xx) by default; `
 
 | Mode or rule | Purpose |
 |---|---|
-| `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | `src/bench/gideon_bench_adam.F90` into `exe-bench/`: GIDEON's kernels against ADAM's on the GPU (`-acc -gpu=$GPU_CC`, no `-Kieee`) and on one CPU core ([Performance](/guide/performance)) |
+| `bench-nvf-oac`, `bench-nvf`, `bench-gnu` | `src/bench/gideon_bench_adam.F90` into `exe-bench/`: GIDEON's kernels against ADAM's on the GPU (`-acc -gpu=$GPU_CC`, `-fast` alone) and on one CPU core ([Performance](/guide/performance)) |
 | `examples-gnu` | every program of `docs/examples/src/` into `exe-examples/`, checked against `docs/examples/output/` by `scripts/run_examples.sh` |
 | `examples-gnu-r4` | the same programs in R4P into `exe-examples-r4/`, for the outputs `docs/examples/output/<name>-r4.txt` ([Precision](/cookbook/precision)); `scripts/run_examples.sh` builds it when such an output exists |
 | `fobis rule --ex makecoverage` | clean, build `tests-gnu-coverage`, run the tests |

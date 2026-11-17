@@ -51,7 +51,7 @@ kernels. Then `GOLDEN` in `gideon_test_golden.F90` points to it, for each kind.
 ## Findings
 
 - The gfortran builds that wrote the files reproduce them bitwise, in all three kinds.
-- The nvfortran OpenACC build (its host code, `-Kieee`) differs from the gfortran writer in the last bits of a share
+- The nvfortran OpenACC build (its host code, strict IEEE) differs from the gfortran writer in the last bits of a share
   of the values, within the tolerance: the reason the comparison is a tolerance and the bitwise count is reported.
   The CI matrix runs the test with gfortran, nvfortran and ifx on every push ([Continuous integration](./ci)).
 - The data are exact in binary on purpose, so that the test measures the kernels and not libm: SETH's first golden

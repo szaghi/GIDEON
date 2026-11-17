@@ -80,9 +80,9 @@ and rely on the operations being executed as written. Two compilers reorder them
 - **ifx: `-fp-model=precise`** on every Intel mode, library and tests (`$FP_INT` in the `fobos`). ifx's default model
   (`fast=1`) reassociates inlined arithmetic: the pair form's exact symmetries break, and 7 curl values differ from
   ADAM's by 1 ulp.
-- **nvfortran: `-Kieee`** on the test modes (`$IEEE_NVF`). The release profile's `-fast` vectorises for the CPU it
-  runs on; on another CPU (the CI runner) it reorders the longer sums and the bitwise equality with ADAM breaks at
-  $s = 4, 5$. The nvfortran libraries and benchmarks keep `-fast` alone: a library built that way computes the same rows
+- **nvfortran: `-Kieee -tp=haswell`** on the test modes (`$FP_NVF`). The release profile's `-fast` vectorises for the
+  CPU that compiles; on another CPU (a CI runner) it reorders the longer sums and the bitwise equality with ADAM breaks
+  at $s = 4, 5$. Strict IEEE and a fixed target (AVX2 + FMA) make every machine compile the same code. The nvfortran libraries and benchmarks keep `-fast` alone: a library built that way computes the same rows
   to round-off, not to the bit.
 
 **Reference.** The kind module: [API](/guide/api#kinds); the tests: [Orders of accuracy](/verification/orders),
