@@ -3,7 +3,9 @@
 What each check proves, where it lives, and what it measured on 2026-11-17 (gfortran 16.2, nvfortran 26.9 and ifx
 2026.2, debug and optimised, R8P and R4P; gfortran in R16P, the quadruple-precision verification build; the device test
 on an RTX 4070). The Intel modes compile with `-fp-model=precise`: ifx's default model reassociates inlined arithmetic,
-which costs the bitwise equality with ADAM (7 curl values 1 ulp off) and the exactness of the pair form's symmetries.
+which costs the bitwise equality with ADAM (7 curl values 1 ulp off) and the exactness of the pair form's symmetries. The nvfortran test
+modes add `-Kieee` to `-fast`: `-fast` vectorises for the host CPU, and on a CI runner it reordered the longer sums
+(45 values at s = 4, 5 off ADAM's in the last digits); the libraries and the benchmarks keep `-fast` alone.
 
 ## In the generator (`scripts/gen_gideon.py --check`)
 

@@ -46,6 +46,10 @@ $STD_INT = -standard-semantics -std18
 # ifx's default fp-model (fast=1) reassociates inlined arithmetic: the pair form's exact symmetries and the bitwise
 # equality with ADAM (7 curl values 1 ulp off) need the operations as written
 $FP_INT  = -fp-model=precise
+# nvfortran's -fast vectorises for the host it runs on: on another CPU (the CI runner) it reorders the longer sums and
+# the bitwise equality with ADAM breaks at s = 4, 5. The test modes add -Kieee (strict IEEE); the libraries and the
+# benchmarks keep -fast alone.
+$IEEE_NVF = -Kieee
 # NVIDIA compute capability of the OpenACC modes; override with --varset (e.g. --varset cc90)
 $GPU_CC = cc89
 
@@ -109,15 +113,17 @@ build_profile = coverage
 [tests-nvf]
 help      = Tests, nvfortran, optimised, CPU (fortran-toolchains matrix: family nvf)
 template  = template-tests template-nvf template-release
+cflags    = -c $IEEE_NVF
 
 [tests-nvf-debug]
 help      = Tests, nvfortran, all checks on
 template  = template-tests template-nvf template-debug
+cflags    = -c $IEEE_NVF
 
 [tests-nvf-oac]
 help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-tests template-nvf template-release
-cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $IEEE_NVF
 lflags    = -acc -gpu=$GPU_CC
 
 [tests-intel]
@@ -195,11 +201,12 @@ template  = template-r4-tests template-tests template-gnu template-debug
 [tests-nvf-r4]
 help      = Tests, nvfortran, optimised, CPU, single precision (R_P = R4P)
 template  = template-r4-tests template-tests template-nvf template-release
+cflags    = -c $IEEE_NVF
 
 [tests-nvf-oac-r4]
 help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, single precision (R_P = R4P)
 template  = template-r4-tests template-tests template-nvf template-release
-cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $IEEE_NVF
 lflags    = -acc -gpu=$GPU_CC
 
 [tests-intel-r4]
