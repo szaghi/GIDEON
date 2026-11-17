@@ -31,3 +31,18 @@ library = true
 name = "gideon_test_kinds"
 source-dir = "src/tests"
 main = "gideon_test_kinds.F90"
+
+[[test]]
+name = "gideon_test_tables"
+source-dir = "src/tests"
+main = "gideon_test_tables.F90"
+
+[[test]]
+name = "gideon_test_order"
+source-dir = "src/tests"
+main = "gideon_test_order.F90"
+
+[[test]]
+name = "gideon_test_properties"
+source-dir = "src/tests"
+main = "gideon_test_properties.F90"

@@ -28,6 +28,7 @@ import argparse
 import re
 import sys
 from dataclasses import dataclass, field
+from decimal import Decimal, getcontext
 from fractions import Fraction as Fr
 from math import factorial
 from pathlib import Path
@@ -182,6 +183,7 @@ class Kernel:
     parity: int = 0  # centred: +1 symmetric pairs, -1 antisymmetric pairs
     row: dict[int, Fr] = field(default_factory=dict)  # stored row (centred: pair half-row incl. c0; upwind: ur row)
     sumabs: Fr = Fr(0)  # sum of |weights| of the full operator (round-off scale of the tests)
+    full: dict[int, Fr] = field(default_factory=dict)  # every weight of the operator by offset (orders check)
 
 
 def check_pairs(row: Row, centre: str) -> tuple[int, dict[int, Fr]]:
@@ -216,7 +218,7 @@ def build() -> list[Kernel]:
         r = derive('fd', 'face', 'point', 0, list(range(1 - s, s + 1)))
         par, half = check_pairs(r, 'face')
         add(Kernel(f'gideon_fd_face_c{r.order}', 'fd_face_c', 'fd', 'face', 'c', 0, s, r.order, 1 - s, s, par, half,
-                   sum(abs(v) for v in r.weights.values())))
+                   sum(abs(v) for v in r.weights.values()), dict(r.weights)))
     for n in range(1, NDER_MAX + 1):
         for s in S_CENTRED:
             if 2 * s + 1 <= n:
@@ -226,7 +228,7 @@ def build() -> list[Kernel]:
                 continue
             par, half = check_pairs(r, 'node')
             add(Kernel(f'gideon_fd_d{n}_c{r.order}', 'fd_node_c', 'fd', f'd{n}', 'c', n, s, r.order, -s, s, par, half,
-                       sum(abs(v) for v in r.weights.values())))
+                       sum(abs(v) for v in r.weights.values()), dict(r.weights)))
 
     # fv centred: face value, face derivatives, cell-average derivatives (flux difference of the face rows)
     face_rows: dict[tuple[int, int], Row] = {}
@@ -242,7 +244,7 @@ def build() -> list[Kernel]:
             op = 'face' if n == 0 else f'face_d{n}'
             fam = 'fv_face_c' if n == 0 else 'fv_facedn_c'
             add(Kernel(f'gideon_fv_{op}_c{r.order}', fam, 'fv', op, 'c', n, s, r.order, 1 - s, s, par, half,
-                       sum(abs(v) for v in r.weights.values())))
+                       sum(abs(v) for v in r.weights.values()), dict(r.weights)))
     for n in range(1, NDER_MAX + 1):
         for s in S_CENTRED:
             if (n - 1, s) not in face_rows:
@@ -257,7 +259,7 @@ def build() -> list[Kernel]:
                 continue
             par, half = check_pairs(g, 'face')
             add(Kernel(f'gideon_fv_d{n}_c{order}', 'fv_cell_c', 'fv', f'd{n}', 'c', n, s, order, -s, s, par, half,
-                       sum(abs(v) for v in full.values())))
+                       sum(abs(v) for v in full.values()), full))
 
     # fv upwind: right-side stencils derived, left-side ones derived independently and proven to be their mirrors
     up_rows: dict[tuple[int, int], Row] = {}
@@ -277,8 +279,9 @@ def build() -> list[Kernel]:
             op = 'face' if n == 0 else f'face_d{n}'
             fam = 'fv_face_u' if n == 0 else 'fv_facedn_u'
             for bias, lo, hi in (('ur', 1, s), ('ul', 1 - s, 0)):
+                fw = dict(r.weights) if bias == 'ur' else {1 - o: sign * w for o, w in r.weights.items()}
                 add(Kernel(f'gideon_fv_{op}_{bias}{r.order}', fam, 'fv', op, bias, n, s, r.order, lo, hi, 0,
-                           dict(r.weights), sum(abs(v) for v in r.weights.values())))
+                           dict(r.weights), sum(abs(v) for v in r.weights.values()), fw))
     for n in range(1, NDER_MAX + 1):
         for s in S_UPWIND:
             if (n - 1, s) not in up_rows:
@@ -295,19 +298,20 @@ def build() -> list[Kernel]:
             if order < 1:
                 continue
             for bias, lo, hi in (('ur', 0, s), ('ul', -s, 0)):
+                fw = full if bias == 'ur' else mirror
                 add(Kernel(f'gideon_fv_d{n}_{bias}{order}', 'fv_cell_u', 'fv', f'd{n}', bias, n, s, order, lo, hi, 0,
-                           dict(g.weights), sum(abs(v) for v in full.values())))
+                           dict(g.weights), sum(abs(v) for v in full.values()), fw))
 
     # deconvolution: cell average -> point value at the centre, point values -> cell average
     for s in S_CENTRED:
         r = derive('fv', 'cell', 'point', 0, list(range(-s, s + 1)))
         par, half = check_pairs(r, 'node')
         add(Kernel(f'gideon_fv_point_c{r.order}', 'deconv', 'fv', 'point', 'c', 0, s, r.order, -s, s, par, half,
-                   sum(abs(v) for v in r.weights.values())))
+                   sum(abs(v) for v in r.weights.values()), dict(r.weights)))
         r = derive('fd', 'cell', 'cellavg', 0, list(range(-s, s + 1)))
         par, half = check_pairs(r, 'node')
         add(Kernel(f'gideon_fd_average_c{r.order}', 'deconv', 'fd', 'average', 'c', 0, s, r.order, -s, s, par, half,
-                   sum(abs(v) for v in r.weights.values())))
+                   sum(abs(v) for v in r.weights.values()), dict(r.weights)))
     return ks
 
 
@@ -420,6 +424,397 @@ def cross_check_adam(ks: list[Kernel]) -> list[str]:
     return found
 
 
+
+# ---------------------------------------------------------------------------------------------------------------------
+# orders on a generic smooth function, in 100-digit decimal arithmetic (G3 of the rows, free of round-off)
+# ---------------------------------------------------------------------------------------------------------------------
+def _sin_cos(x: Decimal) -> tuple[Decimal, Decimal]:
+    """sin and cos of a small argument by their Taylor series, at the context precision."""
+    s, c, term, k = Decimal(0), Decimal(0), Decimal(1), 0
+    eps = Decimal(10) ** (-getcontext().prec - 5)
+    while True:
+        if k % 4 == 0:
+            c += term
+        elif k % 4 == 1:
+            s += term
+        elif k % 4 == 2:
+            c -= term
+        else:
+            s -= term
+        k += 1
+        term = term * x / k
+        if abs(term) < eps and k > 4:
+            return s, c
+
+
+GA, GP, GB, GC, GQ, GX0 = (Decimal('1.3'), Decimal('0.4'), Decimal('0.5'), Decimal('0.7'), Decimal('-0.2'),
+                          Decimal('0.37'))
+
+
+def g_deriv(k: int, x: Decimal) -> Decimal:
+    """k-th derivative (k >= -1, -1 the primitive) of g = sin(1.3 x + 0.4) + 0.5 cos(0.7 x - 0.2)."""
+    s1, c1 = _sin_cos(GA * x + GP)
+    s2, c2 = _sin_cos(GC * x + GQ)
+    ds = [s1, c1, -s1, -c1][k % 4]
+    dc = [c2, -s2, -c2, s2][k % 4]
+    return GA**k * ds + GB * GC**k * dc
+
+
+def kernel_error(k: Kernel, h: Decimal) -> Decimal:
+    """|kernel - target| on g at step h around GX0, every weight exact."""
+    geom, tgt = GEOM.get(k.family, ('fvcell', 'point') if k.data == 'fv' else ('fdnode', 'cellavg'))
+    half = Decimal('0.5')
+    acc = Decimal(0)
+    for o, w in k.full.items():
+        if geom == 'fdnode':
+            d = g_deriv(0, GX0 + o * h)
+        elif geom == 'fdface':
+            d = g_deriv(0, GX0 + (o - half) * h)
+        elif geom == 'fvface':
+            d = (g_deriv(-1, GX0 + o * h) - g_deriv(-1, GX0 + (o - 1) * h)) / h
+        else:
+            d = (g_deriv(-1, GX0 + (o + half) * h) - g_deriv(-1, GX0 + (o - half) * h)) / h
+        acc += Decimal(w.numerator) / Decimal(w.denominator) * d
+    acc /= h**k.n
+    if tgt == 'point':
+        t = g_deriv(k.n, GX0)
+    else:
+        t = (g_deriv(k.n - 1, GX0 + half * h) - g_deriv(k.n - 1, GX0 - half * h)) / h
+    return abs(acc - t)
+
+
+def check_orders(ks: list[Kernel]) -> list[str]:
+    """Observed order of every row between h = 2^-11 and 2^-12; frozen bound: >= design - 0.25."""
+    getcontext().prec = 100
+    out = []
+    worst = None
+    for k in ks:
+        e1, e2 = kernel_error(k, Decimal(2) ** -11), kernel_error(k, Decimal(2) ** -12)
+        p = float((e1 / e2).ln() / Decimal(2).ln())
+        if worst is None or p - k.order < worst[0]:
+            worst = (p - k.order, k.name, p)
+        if p < k.order - 0.25:
+            out.append(f'ORDER {k.name}: observed {p:.3f}, design {k.order}')
+    out.append(f'orders: {len(ks)} rows, smallest margin {worst[0]:+.3f} ({worst[1]}, observed {worst[2]:.3f})')
+    return out
+
+# ---------------------------------------------------------------------------------------------------------------------
+# emission: Fortran sources (generated, never hand-edited)
+# ---------------------------------------------------------------------------------------------------------------------
+HEADER = '!< Generated by scripts/gen_gideon.py: do not edit; change the generator and run it again.\n'
+GEOM = {  # family -> (geometry of the data, target kind) for the test registry
+    'fd_face_c': ('fdface', 'point'),
+    'fd_node_c': ('fdnode', 'point'),
+    'fv_face_c': ('fvface', 'point'),
+    'fv_facedn_c': ('fvface', 'point'),
+    'fv_face_u': ('fvface', 'point'),
+    'fv_facedn_u': ('fvface', 'point'),
+    'fv_cell_c': ('fvcell', 'cellavg'),
+    'fv_cell_u': ('fvcell', 'cellavg'),
+}
+GEOM_CODE = {'fdnode': 1, 'fdface': 2, 'fvface': 3, 'fvcell': 4}
+TARGET_CODE = {'point': 1, 'cellavg': 2}
+
+
+def lit(v: Fr) -> str:
+    """Fortran literal of an exact rational, `p._R_P/q._R_P` (correctly rounded by the compiler's constant folding)."""
+    if v.denominator == 1:
+        return f'{v.numerator}._R_P'
+    return f'{v.numerator}._R_P/{v.denominator}._R_P'
+
+
+def row_name(k: Kernel) -> str:
+    """Name of the stored row a kernel reads."""
+    if k.family == 'fd_face_c':
+        return f'FD_FACE_S{k.s}'
+    if k.family == 'fd_node_c':
+        return f'FD_D{k.n}_S{k.s}'
+    if k.family in ('fv_face_c', 'fv_facedn_c'):
+        return f'FV_FACE_S{k.s}' if k.n == 0 else f'FV_FACE_D{k.n}_S{k.s}'
+    if k.family == 'fv_cell_c':
+        return f'FV_FACE_S{k.s}' if k.n == 1 else f'FV_FACE_D{k.n - 1}_S{k.s}'
+    if k.family in ('fv_face_u', 'fv_facedn_u'):
+        return f'FV_UFACE_S{k.s}' if k.n == 0 else f'FV_UFACE_D{k.n}_S{k.s}'
+    if k.family == 'fv_cell_u':
+        return f'FV_UFACE_S{k.s}' if k.n == 1 else f'FV_UFACE_D{k.n - 1}_S{k.s}'
+    if k.family == 'deconv':
+        return f'FV_POINT_S{k.s}' if k.data == 'fv' else f'FD_AVERAGE_S{k.s}'
+    raise ValueError(k.family)
+
+
+def array_constructor(vals: list[Fr], indent: int) -> str:
+    """`[a, b, ...]` wrapped at 120 columns with continuation lines."""
+    items = [lit(v) for v in vals]
+    lines, cur = [], '['
+    for i, it in enumerate(items):
+        piece = it + (', ' if i < len(items) - 1 else ']')
+        if len(cur) + len(piece) + indent > 116:
+            lines.append(cur.rstrip() + ' &')
+            cur = ' ' * 4 + piece
+        else:
+            cur += piece
+    lines.append(cur)
+    return ('\n' + ' ' * indent).join(lines)
+
+
+def emit_tables(ks: list[Kernel]) -> str:
+    """The rows, one named constant each, stored once (left-upwind and cell kernels read the rows they share)."""
+    rows: dict[str, tuple[int, int, list[Fr], str]] = {}
+    for k in ks:
+        if k.family in ('fv_cell_c', 'fv_cell_u', ) or k.bias == 'ul':
+            continue
+        name = row_name(k)
+        lo = min(k.row)
+        vals = [k.row[i] for i in range(lo, max(k.row) + 1)]
+        what = f'{k.name} ({"pairs" if k.bias == "c" else "cells 1..S, the face nearest first"})'
+        rows[name] = (lo, max(k.row), vals, what)
+    out = [HEADER + '!< GIDEON, the stencil rows: exact rationals, one named constant per row, folded by the compiler.',
+           'module gideon_tables',
+           '!< GIDEON, the stencil rows: exact rationals, one named constant per row, folded by the compiler.',
+           '!<',
+           '!< Centred rows hold half the stencil in pair form (index m multiplies the pair of offsets m and -m',
+           '!< for a node or cell, m and 1-m for a face; index 0 the centre); upwind rows hold the right-side',
+           '!< stencil, cells 1..S, the face nearest first; the left-side kernels read the same rows mirrored.',
+           '!< See docs/guide/conventions.md.',
+           'use penf, only : R_P', 'implicit none', 'public']
+    for name, (lo, hi, vals, what) in rows.items():
+        decl = f'real(R_P), parameter :: {name}({lo}:{hi}) = '
+        out.append(f'!< {what}')
+        out.append(decl + array_constructor(vals, len(decl)))
+    out.append('endmodule gideon_tables')
+    return '\n'.join(out) + '\n'
+
+
+def scale(n: int, style: str) -> str:
+    """The division by the step: ADAM's FD form (repeated divisions) or FV form (one product), D4."""
+    if style == 'fd':
+        return '/ds' * n
+    return '/ds' if n == 1 else '/(' + '*'.join(['ds'] * n) + ')'
+
+
+def ordinal(n: int) -> str:
+    return {0: 'value', 1: 'first derivative', 2: 'second derivative', 3: 'third derivative',
+            4: 'fourth derivative', 5: 'fifth derivative', 6: 'sixth derivative'}[n]
+
+
+def emit_kernel(k: Kernel) -> str:
+    """One kernel: explicit-shape window, the row as a compile-time constant, ADAM's arithmetic shape."""
+    rn = row_name(k)
+    s = k.s
+    has_ds = k.n >= 1
+    res = {'face': 'f', 'point': 'v', 'average': 'v'}.get(k.op, 'd')
+    args = f'(q, ds, {res})' if has_ds else f'(q, {res})'
+    data_doc = 'point values' if k.data == 'fd' else 'cell averages'
+    where = {'fd_face_c': 'at the face between nodes 0 and 1', 'fd_node_c': 'at node 0',
+             'fv_face_c': 'at the face between cells 0 and 1', 'fv_facedn_c': 'at the face between cells 0 and 1',
+             'fv_face_u': 'at the face between cells 0 and 1', 'fv_facedn_u': 'at the face between cells 0 and 1',
+             'fv_cell_c': 'averaged over cell 0', 'fv_cell_u': 'averaged over cell 0'}.get(k.family, '')
+    bias_doc = {'c': 'centred', 'ur': 'upwind, right-side stencil', 'ul': 'upwind, left-side stencil'}[k.bias]
+    if k.family == 'deconv':
+        title = ('Point value at the centre of cell 0 from cell averages' if k.data == 'fv'
+                 else 'Average over cell 0 from point values')
+    else:
+        title = f'{ordinal(k.n).capitalize()} {where}, {bias_doc}'
+    L = [f'   pure subroutine {k.name}{args}',
+         f'   !< {title}, order {k.order}, from {data_doc} q({k.lo}:{k.hi}).',
+         f'   real(R_P),    intent(in)  :: q({k.lo}:{k.hi}) !< Data by offset (docs/guide/conventions.md).']
+    if has_ds:
+        L.append('   real(R_P),    intent(in)  :: ds       !< Grid step.')
+    L.append(f'   real(R_P),    intent(out) :: {res}        !< Result.')
+    fam = k.family
+    if fam in ('fv_cell_c', 'fv_cell_u'):
+        L.append('   real(R_P)                 :: gl, gr   !< The face rows at the faces -1/2 and +1/2.')
+    L.append('   integer(I4P)              :: m        !< Counter.')
+    L += ['   !$acc routine seq', '   !$omp declare target']
+    pm = '+' if k.parity == 1 else '-'
+    if fam in ('fd_face_c', 'fv_face_c', 'fv_facedn_c'):
+        L += [f'   {res} = 0._R_P', f'   do m=1, {s}', f'      {res} = {res} + {rn}(m)*(q(m) {pm} q(1-m))', '   enddo']
+        if has_ds:
+            L.append(f'   {res} = {res}{scale(k.n, "fv")}')
+    elif fam == 'fd_node_c' or fam == 'deconv':
+        if k.parity == 1:
+            L.append(f'   {res} = {rn}(0)*q(0)')
+        else:
+            L.append(f'   {res} = 0._R_P')
+        L += [f'   do m=1, {s}', f'      {res} = {res} + {rn}(m)*(q(m) {pm} q(-m))', '   enddo']
+        if has_ds:
+            L.append(f'   {res} = {res}{scale(k.n, "fd")}')
+    elif fam == 'fv_cell_c':
+        L += ['   gl = 0._R_P', f'   do m=1, {s}', f'      gl = gl + {rn}(m)*(q(m-1) {pm} q(-m))', '   enddo',
+              '   gr = 0._R_P', f'   do m=1, {s}', f'      gr = gr + {rn}(m)*(q(m) {pm} q(1-m))', '   enddo',
+              f'   d = (gr-gl){scale(k.n, "fv")}']
+    elif fam in ('fv_face_u', 'fv_facedn_u'):
+        acc = 'q(m)' if k.bias == 'ur' else 'q(1-m)'
+        L += [f'   {res} = 0._R_P', f'   do m=1, {s}', f'      {res} = {res} + {rn}(m)*{acc}', '   enddo']
+        if has_ds:
+            neg = '-' if (k.bias == 'ul' and k.n % 2) else ''
+            L.append(f'   {res} = {neg}{res}{scale(k.n, "fv")}')
+    elif fam == 'fv_cell_u':
+        if k.bias == 'ur':
+            L += ['   gl = 0._R_P', f'   do m=1, {s}', f'      gl = gl + {rn}(m)*q(m-1)', '   enddo',
+                  '   gr = 0._R_P', f'   do m=1, {s}', f'      gr = gr + {rn}(m)*q(m)', '   enddo',
+                  f'   d = (gr-gl){scale(k.n, "fv")}']
+        else:  # mirrored: the face +1/2 reads cells 0, -1, ...; the face -1/2 cells -1, -2, ...; rows times (-1)^(n-1)
+            first, second = ('gr', 'gl') if (k.n - 1) % 2 == 0 else ('gl', 'gr')
+            L += ['   gl = 0._R_P', f'   do m=1, {s}', f'      gl = gl + {rn}(m)*q(-m)', '   enddo',
+                  '   gr = 0._R_P', f'   do m=1, {s}', f'      gr = gr + {rn}(m)*q(1-m)', '   enddo',
+                  f'   d = ({first}-{second}){scale(k.n, "fv")}']
+    else:
+        raise ValueError(fam)
+    L.append(f'   endsubroutine {k.name}')
+    return '\n'.join(L)
+
+
+MODULES = {  # module -> (families, title)
+    'gideon_fd_centred': (('fd_face_c', 'fd_node_c'), 'finite differences on point values, centred'),
+    'gideon_fv_centred': (('fv_face_c', 'fv_facedn_c', 'fv_cell_c'), 'finite volumes on cell averages, centred'),
+    'gideon_fv_upwind': (('fv_face_u', 'fv_facedn_u', 'fv_cell_u'), 'finite volumes on cell averages, upwind'),
+    'gideon_deconvolution': (('deconv',), 'cell averages and point values, one from the other'),
+}
+
+
+def emit_module(mod: str, ks: list[Kernel]) -> str:
+    fams, title = MODULES[mod]
+    mine = [k for k in ks if k.family in fams]
+    out = [HEADER + f'!< GIDEON, {title}.', f'module {mod}', f'!< GIDEON, {title}.', '!<',
+           '!< One pure, device-callable kernel per operator and order: the window an explicit-shape dummy by offset,',
+           '!< the row a compile-time constant of gideon_tables, ADAM\'s arithmetic shape (pair form, division by the',
+           '!< step inside). Conventions and names: docs/guide/conventions.md.',
+           'use penf, only : I4P, R_P', 'use gideon_tables', 'implicit none', 'private']
+    out += [f'public :: {k.name}' for k in mine]
+    out.append('contains')
+    out += [emit_kernel(k) + '\n' for k in mine]
+    out.append(f'endmodule {mod}')
+    return '\n'.join(out) + '\n'
+
+
+def leading_error(k: Kernel) -> Fr:
+    """Exact error of the operator on x^(K+1) at h = 1 (K its exact degree): non-zero by the definition of K."""
+    geom, tgt = GEOM.get(k.family, ('fvcell', 'point') if k.data == 'fv' else ('fdnode', 'cellavg'))
+    data, place = {'fdnode': ('fd', 'node'), 'fdface': ('fd', 'face'), 'fvface': ('fv', 'face'),
+                   'fvcell': ('fv', 'cell')}[geom]
+    j = k.order + k.n
+    e = sum(w * sampler(data, place, o)(j) for o, w in k.full.items()) - target(tgt, k.n)(j)
+    if e == 0:
+        raise AssertionError(f'{k.name}: exact beyond its degree')
+    return e
+
+
+def emit_registry(ks: list[Kernel]) -> str:
+    """Test registry: metadata of every kernel and one routine that applies kernel `id` to a wide window."""
+    nk = len(ks)
+    meta = []
+    for i, k in enumerate(ks, 1):
+        geom, tgt = GEOM.get(k.family, ('fvcell', 'point') if k.data == 'fv' else ('fdnode', 'cellavg'))
+        flux = 1 if k.family in ('fv_cell_c', 'fv_cell_u') or (k.family == 'fd_node_c' and k.parity == -1) else 0
+        meta.append((i, k, GEOM_CODE[geom], TARGET_CODE[tgt], flux))
+    title = '!< GIDEON tests, the registry of the kernels: their metadata and one routine that applies any of them.'
+    out = [HEADER + title, 'module gideon_test_registry', title,
+           '!<',
+           '!< geom: 1 point values at x = o (node 0), 2 point values at x = o - 1/2 (face at 0), 3 cell o on [o-1, o]',
+           '!< (face at 0), 4 cell o on [o-1/2, o+1/2] (cell 0). target: 1 the n-th derivative at x = 0, 2 its average',
+           '!< over cell 0. zero_const: the kernel returns exactly 0 on constant data (pair or flux-difference form).',
+           'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
+           'public :: NK, WMAX, kname, kdata, kbias, kgeom, ktarget, kn, korder, klo, khi, kdegree, ksumabs',
+           'public :: kzero_const, kerror',
+           'public :: kmirror, apply',
+           f'integer(I4P), parameter :: NK = {nk} !< Number of kernels.',
+           'integer(I4P), parameter :: WMAX = 16 !< Half-width of the windows the tests pass.']
+
+    def arr(name: str, typ: str, vals: list[str], ln: str = '') -> None:
+        decl = f'{typ}, parameter :: {name}(NK) = '
+        lines, cur = [], '['
+        for j, v in enumerate(vals):
+            piece = v + (', ' if j < len(vals) - 1 else ']')
+            if len(cur) + len(piece) + len(decl) > 112:
+                lines.append(cur.rstrip() + ' &')
+                cur = '   ' + piece
+            else:
+                cur += piece
+        lines.append(cur)
+        out.append(decl + ('\n' + ' ' * len(decl)).join(lines) + ln)
+
+    arr('kname', 'character(len=24)', [f"'{k.name.removeprefix('gideon_'):24s}'" for _, k, *_ in meta])
+    arr('kdata', 'character(len=2)', [f"'{k.data}'" for _, k, *_ in meta])
+    arr('kbias', 'character(len=2)', [f"'{k.bias:2s}'" for _, k, *_ in meta])
+    arr('kgeom', 'integer(I4P)', [str(g) for _, _, g, _, _ in meta])
+    arr('ktarget', 'integer(I4P)', [str(t) for _, _, _, t, _ in meta])
+    arr('kn', 'integer(I4P)', [str(k.n) for _, k, *_ in meta])
+    arr('korder', 'integer(I4P)', [str(k.order) for _, k, *_ in meta])
+    arr('klo', 'integer(I4P)', [str(k.lo) for _, k, *_ in meta])
+    arr('khi', 'integer(I4P)', [str(k.hi) for _, k, *_ in meta])
+    arr('kdegree', 'integer(I4P)', [str(k.order + k.n - 1) for _, k, *_ in meta])
+    arr('ksumabs', 'real(R_P)', [f'{float(k.sumabs):.17e}'.replace('e', '_R_P*1e') + '_R_P' for _, k, *_ in meta])
+    arr('kerror', 'real(R_P)', [f'{float(leading_error(k)):.17e}'.replace('e', '_R_P*1e') + '_R_P'
+                                 for _, k, *_ in meta])
+    arr('kzero_const', 'logical', ['.true.' if z else '.false.' for *_, z in meta])
+    # mirror partner of each ul kernel (0 elsewhere)
+    idx = {k.name: i for i, k, *_ in meta}
+    arr('kmirror', 'integer(I4P)', [str(idx.get(k.name.replace('_ul', '_ur'), 0)) if k.bias == 'ul' else '0'
+                                    for _, k, *_ in meta])
+    out += ['contains',
+            '   subroutine apply(id, q, ds, r)',
+            '   !< Apply kernel `id` to its window of q (offsets klo(id)..khi(id)).',
+            '   integer(I4P), intent(in)  :: id         !< Kernel.',
+            '   real(R_P),    intent(in)  :: q(-WMAX:WMAX) !< Data by offset.',
+            '   real(R_P),    intent(in)  :: ds         !< Grid step (ignored by the kernels without one).',
+            '   real(R_P),    intent(out) :: r          !< Result.',
+            '   select case(id)']
+    for i, k, *_ in meta:
+        call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
+        out.append(f'   case({i}) ; {call}')
+    out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply',
+            'endmodule gideon_test_registry']
+    return '\n'.join(out) + '\n'
+
+
+def parse_emitted_tables(text: str) -> dict[str, list[Fr]]:
+    """Read the emitted rows back (G1: the text written is the row derived)."""
+    out: dict[str, list[Fr]] = {}
+    stmts, buf = [], ''
+    for line in text.splitlines():
+        code = line.split('!')[0].rstrip()
+        if buf:
+            buf += ' ' + code.strip()
+        elif 'parameter ::' in code:
+            buf = code
+        else:
+            continue
+        if buf.endswith('&'):
+            buf = buf[:-1]
+            continue
+        stmts.append(buf)
+        buf = ''
+    for st in stmts:
+        m = re.search(r'::\s*(\w+)\(\s*-?\d+:\d+\)\s*=\s*\[(.*)\]', st)
+        vals = []
+        for item in m.group(2).split(','):
+            num = re.fullmatch(r'\s*(-?\d+)\._R_P(?:/(\d+)\._R_P)?\s*', item)
+            vals.append(Fr(int(num.group(1)), int(num.group(2) or 1)))
+        out[m.group(1)] = vals
+    return out
+
+
+def write_sources(ks: list[Kernel]) -> list[str]:
+    files = {ROOT / 'src/lib/gideon_tables.F90': emit_tables(ks)}
+    for mod in MODULES:
+        files[ROOT / f'src/lib/{mod}.F90'] = emit_module(mod, ks)
+    files[ROOT / 'src/tests/gideon_test_registry.F90'] = emit_registry(ks)
+    back = parse_emitted_tables(files[ROOT / 'src/lib/gideon_tables.F90'])
+    for k in ks:
+        if k.family in ('fv_cell_c', 'fv_cell_u') or k.bias == 'ul':
+            continue
+        lo = min(k.row)
+        if back[row_name(k)] != [k.row[i] for i in range(lo, max(k.row) + 1)]:
+            raise AssertionError(f'emitted row {row_name(k)} is not the derived one')
+    written = []
+    for path, text in files.items():
+        if not path.exists() or path.read_text() != text:
+            path.write_text(text)
+            written.append(str(path.relative_to(ROOT)))
+    return written
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------------------------------------------------
@@ -429,15 +824,20 @@ def main() -> int:
     ap.add_argument('--list', action='store_true', help='list the kernels')
     args = ap.parse_args()
     ks = build()
-    findings = cross_check_adam(ks)
+    findings = cross_check_adam(ks) + check_orders(ks)
     if args.list:
         for k in ks:
             print(f'{k.name:28s} {k.family:12s} n={k.n} s={k.s} order={k.order} window={k.lo}:{k.hi}')
     for f in findings:
         print(f)
     print(f'{len(ks)} kernels derived')
-    bad = [f for f in findings if f.startswith(('MISMATCH', 'NOT GENERATED'))]
-    return 1 if bad else 0
+    bad = [f for f in findings if f.startswith(('MISMATCH', 'NOT GENERATED', 'ORDER'))]
+    if bad:
+        return 1
+    if not args.check:
+        for w in write_sources(ks):
+            print(f'written {w}')
+    return 0
 
 
 if __name__ == '__main__':

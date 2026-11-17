@@ -17,7 +17,7 @@ public :: R_P
 #if defined _R_P_IS_R4P
 integer, parameter :: KIND_CHECK = 1/merge(1, 0, R_P == R4P) !< Stops the build if PENF's R_P is not R4P.
 #elif defined _R_P_IS_R16P
-#error "GIDEON: R16P is not supported (no device code, no caller)"
+#error "GIDEON: R16P is not supported (no device code; PENF cannot build R_P = R16P either)"
 #else
 integer, parameter :: KIND_CHECK = 1/merge(1, 0, R_P == R8P) !< Stops the build if PENF's R_P is not R8P.
 #endif
