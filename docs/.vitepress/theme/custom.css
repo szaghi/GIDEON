@@ -132,9 +132,9 @@
 }
 
 /* ---------- Figures (not identity tokens) ----------
-   The verification figures are drawn on the washi ground (docs/scripts/theme_figures.py); on silver ink they are shown
+   The verification figures are drawn on the washi ground (docs/scripts/theme_figures.py); on the dark ground they are shown
    as washi cards, the way a printed plate sits on a dark table, rather than as white rectangles. A figure with a
-   silver-ink twin (<name>-dark.png, docs/scripts/figure_theme.py) shows the twin instead, swapped in by index.ts
+   dark twin (<name>-dark.png, docs/scripts/figure_theme.py) shows the twin instead, swapped in by index.ts
    (class gideon-dark-twin): drawn on the page ground, it needs no card. */
 .dark .vp-doc img[src$=".png"] {
   background: #f3ede1;
@@ -208,7 +208,7 @@
   padding: 6px;
 }
 .dark .vp-doc .gideon-gallery img.gideon-dark-twin {
-  background: #0e1116;   /* the silver-ink twin's ground (figure_theme.py) */
+  background: #11100c;   /* the dark twin's ground, smoked bronze (figure_theme.py) */
   padding: 6px;
 }
 .vp-doc .gideon-gallery strong { padding: 8px 12px 0; font-size: 14px; }

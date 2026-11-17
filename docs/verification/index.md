@@ -123,9 +123,10 @@ the advection), keeps every output, and then draws the pages from them with the 
 | `make_animations.py` | the frames of `gideon_vv_advection` | `docs/public/verification/casts`: WebM, MP4 and a poster per theme (needs ffmpeg) |
 | `make_cookbook_tables.py` | `src/lib/*.F90` only (`--check`: exit 1 when a table is stale) | the tables of the cookbook and of the [API](/guide/api) |
 
-The figures share two modules: `figure_theme.py`, the light (washi) and dark (silver ink) styles, a verbatim copy of
-SETH's and ADAM's, which draws every figure a second time as `<name>-dark.png` for the dark theme; and
-`gideon_palette.py`, the colours of the data. The Python needs numpy and matplotlib (`GIDEON_DOCS_PYTHON`, else
+The figures share two modules: `figure_theme.py`, the light (washi) and dark (smoked bronze) styles, SETH's and
+ADAM's copy with GIDEON's dark tokens ([its identity](https://github.com/szaghi/GIDEON/blob/main/docs/brand/BRAND.md)),
+which draws every figure a second time as `<name>-dark.png` for the dark theme; and `gideon_palette.py`, the grounds
+and the colours of the data. The Python needs numpy and matplotlib (`GIDEON_DOCS_PYTHON`, else
 `exe/.docs-venv/bin/python`, else `python3`).
 
 What the pages say about the code is checked too: `scripts/check_docs.py` fails when a public entity, a module, a test

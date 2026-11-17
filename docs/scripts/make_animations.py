@@ -2,7 +2,7 @@
 """Render the animations of GIDEON's verification documentation from the frames of the verification programs.
 
 Modelled on SETH's docs/scripts/make_doc_animations.py: each animation is drawn twice, on the two grounds of the docs
-identity, washi (light) and silver ink (dark), with no title in the frame, a small time label under the panel, and no
+identity, washi (light) and smoked bronze (dark), with no title in the frame, a small time label under the panel, and no
 margin of another colour. Per animation and theme it writes, into --out:
 
     <name>-<theme>.webm   VP9, constant quality (crf 36), 720 px wide
@@ -57,7 +57,7 @@ class Theme:
 
 THEMES = (
     Theme('light', P.WASHI, P.WASHI_ALT, P.INK_LIGHT, P.MESH_LIGHT, P.INK_LIGHT, P.RIGHT, P.CENTRED, P.UPWIND),
-    Theme('dark', P.SILVER, P.SILVER_ALT, P.INK_DARK, P.MESH_DARK, P.INK_DARK, P.RIGHT_D, P.CENTRED_D, P.UPWIND_D),
+    Theme('dark', P.BRONZE, P.BRONZE_ALT, P.INK_DARK, P.MESH_DARK, P.INK_DARK, P.RIGHT_D, P.CENTRED_D, P.UPWIND_D),
 )
 # kernel, label, the theme's colour attribute (the same roles as the static figure, make_figures.fig_advection)
 ADVECTION = (('fv_d1_c2', 'centred c2 (fv_d1_c2)', 'centred2'), ('fv_d1_c4', 'centred c4 (fv_d1_c4)', 'centred4'),

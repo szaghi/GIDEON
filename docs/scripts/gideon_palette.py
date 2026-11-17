@@ -1,9 +1,12 @@
-"""The colours of GIDEON's documentation figures and animations: the Sumi family identity applied to data.
+"""The colours of GIDEON's documentation figures and animations: the identity's grounds and inks applied to data.
 
-Modelled on SETH's docs/scripts/seth_palette.py. GIDEON wears SETH's Neon Moegi ink until it has its own identity
-(docs/.vitepress/theme/custom.css), so the grounds, the inks and the four categorical data colours are SETH's, which
-were validated there with the dataviz skill's validate_palette.js (lightness band, chroma floor, colour-blind and
-normal-vision separation of adjacent pairs, contrast against washi #f3ede1 and silver ink #0e1116). The colours live
+Modelled on SETH's docs/scripts/seth_palette.py. The grounds and the inks are GIDEON's own (Ensō to sessen, Kogane;
+docs/brand/tokens.json): washi light, smoked bronze dark. The four categorical data colours and the ramps are SETH's,
+which GIDEON wore until it had its own identity: they were validated there with the dataviz skill's
+validate_palette.js (lightness band, chroma floor, colour-blind and normal-vision separation of adjacent pairs,
+contrast against washi #f3ede1 and silver ink #0e1116), and they are kept because a data colour is chosen for the data,
+not for the brand. Against smoked bronze #11100c every dark data colour keeps at least the 3:1 of a graphical object
+(checked when the identity was applied: the bronze ground's luminance is that of silver ink to 1e-3). The colours live
 here once, for the figures (make_figures.py) and the animations (make_animations.py).
 
 The static figures are drawn twice, with the light colours and, inside figure_theme.theme('dark') (which maps the
@@ -14,7 +17,7 @@ from __future__ import annotations
 
 # identity grounds (custom.css)
 WASHI, WASHI_ALT, INK_LIGHT, MESH_LIGHT = '#f3ede1', '#ebe3d3', '#1d1b18', '#6f6a62'
-SILVER, SILVER_ALT, INK_DARK, MESH_DARK = '#0e1116', '#0a0d11', '#e8ecf0', '#8b949e'
+BRONZE, BRONZE_ALT, INK_DARK, MESH_DARK = '#11100c', '#0c0b08', '#efe9da', '#948c79'
 
 # categorical data colours, in fixed order (never cycled): blue, moegi, plum, umber
 BLUE, MOEGI, PLUM, UMBER = '#1f63a8', '#4a7a06', '#8a4f9e', '#a8661c'

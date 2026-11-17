@@ -1,8 +1,10 @@
 """The light (washi) and dark (silver ink) styles of the docs' matplotlib figures.
 
-Copied verbatim from SETH (docs/scripts/figure_theme.py), itself a copy of ADAM's (the harness of the ADAM and FLUME
+Copied from SETH (docs/scripts/figure_theme.py), itself a copy of ADAM's (the harness of the ADAM and FLUME
 documentation, whose docs/BRAND.md defines the tokens), so that GIDEON's figures are drawn exactly as SETH's, ADAM's
-and FLUME's are; only this paragraph differs. Keep the copies equal.
+and FLUME's are. Two things differ, this paragraph and the dark tokens below: GIDEON's own identity (Ensō to sessen,
+Kogane; docs/brand/tokens.json) replaces the family's silver ink with smoked bronze, so its dark figures are drawn on
+#11100c. Where this docstring says silver ink, read smoked bronze. Keep the rest equal to the family's copies.
 
 Why this module exists: the docs show every figure in both themes. A figure script draws its figures as it always did
 (the light style, unchanged); inside `theme("dark")` the same drawing code produces `<name>-dark.png` next to
@@ -42,14 +44,15 @@ from matplotlib.text import Text
 
 THEMES = ("light", "dark", "both")
 WASHI = "#f3ede1"
-# silver ink (docs/BRAND.md, "Themes"): ground, bg-alt (the axes panel), text-1, text-2, mesh, border
+# GIDEON's smoked bronze (docs/brand/tokens.json, "dark"; the family's silver ink was #0e1116 #0a0d11 #e8ecf0 #a9b1bb
+# #8b949e #2c333d): ground, alt (the axes panel), ink (text-1), muted (text-2), mesh, line (border)
 GROUND, PANEL, INK, TEXT2, MESH, BORDER = (
-    "#0e1116",
-    "#0a0d11",
-    "#e8ecf0",
-    "#a9b1bb",
-    "#8b949e",
-    "#2c333d",
+    "#11100c",
+    "#0c0b08",
+    "#efe9da",
+    "#bab29e",
+    "#948c79",
+    "#2e2a1f",
 )
 DARK_RC = {
     "figure.facecolor": GROUND,
@@ -67,9 +70,10 @@ DARK_RC = {
     "legend.edgecolor": BORDER,
     "patch.edgecolor": INK,
     "hatch.color": INK,
-    "axes3d.xaxis.panecolor": (0.08, 0.094, 0.125, 0.5),
-    "axes3d.yaxis.panecolor": (0.08, 0.094, 0.125, 0.5),
-    "axes3d.zaxis.panecolor": (0.08, 0.094, 0.125, 0.5),
+    # the raised ground #1b1913 (the family's #141820), half transparent
+    "axes3d.xaxis.panecolor": (0.106, 0.098, 0.075, 0.5),
+    "axes3d.yaxis.panecolor": (0.106, 0.098, 0.075, 0.5),
+    "axes3d.zaxis.panecolor": (0.106, 0.098, 0.075, 0.5),
 }
 MIN_CONTRAST = 3.0
 

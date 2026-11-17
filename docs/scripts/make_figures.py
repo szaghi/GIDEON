@@ -4,7 +4,7 @@
 Every curve and every number of a figure is read from a file: the generator's JSON (the exact rows; spectral curves
 are computed from them), the CSV files and outputs of the test programs run by scripts/run_report.sh (e(h), observed
 orders, the ADAM comparisons), the recorded mutation run, and the benchmark data in notes/bench-data. Each figure
-<name>.png is drawn on washi and, with --theme both, again as <name>-dark.png on silver ink (figure_theme.py); the
+<name>.png is drawn on washi and, with --theme both, again as <name>-dark.png on smoked bronze (figure_theme.py); the
 docs theme swaps them.
 
     docs/public/guide/windows-{fd,fv,upwind}.png      the windows of each geometry, with the weights of a row
@@ -61,7 +61,7 @@ class Ink:
         self.upwind = P.UPWIND_D if dark else P.UPWIND
         self.right = P.RIGHT_D if dark else P.RIGHT
         self.adam = P.ADAM_D if dark else P.ADAM
-        self.ink = 'k'  # mapped to the silver ink by figure_theme in the dark theme
+        self.ink = 'k'  # mapped to the dark ink by figure_theme in the dark theme
         self.blue_ramp = P.RAMP_BLUE_D if dark else P.RAMP_BLUE
         self.moegi_ramp = P.RAMP_MOEGI_D if dark else P.RAMP_MOEGI
 

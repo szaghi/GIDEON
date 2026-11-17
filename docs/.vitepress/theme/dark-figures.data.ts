@@ -1,5 +1,5 @@
 // docs/.vitepress/theme/dark-figures.data.ts (copied from ADAM's docs theme, unchanged below this line)
-// The figures that have a silver-ink twin: every docs/public/<path>/<name>.png next to which <name>-dark.png exists
+// The figures that have a dark twin: every docs/public/<path>/<name>.png next to which <name>-dark.png exists
 // (written by the figure scripts with --theme dark, docs/scripts/figure_theme.py). A VitePress data loader: the list is
 // computed at build time (and refreshed by the dev server when a twin is added), so a new twin needs no edit here or in
 // a page. index.ts swaps the images on the client.
