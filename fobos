@@ -36,6 +36,7 @@ modes = static-gnu shared-gnu
         tests-intel tests-intel-debug
         static-gnu-r4 shared-gnu-r4 static-nvf-r4 shared-nvf-r4 static-intel-r4 shared-intel-r4
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
+        tests-gnu-r16
         bench-nvf-oac bench-nvf bench-gnu
 
 [common-variables]
@@ -202,6 +203,12 @@ lflags    = -acc -gpu=$GPU_CC
 help      = Tests, ifx, optimised, single precision (R_P = R4P)
 template  = template-r4-tests template-tests template-intel-release template-intel
 
+# ── quadruple precision (R16P): a host-only verification build, gfortran (PENF_R16P); the orders of every kernel are
+# measured here, where double precision's round-off hides those of the widest stencils ──
+[tests-gnu-r16]
+help      = Tests, gfortran, optimised, quadruple precision (R_P = R16P): the verification of the orders
+template  = template-r16-tests template-tests template-gnu template-release
+
 # ── templates: left wins when a mode lists several, so the role template (lib, tests) comes first ──
 [template-base]
 src             = src/lib/
@@ -263,6 +270,12 @@ build_dir = exe-r4/
 # ADAM's code and the comparison with it are R8P only
 exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
 
+[template-r16-tests]
+preproc   = -DPENF_R16P -D_R_P_IS_R16P
+build_dir = exe-r16/
+# ADAM's code and the comparison with it are R8P only
+exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
+
 [template-tests]
 src       = src/lib/ src/tests/
 build_dir = exe/
@@ -278,6 +291,9 @@ rule_3 = bash scripts/run_tests.sh
 help   = Coverage analysis: the badge JSON in docs/public/coverage.json (what CI runs)
 rule_1 = fobis rule --ex makecoverage
 rule_2 = bash scripts/compute-coverage.sh
+# then the tests in quadruple precision: the orders of every kernel, observed (gideon_test_order)
+rule_3 = fobis build --mode tests-gnu-r16
+rule_4 = bash scripts/run_tests.sh --exe-dir exe-r16
 
 [rule-makedoc]
 help   = Build the documentation: formal API + VitePress
@@ -285,4 +301,4 @@ rule_1 = cd docs && npm install --no-audit --no-fund && npm run docs:build
 
 [rule-clean]
 help = Remove build products and documentation artefacts
-rule = rm -rf exe/ exe-r4/ exe-bench/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json
+rule = rm -rf exe/ exe-r4/ exe-r16/ exe-bench/ lib/ obj/ mod/ docs/api/ docs/.vitepress/dist/ docs/.vitepress/cache/ docs/public/coverage.json

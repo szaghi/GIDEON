@@ -10,6 +10,8 @@ if (storage_size(1._R4P) /= 32) error stop 'R4P is not a 32-bit real'
 if (storage_size(1._R8P) /= 64) error stop 'R8P is not a 64-bit real'
 #if defined _R_P_IS_R4P
 if (R_P /= R4P) error stop 'R_P is not R4P in a single-precision build'
+#elif defined _R_P_IS_R16P
+if (precision(1._R_P) < 33) error stop 'R_P is not quadruple precision in a quadruple-precision build'
 #else
 if (R_P /= R8P) error stop 'R_P is not R8P in a double-precision build'
 #endif

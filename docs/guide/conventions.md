@@ -69,4 +69,6 @@ silent 0 is what audit item C fixes.
 ## Kinds
 
 The kernels compute in PENF's `R_P`, chosen when GIDEON (and PENF, compiled by the same mode) is built:
-`-D_R_P_IS_R4P` or nothing (R8P). One precision per build. R16P is refused: PENF cannot build `R_P = R16P`.
+`-D_R_P_IS_R4P` or nothing (R8P). One precision per build. R16P (`-DPENF_R16P -D_R_P_IS_R16P`, mode `tests-gnu-r16`)
+is a host-only verification kind: there the orders of every kernel are observed, which double precision's round-off
+hides for the widest stencils. An OpenACC build refuses it.

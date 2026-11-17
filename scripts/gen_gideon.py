@@ -951,8 +951,7 @@ def emit_registry(ks: list[Kernel]) -> str:
     arr('khi', 'integer(I4P)', [str(k.hi) for _, k, *_ in meta])
     arr('kdegree', 'integer(I4P)', [str(k.order + k.n - 1) for _, k, *_ in meta])
     arr('ksumabs', 'real(R_P)', [f'{float(k.sumabs):.17e}'.replace('e', '_R_P*1e') + '_R_P' for _, k, *_ in meta])
-    arr('kerror', 'real(R_P)', [f'{float(leading_error(k)):.17e}'.replace('e', '_R_P*1e') + '_R_P'
-                                 for _, k, *_ in meta])
+    arr('kerror', 'real(R_P)', [lit(leading_error(k)) for _, k, *_ in meta])  # exact: R16P compares at 34 digits
     arr('kzero_const', 'logical', ['.true.' if z else '.false.' for *_, z in meta])
     # mirror partner of each ul kernel (0 elsewhere)
     idx = {k.name: i for i, k, *_ in meta}

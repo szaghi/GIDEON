@@ -12,11 +12,11 @@ program gideon_test_order
 !< observed orders log2(e(h)/e(h/2)) differ by at most 0.25: the asymptotic range. Frozen
 !< bound (written before the kernels): on the finest plateau, both observed orders >= design - 0.25.
 !<
-!< A kernel with no plateau in the working precision is listed as unresolved, not failed: the widest upwind stencils
-!< (7 to 9 cells) leave their pre-asymptotic range in double precision only where round-off already dominates,
-!< whatever the function (truncation over round-off depends on the wavenumber times h alone). Their orders, and
-!< every other row's, are measured round-off free by the generator (scripts/gen_gideon.py, 100-digit arithmetic,
-!< same bound), and the compiled rows are proven exact to their degree in every kind (gideon_test_tables).
+!< A kernel with no plateau in the working precision is listed as unresolved, not failed: in double precision the
+!< widest upwind stencils (7 to 9 cells) leave their pre-asymptotic range only where round-off already dominates,
+!< whatever the function (truncation over round-off depends on the wavenumber times h alone): R8P resolves 96 of the
+!< 243 kernels, R4P 11. The quadruple-precision build (tests-gnu-r16, host only) resolves all 243: that is where the
+!< orders of the compiled kernels are observed, every one. The generator measures the rows themselves at 100 digits.
 use penf, only : I4P, R_P
 use gideon_test_registry
 use gideon_test_functions, only : data_generic, target_generic
