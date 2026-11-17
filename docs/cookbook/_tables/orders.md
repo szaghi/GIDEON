@@ -9,6 +9,15 @@
 | `gideon_fd_d4_c` | point values | d4 at the node | centred | 2: 5, 4: 7, 6: 9, 8: 11 |
 | `gideon_fd_d5_c` | point values | d5 at the node | centred | 2: 7, 4: 9, 6: 11 |
 | `gideon_fd_d6_c` | point values | d6 at the node | centred | 2: 7, 4: 9, 6: 11 |
+| `gideon_fd_face_d1_c` | point values | d1 at the face | centred | 2: 2, 4: 4, 6: 6, 8: 8, 10: 10 |
+| `gideon_fd_face_d2_c` | point values | d2 at the face | centred | 2: 4, 4: 6, 6: 8, 8: 10 |
+| `gideon_fd_face_d3_c` | point values | d3 at the face | centred | 2: 4, 4: 6, 6: 8, 8: 10 |
+| `gideon_fd_face_d4_c` | point values | d4 at the face | centred | 2: 6, 4: 8, 6: 10 |
+| `gideon_fd_face_d5_c` | point values | d5 at the face | centred | 2: 6, 4: 8, 6: 10 |
+| `gideon_fd_face_ur` | point values | value at the face | right side | 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9 |
+| `gideon_fd_face_ul` | point values | value at the face | left side | 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9 |
+| `gideon_fd_face_br` | point values | value at the face | biased right | 3: 3, 5: 5, 7: 7, 9: 9 |
+| `gideon_fd_face_bl` | point values | value at the face | biased left | 3: 3, 5: 5, 7: 7, 9: 9 |
 | `gideon_fv_face_c` | cell averages | value at the face | centred | 2: 2, 4: 4, 6: 6, 8: 8, 10: 10 |
 | `gideon_fv_face_d1_c` | cell averages | d1 at the face | centred | 2: 2, 4: 4, 6: 6, 8: 8, 10: 10 |
 | `gideon_fv_face_d2_c` | cell averages | d2 at the face | centred | 2: 4, 4: 6, 6: 8, 8: 10 |

@@ -48,7 +48,7 @@ By family: how many kernels each kind measures, and the smallest margin of the q
 
 ![Observed minus design order of every kernel](/verification/orders.png)
 
-*The smaller of the two observed orders on the finest plateau, minus the design order, for every kernel: all 243 in
+*The smaller of the two observed orders on the finest plateau, minus the design order, for every kernel: all 288 in
 R16P, the measured ones in R8P. The dashed line is the frozen bound.*
 
 <details>

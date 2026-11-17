@@ -17,7 +17,7 @@ backwards, and no left row is stored.
 | Item | Choice | Code |
 |---|---|---|
 | Data | 20 trials of uniform random numbers in $[-1/2, 1/2)$ on the widest window, a fixed seed | [`gideon_test_properties.F90`](https://github.com/szaghi/GIDEON/blob/main/src/tests/gideon_test_properties.F90) |
-| Mirror | $k_{ul}(\tilde q) = (-1)^n\,k_{ur}(q)$, $\tilde q_o = q_{1-o}$ (face windows) or $q_{-o}$ (cell windows) | |
+| Mirror | $k_{ul}(\tilde q) = (-1)^n\,k_{ur}(q)$ and $k_{bl}(\tilde q) = k_{br}(q)$, $\tilde q_o = q_{1-o}$ (face windows, FV cells and FD points alike) or $q_{-o}$ (cell windows) | |
 | Symmetry | a centred kernel on data of the parity that makes its result odd returns exactly 0: the pair form $c_m(q_m \pm q_{-m})$ (node, cell) or $c_m(q_m \pm q_{1-m})$ (face) cancels term by term | |
 | Scaling | $k(8q) = 8\,k(q)$ and $k(q, 1.5) = k(q, 0.75)/2^n$: powers of two are exact in binary | |
 | Constant data | a derivative in pair or flux-difference form returns exactly 0; a value returns the constant within 64 ε Σ\|c\| | |
@@ -43,5 +43,7 @@ The dispatch columns are the run-time dispatchers of [C4](./dispatch), run on th
   in the arithmetic, not only in the rows.
 - The bitwise mirror needs the left-side kernel to add the same products in the same order as its right twin. The
   generator emits both from one template, so a hand edit of one side breaks C3 at once (the mutants
-  `mirror-fv-face-ul3` and `mirror-sign-fv-face-d1-ul2` of [Mutation testing](/regression/mutation)).
+  `mirror-fv-face-ul3`, `mirror-sign-fv-face-d1-ul2`, `mirror-fd-face-ul3` and `mirror-fd-face-bl5` of
+  [Mutation testing](/regression/mutation)). The FD one-sided and biased face values of phase 2 follow the same rule:
+  13 more pairs.
 - The properties do not test accuracy: a kernel with a wrong but symmetric row passes C3 and fails C2 and A1.

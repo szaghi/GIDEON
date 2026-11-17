@@ -52,9 +52,9 @@ kind (next section).
 | Test | R8P | R4P | R16P |
 |---|---|---|---|
 | exactness on monomials and the leading error (`gideon_test_tables`), 64 ε | yes | yes | yes |
-| orders observed on a smooth function (`gideon_test_order`) | 96 of 243 kernels | 11 of 243 | **all 243** |
+| orders observed on a smooth function (`gideon_test_order`) | 119 of 288 kernels | 17 of 288 | **all 288** |
 | mirrors and symmetries, dispatch, 3-D operators, host = device | yes | yes | yes (host) |
-| golden values (`src/tests/golden/`) | `gideon_golden_v1.txt`, tolerance $10^{-13}$ | `gideon_golden_r4_v1.txt`, $10^{-5}$ | `gideon_golden_r16_v1.txt`, $10^{-30}$ |
+| golden values (`src/tests/golden/`) | `gideon_golden_v2.txt`, tolerance $10^{-13}$ | `gideon_golden_r4_v2.txt`, $10^{-5}$ | `gideon_golden_r16_v2.txt`, $10^{-30}$ |
 | equivalence with ADAM (`gideon_test_adam`) | yes | no: ADAM's code is R8P | no |
 
 The order test counts a kernel as measured only on a plateau of three resolved steps above ten round-off floors; a

@@ -79,6 +79,7 @@ export default withMermaid({
           { text: 'Choose an operator and its order', link: '/cookbook/choose' },
           { text: 'Ghost cells for a window',         link: '/cookbook/ghosts' },
           { text: 'Averages and point values',        link: '/cookbook/deconvolution' },
+          { text: 'Face values from point values',    link: '/cookbook/face-from-points' },
           { text: 'A run-time order, fast',           link: '/cookbook/run-time-order' },
           { text: 'Single and quadruple precision',   link: '/cookbook/precision' },
           { text: 'Replace ADAM\'s FDV calls',        link: '/cookbook/from-adam' },

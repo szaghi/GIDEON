@@ -42,8 +42,8 @@ they share no interface, and a procedure pointer is not device code.
 ```
 
 Order 3 has no centred kernel and is refused before any loop runs; every other order gives the same values through
-the dispatcher and through the hoisted kernels, to the last bit (`gideon_test_dispatch` asserts the same for all 243
-kernels and their 45 dispatchers). On a GPU the hoisted form puts the `!$acc parallel loop` on each loop inside the
+the dispatcher and through the hoisted kernels, to the last bit (`gideon_test_dispatch` asserts the same for all 288
+kernels and their 54 dispatchers). On a GPU the hoisted form puts the `!$acc parallel loop` on each loop inside the
 cases, so every case launches its own kernel with its own compile-time row ([On the GPU](/tutorials/gpu)).
 
 **Reference.** The measurement: [Performance](/guide/performance); the dispatchers' NaN contract:

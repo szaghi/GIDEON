@@ -47,3 +47,12 @@
 | `fv_d6_ul` | 4 | 1-4 | `q(-(order+5):0)` | 5 |
 | `fv_point_c` | 5 | 4-12 (even) | `q(-(order/2-1):order/2-1)` | 14 |
 | `fd_average_c` | 5 | 4-12 (even) | `q(-(order/2-1):order/2-1)` | 14 |
+| `fd_face_d1_c` | 5 | 2-10 (even) | `q(1-(order/2):order/2)` | 12 |
+| `fd_face_d2_c` | 4 | 2-8 (even) | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fd_face_d3_c` | 4 | 2-8 (even) | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fd_face_d4_c` | 3 | 2-6 (even) | `q(1-(order/2+2):order/2+2)` | 8 |
+| `fd_face_d5_c` | 3 | 2-6 (even) | `q(1-(order/2+2):order/2+2)` | 8 |
+| `fd_face_ur` | 9 | 1-9 | `q(1:order)` | 10 |
+| `fd_face_ul` | 9 | 1-9 | `q(-(order-1):0)` | 10 |
+| `fd_face_br` | 4 | 3-9 | `q(2-(order/2+1):order/2+1)` | 10 |
+| `fd_face_bl` | 4 | 3-9 | `q(-(order/2):order/2)` | 10 |

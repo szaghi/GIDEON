@@ -39,7 +39,7 @@ features:
       width: 44
       height: 44
     title: Every operator, one kernel each
-    details: 243 kernels. FD centred face values and node derivatives d1–d6; FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values. 45 run-time order dispatchers on top.
+    details: 288 kernels. FD centred face values, node derivatives d1–d6 and face derivatives d1–d5 (the viscous fluxes); FD face values from one side (extrapolation) or upwind-biased (interpolation); FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values. 54 run-time order dispatchers on top.
     link: /guide/operators
     linkText: Operators
   - icon:
@@ -75,7 +75,7 @@ features:
       width: 44
       height: 44
     title: Verification you can read
-    details: Eleven programs, also the test suite. Rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 243 kernels observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, golden values.
+    details: Eleven programs, also the test suite. Rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 288 kernels observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, golden values.
     link: /verification/
     linkText: Verification
   - icon:
@@ -84,7 +84,7 @@ features:
       width: 44
       height: 44
     title: Three compilers, CPU and GPU
-    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; single, double and quadruple precision; built with FoBiS or fpm. A mutation run catches 22 of 22 planted defects; the tutorials' code is compiled and run in CI.
+    details: gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; single, double and quadruple precision; built with FoBiS or fpm. A mutation run catches 30 of 30 planted defects; the tutorials' code is compiled and run in CI.
     link: /guide/installation
     linkText: Installation
 ---

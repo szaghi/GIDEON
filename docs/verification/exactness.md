@@ -18,7 +18,7 @@ of the same order), or a compiled coefficient off by more than its rounding.
 |---|---|---|
 | Data | the monomial $x^j$ on the kernel's window ($h = 1$, $x_0 = 0$): point values, or exact cell averages $(b^{j+1} - a^{j+1})/(j+1)$ | [`gideon_test_functions.F90`](https://github.com/szaghi/GIDEON/blob/main/src/tests/gideon_test_functions.F90) `data_monomial` |
 | Target | the n-th derivative at 0, or its average over cell 0 | `target_monomial` |
-| Kernels | all of them, through the registry's `apply` (one `select case` over the 243 kernels) | [`gideon_test_registry.F90`](https://github.com/szaghi/GIDEON/blob/main/src/tests/gideon_test_registry.F90) (generated) |
+| Kernels | all of them, through the registry's `apply` (one `select case` over the 288 kernels) | [`gideon_test_registry.F90`](https://github.com/szaghi/GIDEON/blob/main/src/tests/gideon_test_registry.F90) (generated) |
 | Asserted, $j \le K$ | $\vert k(x^j) - T(x^j)\vert \le 64\,\varepsilon \sum_k \vert c_k\vert \max(\vert q\vert, 1)$ | [`gideon_test_tables.F90`](https://github.com/szaghi/GIDEON/blob/main/src/tests/gideon_test_tables.F90) |
 | Asserted, $j = K + 1$ | $\vert (k - T) - E\vert \le$ the same tolerance, $E$ the exact leading error (`kerror`, derived by `leading_error` in the generator) | |
 

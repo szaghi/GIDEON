@@ -17,8 +17,8 @@ The run takes about half a second and ends with its findings:
 
 ```text
 checked 93 ADAM rows
-orders: 243 rows, smallest margin -0.002 (gideon_fv_face_ur9, observed 8.998)
-243 kernels derived
+orders: 288 rows, smallest margin -0.002 (gideon_fv_face_ur9, observed 8.998)
+288 kernels derived
 ```
 
 It exits 1, writing nothing, on any `MISMATCH`, `NOT GENERATED` or `ORDER` finding, and stops on an assertion when a
@@ -99,7 +99,7 @@ The compiled kernels' orders are measured again by `gideon_test_order`, where ea
 ## 6. Emission
 
 - **Rows** (`gideon_tables.F90`): one `real(R_P), parameter` per stored row, its literals `p._R_P/q._R_P` (the compiler
-  folds the division in the build's kind): 102 rows for 243 kernels, since left-side and cell kernels read the rows of
+  folds the division in the build's kind): 134 rows for 288 kernels, since left-side and cell kernels read the rows of
   their right-side and face twins.
 - **Kernels** (`gideon_fd_centred.F90`, `gideon_fv_centred.F90`, `gideon_fv_upwind.F90`,
   `gideon_deconvolution.F90`): `emit_kernel` writes the explicit-shape window, the loop over the compile-time row in

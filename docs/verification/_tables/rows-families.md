@@ -4,6 +4,9 @@
 |---|---|---|---|---|
 | FD centred, face value | 5 | 2-10 | 2-10 | -0.000 (`fd_face_c10`) |
 | FD centred, node derivatives d1-d6 | 24 | 2-10 | 3-11 | -0.000 (`fd_d1_c10`) |
+| FD centred, face derivatives d1-d5 | 19 | 2-10 | 2-10 | -0.000 (`fd_face_d2_c8`) |
+| FD one-sided, face value (extrapolation) | 18 | 1-9 | 1-9 | -0.002 (`fd_face_ur9`) |
+| FD upwind-biased, face value (interpolation) | 8 | 3-9 | 3-9 | -0.000 (`fd_face_br9`) |
 | FV centred, face value | 5 | 2-10 | 2-10 | -0.000 (`fv_face_c10`) |
 | FV centred, face derivatives d1-d5 | 19 | 2-10 | 2-10 | -0.000 (`fv_face_d2_c8`) |
 | FV centred, cell-average derivatives d1-d6 | 24 | 2-10 | 3-11 | -0.000 (`fv_d1_c10`) |
@@ -11,4 +14,4 @@
 | FV upwind, face derivatives d1-d5 | 60 | 1-8 | 2-9 | -0.002 (`fv_face_d1_ur8`) |
 | FV upwind, cell-average derivatives d1-d6 | 78 | 1-9 | 2-10 | -0.002 (`fv_d1_ur8`) |
 | Deconvolution (point value, cell average) | 10 | 4-12 | 3-11 | -0.000 (`fv_point_c12`) |
-| **all** | 243 |  |  |  |
+| **all** | 288 |  |  |  |

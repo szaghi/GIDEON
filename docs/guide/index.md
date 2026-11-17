@@ -17,7 +17,9 @@ upwind operator generated as the mirror of its twin.
 
 The first release (v0.1.0) carries ADAM's FD and FV operators, fixed (audit items A–F in `notes/adam-fdv-audit.md`),
 with the upwind branch kept and extended to stencils of 9 cells and the sixth derivative: 243 kernels, 45 run-time
-order dispatchers, 40 3-D operators and their 8 dispatchers. Bitwise equal to ADAM where ADAM is right, at 0.17–0.82
+order dispatchers, 40 3-D operators and their 8 dispatchers. Phase 2 adds what ADAM's callers write by hand, on point
+values: the face derivatives d1–d5 (the viscous fluxes), and the face value from one side (extrapolation) or
+upwind-biased (interpolation): 288 kernels, 54 run-time order dispatchers. Bitwise equal to ADAM where ADAM is right, at 0.17–0.82
 of its cost on an RTX 4070 and on one CPU core ([Performance](/guide/performance)). Tested with gfortran 16.2,
 nvfortran 26.9 (also on the GPU, OpenACC) and ifx, in single and double precision, and with gfortran in quadruple.
 

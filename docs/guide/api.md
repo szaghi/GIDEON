@@ -8,12 +8,13 @@ modules behind it can be used one by one; all but `gideon_kind_parameters` and `
 |---|---|---|
 | `gideon` | everything below, and `I4P`, `I8P`, `R4P`, `R8P` from PENF | — |
 | `gideon_kind_parameters` | `R_P`, `GIDEON_NAN` | 2 |
-| `gideon_tables` | the rows, `FD_*`, `FV_*` (and `R_P`: the module's default accessibility is public) | 102 |
-| `gideon_fd_centred` | `gideon_fd_face_c<p>`, `gideon_fd_dN_c<p>` | 29 |
+| `gideon_tables` | the rows, `FD_*`, `FV_*` (and `R_P`: the module's default accessibility is public) | 134 |
+| `gideon_fd_centred` | `gideon_fd_face_c<p>`, `gideon_fd_dN_c<p>`, `gideon_fd_face_dN_c<p>` | 48 |
+| `gideon_fd_upwind` | `gideon_fd_face_{ur,ul}<p>` (one-sided), `gideon_fd_face_{bl,br}<p>` (upwind-biased) | 26 |
 | `gideon_fv_centred` | `gideon_fv_face_c<p>`, `gideon_fv_face_dN_c<p>`, `gideon_fv_dN_c<p>` | 48 |
 | `gideon_fv_upwind` | `gideon_fv_face_{ur,ul}<p>`, `gideon_fv_face_dN_{ur,ul}<p>`, `gideon_fv_dN_{ur,ul}<p>` | 156 |
 | `gideon_deconvolution` | `gideon_fv_point_c<p>`, `gideon_fd_average_c<p>` | 10 |
-| `gideon_dispatch` | the run-time order dispatchers of the 1-D kernels | 45 |
+| `gideon_dispatch` | the run-time order dispatchers of the 1-D kernels | 54 |
 | `gideon_operators_3d` | `gideon_{fd,fv}_{gradient,divergence,curl,laplacian}_c<p>` and their 8 dispatchers | 48 |
 
 Every procedure is a `pure subroutine` with `!$acc routine seq` and `!$omp declare target`: callable from host code,
@@ -38,7 +39,7 @@ real(R_P), intent(in)  :: ds       ! the grid step: derivatives only (dN, face_d
 real(R_P), intent(out) :: r        ! the result: f (face value), d (derivative), v (point value, average)
 ```
 
-243 kernels; the name, the window and the order of each are in the table of [Operators](/guide/operators#every-kernel).
+288 kernels; the name, the window and the order of each are in the table of [Operators](/guide/operators#every-kernel).
 The result is a derivative divided by `ds**N` inside the kernel (`/ds/ds` for `fd`, `/(ds*ds)` for `fv`), so `ds = 1`
 gives the undivided difference.
 
@@ -48,6 +49,8 @@ real(R_P) :: u(-2:102), du, uf
 integer   :: i
 call gideon_fd_d1_c6(u(i-3:i+3), 0.01_R_P, du) ! sixth-order first derivative at node i, point values
 call gideon_fv_face_ul5(u(i-4:i), uf)          ! fifth-order value at the face i+1/2 from the five cells on its left
+call gideon_fd_face_d1_c4(u(i-1:i+2), 0.01_R_P, du) ! fourth-order first derivative at the face i+1/2, point values
+call gideon_fd_face_bl5(u(i-2:i+2), uf)        ! fifth-order upwind-biased value at the face i+1/2, point values
 ```
 
 ## Run-time order dispatchers
@@ -89,8 +92,10 @@ every component for an order without a kernel.
 
 `gideon_tables` holds one named constant per row, an exact rational folded by the compiler (`p._R_P/q._R_P`). A
 centred row is half the stencil in pair form: index `m` multiplies the pair of offsets `m` and `-m` (node or cell; index
-0 the centre) or `m` and `1-m` (face). An upwind row holds the right-side stencil, cells `1..S`, the face nearest
-first; the left-side kernels and the cell derivatives read the same rows. Every row, with the kernels that read it:
+0 the centre) or `m` and `1-m` (face). An upwind row holds the right-side stencil, cells (or points) `1..S`, the face
+nearest first; the left-side kernels and the cell derivatives read the same rows. A biased row (`FD_BFACE_S<k>`) holds
+the right-biased stencil by offset, `1-k..k+1`; the left-biased kernel reads it mirrored. Every row, with the kernels
+that read it:
 
 <!--@include: ./_tables/api-rows.md-->
 

@@ -14,13 +14,15 @@ gideon_<data>_<op>_<bias><order>
 |---|---|---|
 | `data` | `fd`, `fv` | point values (finite differences) or cell averages (finite volumes) |
 | `op` | `face`, `dN`, `face_dN`, `point`, `average`, `gradient`, `divergence`, `curl`, `laplacian` | the value at a face; the N-th derivative at the node (`fd`) or averaged over the cell (`fv`); the N-th derivative at a face; the point value at a cell centre from averages; the cell average from point values; the 3-D operators |
-| `bias` | `c`, `ur`, `ul` | centred; upwind with the stencil on the **right** side; upwind with the stencil on the **left** side |
+| `bias` | `c`, `ur`, `ul`, `br`, `bl` | centred; upwind (or one-sided) with the stencil on the **right** side; the same on the **left** side; upwind-biased with one point more on the **right**; the same on the **left** |
 | `order` | integer | the order of accuracy, measured by the generator (not a stencil half-width) |
 
 `gideon_fd_d1_c6` is the sixth-order centred first derivative at a node from point values; `gideon_fv_face_ul3` the
 third-order value at a face from the three cells on its left (the upwind value when the flow goes to the right).
 
-The upwind bias is named by **where the stencil lies**, never by the face it reconstructs. ADAM named its upwind
+The upwind bias is named by **where the stencil lies**, never by the face it reconstructs; a biased stencil by the side
+that holds the extra point (`gideon_fd_face_bl3` reads two points left of the face and one right: the upwind value
+when the flow goes to the right). ADAM named its upwind
 operators the other way, inconsistently between the first derivative and the others (audit item F in
 `notes/adam-fdv-audit.md`).
 
@@ -40,8 +42,10 @@ All in units of the grid step; the window is an explicit-shape dummy `q(LO:HI)`,
 |---|---|
 | centred node or cell, half-stencil S | `q(-S:S)` |
 | centred face | `q(1-S:S)` |
-| upwind face, right side (S cells) | `q(1:S)` |
-| upwind face, left side | `q(1-S:0)` |
+| upwind (one-sided) face, right side (S cells or points) | `q(1:S)` |
+| upwind (one-sided) face, left side | `q(1-S:0)` |
+| biased face, one point more on the left (k + 1 left, k right) | `q(-k:k)` |
+| biased face, one point more on the right | `q(1-k:k+1)` |
 | upwind cell, right side | `q(0:S)` |
 | upwind cell, left side | `q(-S:0)` |
 

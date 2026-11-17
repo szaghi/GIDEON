@@ -1,0 +1,13 @@
+the first derivative at the faces i+1/2 of a periodic grid (the viscous flux), max error on sin(2 pi x)
+  gideon_fd_face_d1_c2  N = 32, 64:  1.004E-02  2.520E-03   observed order  1.99
+  gideon_fd_face_d1_c4  N = 32, 64:  4.347E-05  2.731E-06   observed order  3.99
+  gideon_fd_face_d1_c6  N = 32, 64:  2.488E-07  3.915E-09   observed order  5.99
+the value at the faces, centred and upwind-biased, max error on sin(2 pi x)
+  gideon_fd_face_c4  N = 32, 64:  3.456E-05  2.173E-06   observed order  3.99
+  gideon_fd_face_bl3 N = 32, 64:  4.720E-04  5.910E-05   observed order  3.00
+  gideon_fd_face_bl5 N = 32, 64:  3.404E-06  1.067E-07   observed order  4.99
+  gideon_fd_face_c6  N = 32, 64:  2.768E-07  4.360E-09   observed order  5.99
+the value at the boundary face x = 0 from the points inside, exp(x) at x = h/2, 3h/2, ...
+  gideon_fd_face_ur2        N = 32, 64:  3.739E-04  9.251E-05   observed order  2.02
+  gideon_fd_face_ur3        N = 32, 64:  9.879E-06  1.213E-06   observed order  3.03
+  gideon_fd_face_ur4        N = 32, 64:  2.742E-07  1.671E-08   observed order  4.04

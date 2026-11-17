@@ -2,9 +2,9 @@
 
 | Check | Result |
 |---|---|
-| rows derived (exact rationals) | 243 |
+| rows derived (exact rationals) | 288 |
 | 3-D operators assembled from them | 40 |
 | ADAM rows cross-checked (non-zero ones of its tables) | 93, mismatches 0 |
-| left-side rows solved independently and found to be mirrors | 78 |
-| orders at 100 digits ($h = 2^{-11}, 2^{-12}$), bound design − 0.25 | 243 rows, smallest margin -0.002 (`fv_face_ur9`, observed 8.998) |
+| left-side rows solved independently and found to be mirrors | 91 |
+| orders at 100 digits ($h = 2^{-11}, 2^{-12}$), bound design − 0.25 | 288 rows, smallest margin -0.002 (`fv_face_ur9`, observed 8.998) |
 | findings that fail the generator | 0 |

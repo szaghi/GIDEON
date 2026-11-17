@@ -9,7 +9,9 @@ choice costs in window width.
 | You hold | You want | Kernel family | Window |
 |---|---|---|---|
 | point values at nodes | a derivative at a node | `gideon_fd_dN_c<p>` | centred, `q(-S:S)` |
-| point values at nodes | the value midway between two nodes | `gideon_fd_face_c<p>` | `q(1-S:S)` |
+| point values at nodes | the value midway between two nodes | `gideon_fd_face_c<p>`, `_bl<p>`, `_br<p>` | centred `q(1-S:S)`, upwind-biased `q(-k:k)` or `q(1-k:k+1)` |
+| point values at nodes | a derivative midway between two nodes (a viscous flux) | `gideon_fd_face_dN_c<p>` | `q(1-S:S)` |
+| point values inside a boundary | the value at the boundary face | `gideon_fd_face_ur<p>`, `_ul<p>` | one side, `q(1:p)` or `q(1-p:0)` |
 | cell averages | the value at a face (the flux a conservative scheme differences) | `gideon_fv_face_c<p>`, `_ur<p>`, `_ul<p>` | centred `q(1-S:S)`, one side `q(1:p)` or `q(1-p:0)` |
 | cell averages | a derivative at a face (a viscous flux) | `gideon_fv_face_dN_c<p>`, `_ur<p>`, `_ul<p>` | as the face value, wider by the derivative |
 | cell averages | the average of a derivative over a cell | `gideon_fv_dN_c<p>`, `_ur<p>`, `_ul<p>` | `q(-S:S)`, `q(0:W)`, `q(-W:0)` |
@@ -48,9 +50,8 @@ To move between the two kinds of data at high order, use the deconvolution kerne
   operators, and the linear part of a hybrid scheme.
 - **Upwind** (`ur`, `ul`): the stencil on one side only. Name it by where the stencil lies: for a flow to the right
   (positive speed) the upwind side of a face is its **left**, so `gideon_fv_face_ul<p>`; for a flow to the left,
-  `gideon_fv_face_ur<p>`. A solver switches between the two per face on the sign of the speed. The stencils are fully
-  one-sided (no upwind-biased rows in this release), and only the narrowest are stable advection operators on their
-  own. The modified wavenumber of the left-side cell first derivative, the flux difference of the left-side faces,
+  `gideon_fv_face_ur<p>`. A solver switches between the two per face on the sign of the speed. The FV stencils are
+  fully one-sided, and only the narrowest are stable advection operators on their own. The modified wavenumber of the left-side cell first derivative, the flux difference of the left-side faces,
   decides it (`gideon_test_spectral`, [Spectral properties](/verification/spectral)): `gideon_fv_d1_ul1` and `_ul2`
   damp every wavenumber of a right-moving wave; `gideon_fv_d1_ul3` to `_ul9` amplify a band. For `_ul3` the real part
   of its symbol is $-(\cos\xi - 1)^2 (4\cos\xi - 1)/3$, so it amplifies every wavenumber $0 < \xi < \arccos(1/4)
@@ -58,6 +59,10 @@ To move between the two kinds of data at high order, use the deconvolution kerne
   wave). The one-sided rows of 3 to 9 cells are building blocks, as the candidate stencils of a WENO reconstruction
   are: exact to their order, combined by a scheme that supplies the stability (kept by owner decision). GIDEON
   provides them; it does not make them a scheme.
+- **Upwind-biased** (`bl`, `br`, point values only): $k + 1$ points on the upwind side of the face and $k$ on the
+  other, order $2k + 1$, named by the side holding the extra point (`gideon_fd_face_bl<p>` for a flow to the right).
+  The linear upwind interpolation of point values; on point values the fully one-sided `ur`/`ul` face values are
+  extrapolations, for boundary faces ([Face values from point values](/cookbook/face-from-points)).
 
 ## The derivative and the order are two numbers
 

@@ -104,3 +104,35 @@
 | `FD_AVERAGE_S4` | `(0:4)` | `gideon_fd_average_c10` |
 | `FV_POINT_S5` | `(0:5)` | `gideon_fv_point_c12` |
 | `FD_AVERAGE_S5` | `(0:5)` | `gideon_fd_average_c12` |
+| `FD_FACE_D1_S1` | `(1:1)` | `gideon_fd_face_d1_c2` |
+| `FD_FACE_D1_S2` | `(1:2)` | `gideon_fd_face_d1_c4` |
+| `FD_FACE_D1_S3` | `(1:3)` | `gideon_fd_face_d1_c6` |
+| `FD_FACE_D1_S4` | `(1:4)` | `gideon_fd_face_d1_c8` |
+| `FD_FACE_D1_S5` | `(1:5)` | `gideon_fd_face_d1_c10` |
+| `FD_FACE_D2_S2` | `(1:2)` | `gideon_fd_face_d2_c2` |
+| `FD_FACE_D2_S3` | `(1:3)` | `gideon_fd_face_d2_c4` |
+| `FD_FACE_D2_S4` | `(1:4)` | `gideon_fd_face_d2_c6` |
+| `FD_FACE_D2_S5` | `(1:5)` | `gideon_fd_face_d2_c8` |
+| `FD_FACE_D3_S2` | `(1:2)` | `gideon_fd_face_d3_c2` |
+| `FD_FACE_D3_S3` | `(1:3)` | `gideon_fd_face_d3_c4` |
+| `FD_FACE_D3_S4` | `(1:4)` | `gideon_fd_face_d3_c6` |
+| `FD_FACE_D3_S5` | `(1:5)` | `gideon_fd_face_d3_c8` |
+| `FD_FACE_D4_S3` | `(1:3)` | `gideon_fd_face_d4_c2` |
+| `FD_FACE_D4_S4` | `(1:4)` | `gideon_fd_face_d4_c4` |
+| `FD_FACE_D4_S5` | `(1:5)` | `gideon_fd_face_d4_c6` |
+| `FD_FACE_D5_S3` | `(1:3)` | `gideon_fd_face_d5_c2` |
+| `FD_FACE_D5_S4` | `(1:4)` | `gideon_fd_face_d5_c4` |
+| `FD_FACE_D5_S5` | `(1:5)` | `gideon_fd_face_d5_c6` |
+| `FD_UFACE_S1` | `(1:1)` | `gideon_fd_face_ur1`, `gideon_fd_face_ul1` |
+| `FD_UFACE_S2` | `(1:2)` | `gideon_fd_face_ur2`, `gideon_fd_face_ul2` |
+| `FD_UFACE_S3` | `(1:3)` | `gideon_fd_face_ur3`, `gideon_fd_face_ul3` |
+| `FD_UFACE_S4` | `(1:4)` | `gideon_fd_face_ur4`, `gideon_fd_face_ul4` |
+| `FD_UFACE_S5` | `(1:5)` | `gideon_fd_face_ur5`, `gideon_fd_face_ul5` |
+| `FD_UFACE_S6` | `(1:6)` | `gideon_fd_face_ur6`, `gideon_fd_face_ul6` |
+| `FD_UFACE_S7` | `(1:7)` | `gideon_fd_face_ur7`, `gideon_fd_face_ul7` |
+| `FD_UFACE_S8` | `(1:8)` | `gideon_fd_face_ur8`, `gideon_fd_face_ul8` |
+| `FD_UFACE_S9` | `(1:9)` | `gideon_fd_face_ur9`, `gideon_fd_face_ul9` |
+| `FD_BFACE_S1` | `(0:2)` | `gideon_fd_face_br3`, `gideon_fd_face_bl3` |
+| `FD_BFACE_S2` | `(-1:3)` | `gideon_fd_face_br5`, `gideon_fd_face_bl5` |
+| `FD_BFACE_S3` | `(-2:4)` | `gideon_fd_face_br7`, `gideon_fd_face_bl7` |
+| `FD_BFACE_S4` | `(-3:5)` | `gideon_fd_face_br9`, `gideon_fd_face_bl9` |

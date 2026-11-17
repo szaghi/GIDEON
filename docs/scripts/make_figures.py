@@ -42,7 +42,7 @@ from matplotlib.patches import Rectangle  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gideon_palette as P  # noqa: E402
 from figure_theme import theme, themes  # noqa: E402
-from make_tables import ADAM_GROUP, FAMILY, Report, short, symbol_exact  # noqa: E402
+from make_tables import ADAM_GROUP, FAMILY, Report, current_mutation_run, short, symbol_exact  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 PUB = ROOT / 'docs' / 'public'
@@ -85,7 +85,8 @@ def frac(s: str) -> str:
 def window_row(ax, k: dict, ink: Ink, colour, title: str) -> None:  # noqa: ANN001
     """One kernel's window on the offset axis: data (points or cells), the target, the weights of the row."""
     lo, hi = k['lo'], k['hi']
-    geom = {'fd_face_c': 'fdface', 'fd_node_c': 'fdnode', 'fv_face_c': 'fvface', 'fv_facedn_c': 'fvface',
+    geom = {'fd_face_c': 'fdface', 'fd_node_c': 'fdnode', 'fd_facedn_c': 'fdface', 'fd_face_u': 'fdface',
+            'fd_face_b': 'fdface', 'fv_face_c': 'fvface', 'fv_facedn_c': 'fvface',
             'fv_face_u': 'fvface', 'fv_facedn_u': 'fvface', 'fv_cell_c': 'fvcell', 'fv_cell_u': 'fvcell'}[k['family']]
     w = {int(o): v for o, v in k['weights'].items()}
     ax.plot([-5.7, 6.0], [0, 0], color='0.55', lw=0.8, zorder=0)
@@ -247,7 +248,8 @@ def fig_convergence(r: Report, ink: Ink) -> None:
     save(fig, PUB / 'verification' / 'convergence.png')
 
 
-SHORT_FAMILY = {'fd_face_c': 'FD face', 'fd_node_c': 'FD node d1-d6', 'fv_face_c': 'FV face',
+SHORT_FAMILY = {'fd_face_c': 'FD face', 'fd_node_c': 'FD node d1-d6', 'fd_facedn_c': 'FD face d1-d5',
+                'fd_face_u': 'FD one-sided face', 'fd_face_b': 'FD biased face', 'fv_face_c': 'FV face',
                 'fv_facedn_c': 'FV face d1-d5', 'fv_cell_c': 'FV cell d1-d6', 'fv_face_u': 'upwind face',
                 'fv_facedn_u': 'upwind face d1-d5', 'fv_cell_u': 'upwind cell d1-d6', 'deconv': 'deconvolution'}
 
@@ -257,7 +259,7 @@ def fig_orders(r: Report, ink: Ink) -> None:
     names = [short(k['name']) for f, _ in fams for k in r.rows['kernels'] if k['family'] == f]
     fam_of = {short(k['name']): k['family'] for k in r.rows['kernels']}
     x = {n: i for i, n in enumerate(names)}
-    fig, ax = plt.subplots(figsize=(9.6, 3.2))
+    fig, ax = plt.subplots(figsize=(9.6, 3.8))
     for tag, col, lab, mk in (('r64', ink.adam, 'R8P (measured kernels)', 'o'),
                               ('r128', ink.centred, 'R16P (every kernel)', '.')):
         s = r.summary(tag)
@@ -276,7 +278,8 @@ def fig_orders(r: Report, ink: Ink) -> None:
     for e in edges[1:-1]:
         ax.axvline(e - 0.5, color='0.8', lw=0.6)
     ax.set_xticks([(edges[i] + edges[i + 1]) / 2 - 0.5 for i in range(len(fams))])
-    ax.set_xticklabels([SHORT_FAMILY[f] for f, _ in fams], rotation=25, ha='right')
+    # 60 degrees: the narrowest families (5 to 8 kernels) sit ~22 px apart, too close for labels at a shallow angle
+    ax.set_xticklabels([SHORT_FAMILY[f] for f, _ in fams], rotation=60, ha='right', rotation_mode='anchor')
     ax.tick_params(axis='x', length=0)
     ax.set_xlim(-1, len(names))
     ax.set_ylim(-0.3, 0.12)
@@ -409,13 +412,14 @@ def fig_performance(ink: Ink) -> None:
 
 def fig_mutation(ink: Ink) -> None:
     sys.path.insert(0, str(ROOT / 'scripts'))
-    run = sorted((ROOT / 'notes').glob('mutation-run-*.txt'))[-1]
+    run = current_mutation_run()  # the recorded run of the current mutants, as the tables (make_tables.py)
     killed = {}
     for ln in run.read_text().splitlines():
         m = re.match(r'(\S+)\s+killed by (.*)$', ln)
         if m:
             killed[m.group(1)] = [t.strip().removeprefix('gideon_test_') for t in m.group(2).split(',')]
-    tests = sorted({t for v in killed.values() for t in v}, key=lambda t: -sum(t in v for v in killed.values()))
+    # by kills, then by name: a tie must not fall to the iteration order of a set of strings (hash-randomised per run)
+    tests = sorted({t for v in killed.values() for t in v}, key=lambda t: (-sum(t in v for v in killed.values()), t))
     mut = list(killed)
     fig, ax = plt.subplots(figsize=(6.4, 6.0))
     for i, m in enumerate(mut):

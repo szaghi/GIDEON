@@ -18,7 +18,7 @@ compared with a file written once by a reference build.
 | Windows | 8 windows of 33 values, made by an integer linear congruential generator: multiples of $2^{-10}$ in $[-32, 32)$, exact in every kind and with every compiler (no libm, no `random_number`); $\Delta s = 0.75$, a dyadic step |
 | Comparison | $\vert r - g\vert \le {\rm TOL}\cdot\sum_k\vert c_k\vert\max\vert q\vert/\Delta s^n$, TOL per kind (below): other compilers and flags contract multiply-adds differently from the writer |
 | Reported | the values bitwise equal to the file, the worst difference relative to the magnitude |
-| Files | `src/tests/golden/`, chosen by the build's kind: `gideon_golden_v1.txt` (R8P), `gideon_golden_r4_v1.txt` (R4P), `gideon_golden_r16_v1.txt` (R16P); each starts with the compiler and options that wrote it |
+| Files | `src/tests/golden/`, chosen by the build's kind: `gideon_golden_v2.txt` (R8P), `gideon_golden_r4_v2.txt` (R4P), `gideon_golden_r16_v2.txt` (R16P); each starts with the compiler and options that wrote it |
 
 <!--@include: ./_tables/golden-count.md-->
 
@@ -30,13 +30,17 @@ A golden file is never edited. A deliberate change of results (a new kernel, a c
 by the test itself, and the test's default path moves to it:
 
 ```bash
-./exe/gideon_test_golden write src/tests/golden/gideon_golden_v2.txt   # refuses to overwrite an existing file
+./exe/gideon_test_golden write src/tests/golden/gideon_golden_v3.txt   # refuses to overwrite an existing file
 ```
 
-The writer opens the file with `status='new'`: an existing file stops it with an error, so v1 cannot be replaced by
-accident. The new file is reviewed like code: for the kernels already in v1, its lines must equal v1's character for
-character when written by the same build (then v1 can be retired), and the new lines are the values of the new
-kernels. Then `GOLDEN` in `gideon_test_golden.F90` points to it, for each kind.
+The writer opens the file with `status='new'`: an existing file stops it with an error, so a committed version cannot
+be replaced by accident. The new file is reviewed like code: for the kernels already in the previous version, its lines
+must equal the previous ones character for character when written by the same build, and the new lines are the values
+of the new kernels.
+
+v1 holds the first release's 243 kernels. v2 (phase 2) adds the FD face derivatives and the one-sided and biased FD
+face values, 288 kernels; written by the same three builds and options as v1, its first 243 kernels equal v1's line
+for line in all three kinds. v1 is kept. Then `GOLDEN` in `gideon_test_golden.F90` points to it, for each kind.
 
 ## Program
 

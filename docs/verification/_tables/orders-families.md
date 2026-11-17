@@ -4,6 +4,9 @@
 |---|---|---|---|---|---|
 | FD centred, face value | 5 | 1 | 3 | 5 | -0.002 |
 | FD centred, node derivatives d1-d6 | 24 | 1 | 6 | 24 | -0.029 |
+| FD centred, face derivatives d1-d5 | 19 | 0 | 7 | 19 | -0.052 |
+| FD one-sided, face value (extrapolation) | 18 | 6 | 12 | 18 | -0.009 |
+| FD upwind-biased, face value (interpolation) | 8 | 0 | 4 | 8 | -0.011 |
 | FV centred, face value | 5 | 1 | 2 | 5 | -0.001 |
 | FV centred, face derivatives d1-d5 | 19 | 0 | 6 | 19 | -0.019 |
 | FV centred, cell-average derivatives d1-d6 | 24 | 0 | 5 | 24 | -0.014 |

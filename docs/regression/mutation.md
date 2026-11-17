@@ -17,7 +17,9 @@ Each mutant replaces the first occurrence of a text after an anchor in code (nev
 is an equivalent mutant). They cover one coefficient of each row family (one of them the smallest coefficient of
 the widest FD first derivative), the pair signs and offsets of the centred kernels, the division by the step, the
 mirror of a left-side kernel and its sign, the order of a flux difference, a dispatcher's case and its NaN, the NaN
-constant itself, and the wiring of the 3-D operators.
+constant itself, and the wiring of the 3-D operators; and, for the FD face kernels of phase 2, a coefficient of each
+new row type, the pair sign and step of a face derivative, the mirror read of a one-sided and of a biased kernel, and a
+biased dispatcher's case.
 
 | Item | Choice | Code |
 |---|---|---|
@@ -28,12 +30,17 @@ constant itself, and the wiring of the 3-D operators.
 
 ```bash
 python3 scripts/mutation_test.py --mode tests-gnu [--workdir DIR] [--only NAME ...]
-python3 scripts/mutation_test.py > exe/report/mutation-run-$(date +%F).txt   # a run the report tables pick up
+python3 scripts/mutation_test.py > notes/mutation-run-<date>[-<label>].txt   # recorded: the tables pick it up
 ```
+
+The tables below are those of the newest recorded run that lists exactly the current mutants
+(`docs/scripts/make_tables.py`): a run of an older mutant list documents an older suite.
 
 ## Results
 
-The recorded run of the release, `notes/mutation-run-2026-11-17.txt`:
+The recorded run of the current suite and its 30 mutants, `notes/mutation-run-2026-11-17-phase2.txt`. The earlier
+runs stay recorded: the first release's 22 mutants (`notes/mutation-run-2026-11-17.txt`) and the same against the suite
+with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`), every mutant killed in each.
 
 <!--@include: ./_tables/mutation-total.md-->
 
@@ -45,19 +52,13 @@ The recorded run of the release, `notes/mutation-run-2026-11-17.txt`:
 
 <!--@include: ./_tables/mutation-tests.md-->
 
-The same mutants against the current suite, which adds `gideon_test_spectral` and `gideon_vv_advection`
-([A3](/verification/spectral)):
-
-<!--@include: ./_tables/mutation-rerun-total.md-->
-
-<!--@include: ./_tables/mutation-rerun-tests.md-->
-
 ## Findings
 
 - Every mutant is killed, most by four or more programs: the suite is redundant by design, each contract checked
   from more than one side.
-- Only `gideon_test_dispatch` kills `dispatch-no-nan`: an order without a kernel is exercised nowhere else among the
-  1-D operators. `gideon_test_golden` and `gideon_test_properties` are the only ones that kill `scale-fv-d6-ur2`: the
+- Only `gideon_test_dispatch` kills `dispatch-no-nan` and `dispatch-wrong-kernel-bl`: an order without a kernel, and
+  the biased dispatchers (which have no ADAM counterpart to compare with), are exercised nowhere else among the 1-D
+  operators. `gideon_test_golden` and `gideon_test_properties` are the only ones that kill `scale-fv-d6-ur2`: the
   sixth-derivative upwind kernels have no ADAM counterpart (audit C), the exactness test runs at $\Delta s = 1$ where a
   wrong power of the step is invisible, and in R8P the kernel has no plateau ([A1](/verification/orders)): a kernel
   that does not converge is reported unresolved, not failed (the mutant's error stays near its target while the

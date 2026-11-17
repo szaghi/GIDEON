@@ -10,6 +10,7 @@ compiled program in `docs/examples/src/` and its output, below the code, is that
 | [Ghost cells for a window](/cookbook/ghosts) | how many ghost cells each operator needs on each side, by order, derived from its window |
 | [Replace ADAM's FDV calls](/cookbook/from-adam) | the GIDEON call for each ADAM routine, the index map, what changes numerically |
 | [Averages and point values](/cookbook/deconvolution) | when a finite-volume solver must convert averages to point values and back, and at which order |
+| [Face values from point values](/cookbook/face-from-points) | a viscous flux at the faces, an upwind-biased face value, the value at a boundary face, from point values |
 | [A run-time order, fast](/cookbook/run-time-order) | the dispatcher's cost, and how to pay it once instead of at every point |
 | [Single and quadruple precision](/cookbook/precision) | the R4P and R16P builds, what each verifies, `GIDEON_NAN` |
 | [Add an operator](/cookbook/new-operator) | a new family through the generator: derive, cross-check, emit, test, the golden-file rule |

@@ -86,21 +86,22 @@ the window offset): a mutant that survives is a defect the suite cannot see ([Mu
 `gideon_test_golden` reads the golden file kernel by kernel in registry order: any new kernel makes the committed file
 too short or out of order, and the test stops. The rule (`src/tests/gideon_test_golden.F90`): **a golden file is
 never edited; a deliberate change of results gets a new file and becomes the test's default path.** For the next
-version, v2:
+version, v3 (v2 is phase 2's, the FD face kernels):
 
-1. in `gideon_test_golden.F90`, set the three `GOLDEN` paths to `gideon_golden_v2.txt`, `gideon_golden_r4_v2.txt`,
-   `gideon_golden_r16_v2.txt`, and the version in the header line the `write` mode prints;
+1. in `gideon_test_golden.F90`, set the three `GOLDEN` paths to `gideon_golden_v3.txt`, `gideon_golden_r4_v3.txt`,
+   `gideon_golden_r16_v3.txt`, and `VERSION`, the version the `write` mode prints in the header line;
 2. write each file with the optimised gfortran build of its kind, from the repository root (the `write` mode refuses
    to overwrite an existing file):
 
    ```bash
-   fobis build --mode tests-gnu     && exe/gideon_test_golden write src/tests/golden/gideon_golden_v2.txt
-   fobis build --mode tests-gnu-r4  && exe-r4/gideon_test_golden write src/tests/golden/gideon_golden_r4_v2.txt
-   fobis build --mode tests-gnu-r16 && exe-r16/gideon_test_golden write src/tests/golden/gideon_golden_r16_v2.txt
+   fobis build --mode tests-gnu     && exe/gideon_test_golden write src/tests/golden/gideon_golden_v3.txt
+   fobis build --mode tests-gnu-r4  && exe-r4/gideon_test_golden write src/tests/golden/gideon_golden_r4_v3.txt
+   fobis build --mode tests-gnu-r16 && exe-r16/gideon_test_golden write src/tests/golden/gideon_golden_r16_v3.txt
    ```
 
-3. diff v2 against v1 on the kernels that existed: they must be identical (the new file adds values, it changes none);
-4. record in the test's header comment what v2 changed and why, as the line of v1 does.
+3. diff v3 against v2 on the kernels that existed: they must be identical (the new file adds values, it changes none);
+   the new families are appended in the generator's `build()`, so the old kernels keep their lines;
+4. record in the test's header comment what v3 changed and why, as the lines of v1 and v2 do.
 
 A change that alters existing values (a different row, a different summation order) follows the same rule, and its
 reason is the commit's subject.

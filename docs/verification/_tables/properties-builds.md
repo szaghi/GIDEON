@@ -2,7 +2,7 @@
 
 | Build | Kernels (properties) | Failures | Kernels (dispatch) | Failures |
 |---|---|---|---|---|
-| gfortran, R4P | 243 | 0 | 243 | 0 |
-| gfortran, R8P | 243 | 0 | 243 | 0 |
-| gfortran, R16P | 243 | 0 | 243 | 0 |
-| nvfortran -acc, R8P | 243 | 0 | 243 | 0 |
+| gfortran, R4P | 288 | 0 | 288 | 0 |
+| gfortran, R8P | 288 | 0 | 288 | 0 |
+| gfortran, R16P | 288 | 0 | 288 | 0 |
+| nvfortran -acc, R8P | 288 | 0 | 288 | 0 |

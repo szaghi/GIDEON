@@ -14,8 +14,8 @@ program gideon_test_order
 !<
 !< A kernel with no plateau in the working precision is listed as unresolved, not failed: in double precision the
 !< widest upwind stencils (7 to 9 cells) leave their pre-asymptotic range only where round-off already dominates,
-!< whatever the function (truncation over round-off depends on the wavenumber times h alone): R8P resolves 96 of the
-!< 243 kernels, R4P 11. The quadruple-precision build (tests-gnu-r16, host only) resolves all 243: that is where the
+!< whatever the function (truncation over round-off depends on the wavenumber times h alone): R8P resolves 119 of the
+!< 288 kernels, R4P 17. The quadruple-precision build (tests-gnu-r16, host only) resolves all 288: that is where the
 !< orders of the compiled kernels are observed, every one. The generator measures the rows themselves at 100 digits.
 !<
 !< Report mode (scripts/run_report.sh, the documentation's data): with the environment variable GIDEON_REPORT_DIR set,

@@ -230,7 +230,7 @@ def family_regex(name: str) -> re.Pattern[str]:
     out.append(re.escape(name[i:]))
     # a family name begins its members; a plain name is itself or a dispatcher-like stem of kernels (`..._c` -> `..._c2`)
     tail = '' if i else r'(\d+)?$'
-    if i == 0 and not re.search(r'_(c|ur|ul)$', name):
+    if i == 0 and not re.search(r'_(c|ur|ul|br|bl)$', name):
         tail = '$'
     return re.compile('^' + ''.join(out) + tail)
 
