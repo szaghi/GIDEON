@@ -39,6 +39,25 @@ public :: gideon_fd_d5_c6
 public :: gideon_fd_d6_c2
 public :: gideon_fd_d6_c4
 public :: gideon_fd_d6_c6
+public :: gideon_fd_face_d1_c2
+public :: gideon_fd_face_d1_c4
+public :: gideon_fd_face_d1_c6
+public :: gideon_fd_face_d1_c8
+public :: gideon_fd_face_d1_c10
+public :: gideon_fd_face_d2_c2
+public :: gideon_fd_face_d2_c4
+public :: gideon_fd_face_d2_c6
+public :: gideon_fd_face_d2_c8
+public :: gideon_fd_face_d3_c2
+public :: gideon_fd_face_d3_c4
+public :: gideon_fd_face_d3_c6
+public :: gideon_fd_face_d3_c8
+public :: gideon_fd_face_d4_c2
+public :: gideon_fd_face_d4_c4
+public :: gideon_fd_face_d4_c6
+public :: gideon_fd_face_d5_c2
+public :: gideon_fd_face_d5_c4
+public :: gideon_fd_face_d5_c6
 contains
    pure subroutine gideon_fd_face_c2(q, f)
    !< Value at the face between nodes 0 and 1, centred, order 2, from point values q(0:1).
@@ -464,5 +483,290 @@ contains
    enddo
    d = d/ds/ds/ds/ds/ds/ds
    endsubroutine gideon_fd_d6_c6
+
+   pure subroutine gideon_fd_face_d1_c2(q, ds, d)
+   !< First derivative at the face between nodes 0 and 1, centred, order 2, from point values q(0:1).
+   real(R_P),    intent(in)  :: q(0:1) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 1
+      d = d + FD_FACE_D1_S1(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds
+   endsubroutine gideon_fd_face_d1_c2
+
+   pure subroutine gideon_fd_face_d1_c4(q, ds, d)
+   !< First derivative at the face between nodes 0 and 1, centred, order 4, from point values q(-1:2).
+   real(R_P),    intent(in)  :: q(-1:2) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 2
+      d = d + FD_FACE_D1_S2(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds
+   endsubroutine gideon_fd_face_d1_c4
+
+   pure subroutine gideon_fd_face_d1_c6(q, ds, d)
+   !< First derivative at the face between nodes 0 and 1, centred, order 6, from point values q(-2:3).
+   real(R_P),    intent(in)  :: q(-2:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 3
+      d = d + FD_FACE_D1_S3(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds
+   endsubroutine gideon_fd_face_d1_c6
+
+   pure subroutine gideon_fd_face_d1_c8(q, ds, d)
+   !< First derivative at the face between nodes 0 and 1, centred, order 8, from point values q(-3:4).
+   real(R_P),    intent(in)  :: q(-3:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 4
+      d = d + FD_FACE_D1_S4(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds
+   endsubroutine gideon_fd_face_d1_c8
+
+   pure subroutine gideon_fd_face_d1_c10(q, ds, d)
+   !< First derivative at the face between nodes 0 and 1, centred, order 10, from point values q(-4:5).
+   real(R_P),    intent(in)  :: q(-4:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 5
+      d = d + FD_FACE_D1_S5(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds
+   endsubroutine gideon_fd_face_d1_c10
+
+   pure subroutine gideon_fd_face_d2_c2(q, ds, d)
+   !< Second derivative at the face between nodes 0 and 1, centred, order 2, from point values q(-1:2).
+   real(R_P),    intent(in)  :: q(-1:2) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 2
+      d = d + FD_FACE_D2_S2(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds
+   endsubroutine gideon_fd_face_d2_c2
+
+   pure subroutine gideon_fd_face_d2_c4(q, ds, d)
+   !< Second derivative at the face between nodes 0 and 1, centred, order 4, from point values q(-2:3).
+   real(R_P),    intent(in)  :: q(-2:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 3
+      d = d + FD_FACE_D2_S3(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds
+   endsubroutine gideon_fd_face_d2_c4
+
+   pure subroutine gideon_fd_face_d2_c6(q, ds, d)
+   !< Second derivative at the face between nodes 0 and 1, centred, order 6, from point values q(-3:4).
+   real(R_P),    intent(in)  :: q(-3:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 4
+      d = d + FD_FACE_D2_S4(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds
+   endsubroutine gideon_fd_face_d2_c6
+
+   pure subroutine gideon_fd_face_d2_c8(q, ds, d)
+   !< Second derivative at the face between nodes 0 and 1, centred, order 8, from point values q(-4:5).
+   real(R_P),    intent(in)  :: q(-4:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 5
+      d = d + FD_FACE_D2_S5(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds
+   endsubroutine gideon_fd_face_d2_c8
+
+   pure subroutine gideon_fd_face_d3_c2(q, ds, d)
+   !< Third derivative at the face between nodes 0 and 1, centred, order 2, from point values q(-1:2).
+   real(R_P),    intent(in)  :: q(-1:2) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 2
+      d = d + FD_FACE_D3_S2(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds
+   endsubroutine gideon_fd_face_d3_c2
+
+   pure subroutine gideon_fd_face_d3_c4(q, ds, d)
+   !< Third derivative at the face between nodes 0 and 1, centred, order 4, from point values q(-2:3).
+   real(R_P),    intent(in)  :: q(-2:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 3
+      d = d + FD_FACE_D3_S3(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds
+   endsubroutine gideon_fd_face_d3_c4
+
+   pure subroutine gideon_fd_face_d3_c6(q, ds, d)
+   !< Third derivative at the face between nodes 0 and 1, centred, order 6, from point values q(-3:4).
+   real(R_P),    intent(in)  :: q(-3:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 4
+      d = d + FD_FACE_D3_S4(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds
+   endsubroutine gideon_fd_face_d3_c6
+
+   pure subroutine gideon_fd_face_d3_c8(q, ds, d)
+   !< Third derivative at the face between nodes 0 and 1, centred, order 8, from point values q(-4:5).
+   real(R_P),    intent(in)  :: q(-4:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 5
+      d = d + FD_FACE_D3_S5(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds
+   endsubroutine gideon_fd_face_d3_c8
+
+   pure subroutine gideon_fd_face_d4_c2(q, ds, d)
+   !< Fourth derivative at the face between nodes 0 and 1, centred, order 2, from point values q(-2:3).
+   real(R_P),    intent(in)  :: q(-2:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 3
+      d = d + FD_FACE_D4_S3(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d4_c2
+
+   pure subroutine gideon_fd_face_d4_c4(q, ds, d)
+   !< Fourth derivative at the face between nodes 0 and 1, centred, order 4, from point values q(-3:4).
+   real(R_P),    intent(in)  :: q(-3:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 4
+      d = d + FD_FACE_D4_S4(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d4_c4
+
+   pure subroutine gideon_fd_face_d4_c6(q, ds, d)
+   !< Fourth derivative at the face between nodes 0 and 1, centred, order 6, from point values q(-4:5).
+   real(R_P),    intent(in)  :: q(-4:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 5
+      d = d + FD_FACE_D4_S5(m)*(q(m) + q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d4_c6
+
+   pure subroutine gideon_fd_face_d5_c2(q, ds, d)
+   !< Fifth derivative at the face between nodes 0 and 1, centred, order 2, from point values q(-2:3).
+   real(R_P),    intent(in)  :: q(-2:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 3
+      d = d + FD_FACE_D5_S3(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d5_c2
+
+   pure subroutine gideon_fd_face_d5_c4(q, ds, d)
+   !< Fifth derivative at the face between nodes 0 and 1, centred, order 4, from point values q(-3:4).
+   real(R_P),    intent(in)  :: q(-3:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 4
+      d = d + FD_FACE_D5_S4(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d5_c4
+
+   pure subroutine gideon_fd_face_d5_c6(q, ds, d)
+   !< Fifth derivative at the face between nodes 0 and 1, centred, order 6, from point values q(-4:5).
+   real(R_P),    intent(in)  :: q(-4:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: ds       !< Grid step.
+   real(R_P),    intent(out) :: d        !< Result.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d = 0._R_P
+   do m=1, 5
+      d = d + FD_FACE_D5_S5(m)*(q(m) - q(1-m))
+   enddo
+   d = d/ds/ds/ds/ds/ds
+   endsubroutine gideon_fd_face_d5_c6
 
 endmodule gideon_fd_centred

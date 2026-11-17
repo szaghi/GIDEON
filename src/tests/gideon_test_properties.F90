@@ -26,7 +26,7 @@ do trial=1, 20
       jr = kmirror(id)
       qm = 0._R_P
       do o=-WMAX + 1, WMAX - 1
-         if (kgeom(id) == 3) then
+         if (kgeom(id) == 2 .or. kgeom(id) == 3) then ! face at 0 (points at o - 1/2, or cells [o-1, o])
             qm(o) = q(1 - o)
          else
             qm(o) = q(-o)

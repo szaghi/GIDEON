@@ -13,7 +13,7 @@ private
 public :: NK, WMAX, kname, kdata, kbias, kgeom, ktarget, kn, korder, klo, khi, kdegree, ksumabs
 public :: kzero_const, kerror
 public :: kmirror, apply, apply_dev, apply_dispatch, apply_dispatch_bad
-integer(I4P), parameter :: NK = 243 !< Number of kernels.
+integer(I4P), parameter :: NK = 288 !< Number of kernels.
 integer(I4P), parameter :: WMAX = 16 !< Half-width of the windows the tests pass.
 character(len=24), parameter :: kname(NK) = ['fd_face_c2              ', 'fd_face_c4              ', &
                                                'fd_face_c6              ', 'fd_face_c8              ', &
@@ -136,7 +136,29 @@ character(len=24), parameter :: kname(NK) = ['fd_face_c2              ', 'fd_fac
                                                'fd_average_c6           ', 'fv_point_c8             ', &
                                                'fd_average_c8           ', 'fv_point_c10            ', &
                                                'fd_average_c10          ', 'fv_point_c12            ', &
-                                               'fd_average_c12          ']
+                                               'fd_average_c12          ', 'fd_face_d1_c2           ', &
+                                               'fd_face_d1_c4           ', 'fd_face_d1_c6           ', &
+                                               'fd_face_d1_c8           ', 'fd_face_d1_c10          ', &
+                                               'fd_face_d2_c2           ', 'fd_face_d2_c4           ', &
+                                               'fd_face_d2_c6           ', 'fd_face_d2_c8           ', &
+                                               'fd_face_d3_c2           ', 'fd_face_d3_c4           ', &
+                                               'fd_face_d3_c6           ', 'fd_face_d3_c8           ', &
+                                               'fd_face_d4_c2           ', 'fd_face_d4_c4           ', &
+                                               'fd_face_d4_c6           ', 'fd_face_d5_c2           ', &
+                                               'fd_face_d5_c4           ', 'fd_face_d5_c6           ', &
+                                               'fd_face_ur1             ', 'fd_face_ul1             ', &
+                                               'fd_face_ur2             ', 'fd_face_ul2             ', &
+                                               'fd_face_ur3             ', 'fd_face_ul3             ', &
+                                               'fd_face_ur4             ', 'fd_face_ul4             ', &
+                                               'fd_face_ur5             ', 'fd_face_ul5             ', &
+                                               'fd_face_ur6             ', 'fd_face_ul6             ', &
+                                               'fd_face_ur7             ', 'fd_face_ul7             ', &
+                                               'fd_face_ur8             ', 'fd_face_ul8             ', &
+                                               'fd_face_ur9             ', 'fd_face_ul9             ', &
+                                               'fd_face_br3             ', 'fd_face_bl3             ', &
+                                               'fd_face_br5             ', 'fd_face_bl5             ', &
+                                               'fd_face_br7             ', 'fd_face_bl7             ', &
+                                               'fd_face_br9             ', 'fd_face_bl9             ']
 character(len=2), parameter :: kdata(NK) = ['fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
                                               'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
                                               'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fv', 'fv', 'fv', 'fv', &
@@ -159,7 +181,11 @@ character(len=2), parameter :: kdata(NK) = ['fd', 'fd', 'fd', 'fd', 'fd', 'fd', 
                                               'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', &
                                               'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', 'fv', &
                                               'fv', 'fv', 'fv', 'fd', 'fv', 'fd', 'fv', 'fd', 'fv', 'fd', 'fv', &
-                                              'fd']
+                                              'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
+                                              'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
+                                              'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
+                                              'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', 'fd', &
+                                              'fd', 'fd']
 character(len=2), parameter :: kbias(NK) = ['c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', &
                                               'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', &
                                               'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', &
@@ -182,7 +208,11 @@ character(len=2), parameter :: kbias(NK) = ['c ', 'c ', 'c ', 'c ', 'c ', 'c ', 
                                               'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', &
                                               'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', &
                                               'ur', 'ul', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', &
-                                              'c ']
+                                              'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', &
+                                              'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'c ', 'ur', 'ul', &
+                                              'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', 'ul', 'ur', &
+                                              'ul', 'ur', 'ul', 'ur', 'ul', 'br', 'bl', 'br', 'bl', 'br', 'bl', &
+                                              'br', 'bl']
 integer(I4P), parameter :: kgeom(NK) = [2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
                                           1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
                                           3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, &
@@ -193,7 +223,9 @@ integer(I4P), parameter :: kgeom(NK) = [2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1
                                           4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, &
                                           4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, &
                                           4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, &
-                                          4, 4, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1]
+                                          4, 4, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+                                          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
+                                          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
 integer(I4P), parameter :: ktarget(NK) = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
                                             1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
@@ -204,7 +236,9 @@ integer(I4P), parameter :: ktarget(NK) = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
                                             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
                                             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
-                                            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]
+                                            2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, &
+                                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
+                                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 integer(I4P), parameter :: kn(NK) = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, &
                                        5, 6, 6, 6, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, &
                                        4, 5, 5, 5, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, &
@@ -215,7 +249,8 @@ integer(I4P), parameter :: kn(NK) = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2
                                        1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, &
                                        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, &
                                        5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, &
-                                       0, 0]
+                                       0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 0, 0, 0, &
+                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 integer(I4P), parameter :: korder(NK) = [2, 4, 6, 8, 10, 2, 4, 6, 8, 10, 2, 4, 6, 8, 10, 2, 4, 6, 8, 2, 4, 6, &
                                            8, 2, 4, 6, 2, 4, 6, 2, 4, 6, 8, 10, 2, 4, 6, 8, 10, 2, 4, 6, 8, 2, &
                                            4, 6, 8, 2, 4, 6, 2, 4, 6, 2, 4, 6, 8, 10, 2, 4, 6, 8, 10, 2, 4, 6, &
@@ -226,7 +261,9 @@ integer(I4P), parameter :: korder(NK) = [2, 4, 6, 8, 10, 2, 4, 6, 8, 10, 2, 4, 6
                                            2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 1, 1, 2, 2, 3, 3, 4, 4, &
                                            5, 5, 6, 6, 7, 7, 8, 8, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 1, &
                                            1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 1, 1, &
-                                           2, 2, 3, 3, 4, 4, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12]
+                                           2, 2, 3, 3, 4, 4, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 2, 4, 6, 8, 10, &
+                                           2, 4, 6, 8, 2, 4, 6, 8, 2, 4, 6, 2, 4, 6, 1, 1, 2, 2, 3, 3, 4, 4, 5, &
+                                           5, 6, 6, 7, 7, 8, 8, 9, 9, 3, 3, 5, 5, 7, 7, 9, 9]
 integer(I4P), parameter :: klo(NK) = [0, -1, -2, -3, -4, -1, -2, -3, -4, -5, -1, -2, -3, -4, -5, -2, -3, -4, &
                                         -5, -2, -3, -4, -5, -3, -4, -5, -3, -4, -5, 0, -1, -2, -3, -4, 0, -1, &
                                         -2, -3, -4, -1, -2, -3, -4, -1, -2, -3, -4, -2, -3, -4, -2, -3, -4, -1, &
@@ -239,7 +276,9 @@ integer(I4P), parameter :: klo(NK) = [0, -1, -2, -3, -4, -1, -2, -3, -4, -5, -1,
                                         -9, 0, -2, 0, -3, 0, -4, 0, -5, 0, -6, 0, -7, 0, -8, 0, -9, 0, -3, 0, &
                                         -4, 0, -5, 0, -6, 0, -7, 0, -8, 0, -9, 0, -4, 0, -5, 0, -6, 0, -7, 0, &
                                         -8, 0, -9, 0, -5, 0, -6, 0, -7, 0, -8, 0, -9, 0, -6, 0, -7, 0, -8, 0, &
-                                        -9, -1, -1, -2, -2, -3, -3, -4, -4, -5, -5]
+                                        -9, -1, -1, -2, -2, -3, -3, -4, -4, -5, -5, 0, -1, -2, -3, -4, -1, -2, &
+                                        -3, -4, -1, -2, -3, -4, -2, -3, -4, -2, -3, -4, 1, 0, 1, -1, 1, -2, 1, &
+                                        -3, 1, -4, 1, -5, 1, -6, 1, -7, 1, -8, 0, -1, -1, -2, -2, -3, -3, -4]
 integer(I4P), parameter :: khi(NK) = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, &
                                         4, 5, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, &
                                         4, 5, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, &
@@ -250,7 +289,8 @@ integer(I4P), parameter :: khi(NK) = [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 
                                         0, 8, 0, 9, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 3, 0, 4, &
                                         0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 5, &
                                         0, 6, 0, 7, 0, 8, 0, 9, 0, 6, 0, 7, 0, 8, 0, 9, 0, 1, 1, 2, 2, 3, 3, 4, &
-                                        4, 5, 5]
+                                        4, 5, 5, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 3, 4, 5, 3, 4, 5, 1, 0, &
+                                        2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 2, 1, 3, 2, 4, 3, 5, 4]
 integer(I4P), parameter :: kdegree(NK) = [1, 3, 5, 7, 9, 2, 4, 6, 8, 10, 3, 5, 7, 9, 11, 4, 6, 8, 10, 5, 7, 9, &
                                             11, 6, 8, 10, 7, 9, 11, 1, 3, 5, 7, 9, 2, 4, 6, 8, 10, 3, 5, 7, 9, &
                                             4, 6, 8, 10, 5, 7, 9, 6, 8, 10, 2, 4, 6, 8, 10, 3, 5, 7, 9, 11, 4, &
@@ -262,7 +302,9 @@ integer(I4P), parameter :: kdegree(NK) = [1, 3, 5, 7, 9, 2, 4, 6, 8, 10, 3, 5, 7
                                             2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 3, 3, 4, 4, 5, 5, &
                                             6, 6, 7, 7, 8, 8, 9, 9, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 5, 5, &
                                             6, 6, 7, 7, 8, 8, 9, 9, 6, 6, 7, 7, 8, 8, 9, 9, 3, 3, 5, 5, 7, 7, &
-                                            9, 9, 11, 11]
+                                            9, 9, 11, 11, 2, 4, 6, 8, 10, 3, 5, 7, 9, 4, 6, 8, 10, 5, 7, 9, 6, &
+                                            8, 10, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 2, 2, &
+                                            4, 4, 6, 6, 8, 8]
 real(R_P), parameter :: ksumabs(NK) = [1.00000000000000000_R_P*1e+00_R_P, 1.25000000000000000_R_P*1e+00_R_P, &
                                          1.39062500000000000_R_P*1e+00_R_P, 1.48828125000000000_R_P*1e+00_R_P, &
                                          1.56304931640625000_R_P*1e+00_R_P, 1.00000000000000000_R_P*1e+00_R_P, &
@@ -384,7 +426,29 @@ real(R_P), parameter :: ksumabs(NK) = [1.00000000000000000_R_P*1e+00_R_P, 1.2500
                                          1.01180555555555562_R_P*1e+00_R_P, 1.28630952380952390_R_P*1e+00_R_P, &
                                          1.02090773809523805_R_P*1e+00_R_P, 1.31669146825396832_R_P*1e+00_R_P, &
                                          1.02786519476135352_R_P*1e+00_R_P, 1.33906362734487727_R_P*1e+00_R_P, &
-                                         1.03336016564193112_R_P*1e+00_R_P]
+                                         1.03336016564193112_R_P*1e+00_R_P, 2.00000000000000000_R_P*1e+00_R_P, &
+                                         2.33333333333333348_R_P*1e+00_R_P, 2.48333333333333339_R_P*1e+00_R_P, &
+                                         2.57261904761904781_R_P*1e+00_R_P, 2.63338293650793664_R_P*1e+00_R_P, &
+                                         2.00000000000000000_R_P*1e+00_R_P, 3.25000000000000000_R_P*1e+00_R_P, &
+                                         4.14930555555555536_R_P*1e+00_R_P, 4.85004340277777768_R_P*1e+00_R_P, &
+                                         8.00000000000000000_R_P*1e+00_R_P, 1.20000000000000000_R_P*1e+01_R_P, &
+                                         1.44666666666666668_R_P*1e+01_R_P, 1.61751322751322739_R_P*1e+01_R_P, &
+                                         6.00000000000000000_R_P*1e+00_R_P, 1.18333333333333339_R_P*1e+01_R_P, &
+                                         1.69739583333333321_R_P*1e+01_R_P, 3.20000000000000000_R_P*1e+01_R_P, &
+                                         5.86666666666666643_R_P*1e+01_R_P, 7.95555555555555571_R_P*1e+01_R_P, &
+                                         1.00000000000000000_R_P*1e+00_R_P, 1.00000000000000000_R_P*1e+00_R_P, &
+                                         2.00000000000000000_R_P*1e+00_R_P, 2.00000000000000000_R_P*1e+00_R_P, &
+                                         3.50000000000000000_R_P*1e+00_R_P, 3.50000000000000000_R_P*1e+00_R_P, &
+                                         6.00000000000000000_R_P*1e+00_R_P, 6.00000000000000000_R_P*1e+00_R_P, &
+                                         1.03750000000000000_R_P*1e+01_R_P, 1.03750000000000000_R_P*1e+01_R_P, &
+                                         1.82500000000000000_R_P*1e+01_R_P, 1.82500000000000000_R_P*1e+01_R_P, &
+                                         3.26875000000000000_R_P*1e+01_R_P, 3.26875000000000000_R_P*1e+01_R_P, &
+                                         5.95000000000000000_R_P*1e+01_R_P, 5.95000000000000000_R_P*1e+01_R_P, &
+                                         1.09773437500000000_R_P*1e+02_R_P, 1.09773437500000000_R_P*1e+02_R_P, &
+                                         1.25000000000000000_R_P*1e+00_R_P, 1.25000000000000000_R_P*1e+00_R_P, &
+                                         1.39062500000000000_R_P*1e+00_R_P, 1.39062500000000000_R_P*1e+00_R_P, &
+                                         1.48828125000000000_R_P*1e+00_R_P, 1.48828125000000000_R_P*1e+00_R_P, &
+                                         1.56304931640625000_R_P*1e+00_R_P, 1.56304931640625000_R_P*1e+00_R_P]
 real(R_P), parameter :: kerror(NK) = [1._R_P/4._R_P, -9._R_P/16._R_P, 225._R_P/64._R_P, -11025._R_P/256._R_P, &
                                         893025._R_P/1024._R_P, 1._R_P, -4._R_P, 36._R_P, -576._R_P, 14400._R_P, &
                                         2._R_P, -8._R_P, 72._R_P, -1152._R_P, 28800._R_P, 30._R_P, -294._R_P, &
@@ -432,7 +496,20 @@ real(R_P), parameter :: kerror(NK) = [1._R_P/4._R_P, -9._R_P/16._R_P, 225._R_P/6
                                         -45556560._R_P, -9._R_P/80._R_P, 17._R_P/240._R_P, 225._R_P/448._R_P, &
                                         -367._R_P/1344._R_P, -1225._R_P/256._R_P, 27859._R_P/11520._R_P, &
                                         893025._R_P/11264._R_P, -1295803._R_P/33792._R_P, &
-                                        -108056025._R_P/53248._R_P, 5329242827._R_P/5591040._R_P]
+                                        -108056025._R_P/53248._R_P, 5329242827._R_P/5591040._R_P, &
+                                        1._R_P/4._R_P, -9._R_P/16._R_P, 225._R_P/64._R_P, -11025._R_P/256._R_P, &
+                                        893025._R_P/1024._R_P, 5._R_P, -259._R_P/8._R_P, 3229._R_P/8._R_P, &
+                                        -1057221._R_P/128._R_P, 15._R_P, -777._R_P/8._R_P, 9687._R_P/8._R_P, &
+                                        -3171663._R_P/128._R_P, 210._R_P, -2961._R_P, 259215._R_P/4._R_P, &
+                                        1050._R_P, -14805._R_P, 1296075._R_P/4._R_P, 1._R_P/2._R_P, &
+                                        -1._R_P/2._R_P, -3._R_P/4._R_P, -3._R_P/4._R_P, 15._R_P/8._R_P, &
+                                        -15._R_P/8._R_P, -105._R_P/16._R_P, -105._R_P/16._R_P, &
+                                        945._R_P/32._R_P, -945._R_P/32._R_P, -10395._R_P/64._R_P, &
+                                        -10395._R_P/64._R_P, 135135._R_P/128._R_P, -135135._R_P/128._R_P, &
+                                        -2027025._R_P/256._R_P, -2027025._R_P/256._R_P, 34459425._R_P/512._R_P, &
+                                        -34459425._R_P/512._R_P, -3._R_P/8._R_P, 3._R_P/8._R_P, &
+                                        45._R_P/32._R_P, -45._R_P/32._R_P, -1575._R_P/128._R_P, &
+                                        1575._R_P/128._R_P, 99225._R_P/512._R_P, -99225._R_P/512._R_P]
 logical, parameter :: kzero_const(NK) = [.false., .false., .false., .false., .false., .true., .true., .true., &
                                            .true., .true., .false., .false., .false., .false., .false., .true., &
                                            .true., .true., .true., .false., .false., .false., .false., .true., &
@@ -465,6 +542,12 @@ logical, parameter :: kzero_const(NK) = [.false., .false., .false., .false., .fa
                                            .true., .true., .true., .true., .true., .true., .true., .true., &
                                            .true., .true., .true., .true., .true., .true., .true., .true., &
                                            .false., .false., .false., .false., .false., .false., .false., &
+                                           .false., .false., .false., .true., .true., .true., .true., .true., &
+                                           .false., .false., .false., .false., .true., .true., .true., .true., &
+                                           .false., .false., .false., .true., .true., .true., .false., .false., &
+                                           .false., .false., .false., .false., .false., .false., .false., &
+                                           .false., .false., .false., .false., .false., .false., .false., &
+                                           .false., .false., .false., .false., .false., .false., .false., &
                                            .false., .false., .false.]
 integer(I4P), parameter :: kmirror(NK) = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
                                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -479,7 +562,9 @@ integer(I4P), parameter :: kmirror(NK) = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                             186, 0, 188, 0, 190, 0, 192, 0, 194, 0, 196, 0, 198, 0, 200, 0, &
                                             202, 0, 204, 0, 206, 0, 208, 0, 210, 0, 212, 0, 214, 0, 216, 0, &
                                             218, 0, 220, 0, 222, 0, 224, 0, 226, 0, 228, 0, 230, 0, 232, 0, 0, &
-                                            0, 0, 0, 0, 0, 0, 0, 0]
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                            0, 0, 0, 0, 0, 0, 263, 0, 265, 0, 267, 0, 269, 0, 271, 0, 273, 0, &
+                                            275, 0, 277, 0, 279, 0, 281, 0, 283, 0, 285, 0, 287]
 contains
    subroutine apply(id, q, ds, r)
    !< Apply kernel `id` to its window of q (offsets klo(id)..khi(id)).
@@ -731,6 +816,51 @@ contains
    case(241) ; call gideon_fd_average_c10(q(-4:4), r)
    case(242) ; call gideon_fv_point_c12(q(-5:5), r)
    case(243) ; call gideon_fd_average_c12(q(-5:5), r)
+   case(244) ; call gideon_fd_face_d1_c2(q(0:1), ds, r)
+   case(245) ; call gideon_fd_face_d1_c4(q(-1:2), ds, r)
+   case(246) ; call gideon_fd_face_d1_c6(q(-2:3), ds, r)
+   case(247) ; call gideon_fd_face_d1_c8(q(-3:4), ds, r)
+   case(248) ; call gideon_fd_face_d1_c10(q(-4:5), ds, r)
+   case(249) ; call gideon_fd_face_d2_c2(q(-1:2), ds, r)
+   case(250) ; call gideon_fd_face_d2_c4(q(-2:3), ds, r)
+   case(251) ; call gideon_fd_face_d2_c6(q(-3:4), ds, r)
+   case(252) ; call gideon_fd_face_d2_c8(q(-4:5), ds, r)
+   case(253) ; call gideon_fd_face_d3_c2(q(-1:2), ds, r)
+   case(254) ; call gideon_fd_face_d3_c4(q(-2:3), ds, r)
+   case(255) ; call gideon_fd_face_d3_c6(q(-3:4), ds, r)
+   case(256) ; call gideon_fd_face_d3_c8(q(-4:5), ds, r)
+   case(257) ; call gideon_fd_face_d4_c2(q(-2:3), ds, r)
+   case(258) ; call gideon_fd_face_d4_c4(q(-3:4), ds, r)
+   case(259) ; call gideon_fd_face_d4_c6(q(-4:5), ds, r)
+   case(260) ; call gideon_fd_face_d5_c2(q(-2:3), ds, r)
+   case(261) ; call gideon_fd_face_d5_c4(q(-3:4), ds, r)
+   case(262) ; call gideon_fd_face_d5_c6(q(-4:5), ds, r)
+   case(263) ; call gideon_fd_face_ur1(q(1:1), r)
+   case(264) ; call gideon_fd_face_ul1(q(0:0), r)
+   case(265) ; call gideon_fd_face_ur2(q(1:2), r)
+   case(266) ; call gideon_fd_face_ul2(q(-1:0), r)
+   case(267) ; call gideon_fd_face_ur3(q(1:3), r)
+   case(268) ; call gideon_fd_face_ul3(q(-2:0), r)
+   case(269) ; call gideon_fd_face_ur4(q(1:4), r)
+   case(270) ; call gideon_fd_face_ul4(q(-3:0), r)
+   case(271) ; call gideon_fd_face_ur5(q(1:5), r)
+   case(272) ; call gideon_fd_face_ul5(q(-4:0), r)
+   case(273) ; call gideon_fd_face_ur6(q(1:6), r)
+   case(274) ; call gideon_fd_face_ul6(q(-5:0), r)
+   case(275) ; call gideon_fd_face_ur7(q(1:7), r)
+   case(276) ; call gideon_fd_face_ul7(q(-6:0), r)
+   case(277) ; call gideon_fd_face_ur8(q(1:8), r)
+   case(278) ; call gideon_fd_face_ul8(q(-7:0), r)
+   case(279) ; call gideon_fd_face_ur9(q(1:9), r)
+   case(280) ; call gideon_fd_face_ul9(q(-8:0), r)
+   case(281) ; call gideon_fd_face_br3(q(0:2), r)
+   case(282) ; call gideon_fd_face_bl3(q(-1:1), r)
+   case(283) ; call gideon_fd_face_br5(q(-1:3), r)
+   case(284) ; call gideon_fd_face_bl5(q(-2:2), r)
+   case(285) ; call gideon_fd_face_br7(q(-2:4), r)
+   case(286) ; call gideon_fd_face_bl7(q(-3:3), r)
+   case(287) ; call gideon_fd_face_br9(q(-3:5), r)
+   case(288) ; call gideon_fd_face_bl9(q(-4:4), r)
    case default ; error stop 'apply: no such kernel'
    endselect
    endsubroutine apply
@@ -987,6 +1117,51 @@ contains
    case(241) ; call gideon_fd_average_c10(q(-4:4), r)
    case(242) ; call gideon_fv_point_c12(q(-5:5), r)
    case(243) ; call gideon_fd_average_c12(q(-5:5), r)
+   case(244) ; call gideon_fd_face_d1_c2(q(0:1), ds, r)
+   case(245) ; call gideon_fd_face_d1_c4(q(-1:2), ds, r)
+   case(246) ; call gideon_fd_face_d1_c6(q(-2:3), ds, r)
+   case(247) ; call gideon_fd_face_d1_c8(q(-3:4), ds, r)
+   case(248) ; call gideon_fd_face_d1_c10(q(-4:5), ds, r)
+   case(249) ; call gideon_fd_face_d2_c2(q(-1:2), ds, r)
+   case(250) ; call gideon_fd_face_d2_c4(q(-2:3), ds, r)
+   case(251) ; call gideon_fd_face_d2_c6(q(-3:4), ds, r)
+   case(252) ; call gideon_fd_face_d2_c8(q(-4:5), ds, r)
+   case(253) ; call gideon_fd_face_d3_c2(q(-1:2), ds, r)
+   case(254) ; call gideon_fd_face_d3_c4(q(-2:3), ds, r)
+   case(255) ; call gideon_fd_face_d3_c6(q(-3:4), ds, r)
+   case(256) ; call gideon_fd_face_d3_c8(q(-4:5), ds, r)
+   case(257) ; call gideon_fd_face_d4_c2(q(-2:3), ds, r)
+   case(258) ; call gideon_fd_face_d4_c4(q(-3:4), ds, r)
+   case(259) ; call gideon_fd_face_d4_c6(q(-4:5), ds, r)
+   case(260) ; call gideon_fd_face_d5_c2(q(-2:3), ds, r)
+   case(261) ; call gideon_fd_face_d5_c4(q(-3:4), ds, r)
+   case(262) ; call gideon_fd_face_d5_c6(q(-4:5), ds, r)
+   case(263) ; call gideon_fd_face_ur1(q(1:1), r)
+   case(264) ; call gideon_fd_face_ul1(q(0:0), r)
+   case(265) ; call gideon_fd_face_ur2(q(1:2), r)
+   case(266) ; call gideon_fd_face_ul2(q(-1:0), r)
+   case(267) ; call gideon_fd_face_ur3(q(1:3), r)
+   case(268) ; call gideon_fd_face_ul3(q(-2:0), r)
+   case(269) ; call gideon_fd_face_ur4(q(1:4), r)
+   case(270) ; call gideon_fd_face_ul4(q(-3:0), r)
+   case(271) ; call gideon_fd_face_ur5(q(1:5), r)
+   case(272) ; call gideon_fd_face_ul5(q(-4:0), r)
+   case(273) ; call gideon_fd_face_ur6(q(1:6), r)
+   case(274) ; call gideon_fd_face_ul6(q(-5:0), r)
+   case(275) ; call gideon_fd_face_ur7(q(1:7), r)
+   case(276) ; call gideon_fd_face_ul7(q(-6:0), r)
+   case(277) ; call gideon_fd_face_ur8(q(1:8), r)
+   case(278) ; call gideon_fd_face_ul8(q(-7:0), r)
+   case(279) ; call gideon_fd_face_ur9(q(1:9), r)
+   case(280) ; call gideon_fd_face_ul9(q(-8:0), r)
+   case(281) ; call gideon_fd_face_br3(q(0:2), r)
+   case(282) ; call gideon_fd_face_bl3(q(-1:1), r)
+   case(283) ; call gideon_fd_face_br5(q(-1:3), r)
+   case(284) ; call gideon_fd_face_bl5(q(-2:2), r)
+   case(285) ; call gideon_fd_face_br7(q(-2:4), r)
+   case(286) ; call gideon_fd_face_bl7(q(-3:3), r)
+   case(287) ; call gideon_fd_face_br9(q(-3:5), r)
+   case(288) ; call gideon_fd_face_bl9(q(-4:4), r)
    case default ; r = GIDEON_NAN
    endselect
    endsubroutine apply_dev
@@ -1241,6 +1416,51 @@ contains
    case(241) ; call gideon_fd_average_c(10, q(-4:4), r)
    case(242) ; call gideon_fv_point_c(12, q(-5:5), r)
    case(243) ; call gideon_fd_average_c(12, q(-5:5), r)
+   case(244) ; call gideon_fd_face_d1_c(2, q(0:1), ds, r)
+   case(245) ; call gideon_fd_face_d1_c(4, q(-1:2), ds, r)
+   case(246) ; call gideon_fd_face_d1_c(6, q(-2:3), ds, r)
+   case(247) ; call gideon_fd_face_d1_c(8, q(-3:4), ds, r)
+   case(248) ; call gideon_fd_face_d1_c(10, q(-4:5), ds, r)
+   case(249) ; call gideon_fd_face_d2_c(2, q(-1:2), ds, r)
+   case(250) ; call gideon_fd_face_d2_c(4, q(-2:3), ds, r)
+   case(251) ; call gideon_fd_face_d2_c(6, q(-3:4), ds, r)
+   case(252) ; call gideon_fd_face_d2_c(8, q(-4:5), ds, r)
+   case(253) ; call gideon_fd_face_d3_c(2, q(-1:2), ds, r)
+   case(254) ; call gideon_fd_face_d3_c(4, q(-2:3), ds, r)
+   case(255) ; call gideon_fd_face_d3_c(6, q(-3:4), ds, r)
+   case(256) ; call gideon_fd_face_d3_c(8, q(-4:5), ds, r)
+   case(257) ; call gideon_fd_face_d4_c(2, q(-2:3), ds, r)
+   case(258) ; call gideon_fd_face_d4_c(4, q(-3:4), ds, r)
+   case(259) ; call gideon_fd_face_d4_c(6, q(-4:5), ds, r)
+   case(260) ; call gideon_fd_face_d5_c(2, q(-2:3), ds, r)
+   case(261) ; call gideon_fd_face_d5_c(4, q(-3:4), ds, r)
+   case(262) ; call gideon_fd_face_d5_c(6, q(-4:5), ds, r)
+   case(263) ; call gideon_fd_face_ur(1, q(1:1), r)
+   case(264) ; call gideon_fd_face_ul(1, q(0:0), r)
+   case(265) ; call gideon_fd_face_ur(2, q(1:2), r)
+   case(266) ; call gideon_fd_face_ul(2, q(-1:0), r)
+   case(267) ; call gideon_fd_face_ur(3, q(1:3), r)
+   case(268) ; call gideon_fd_face_ul(3, q(-2:0), r)
+   case(269) ; call gideon_fd_face_ur(4, q(1:4), r)
+   case(270) ; call gideon_fd_face_ul(4, q(-3:0), r)
+   case(271) ; call gideon_fd_face_ur(5, q(1:5), r)
+   case(272) ; call gideon_fd_face_ul(5, q(-4:0), r)
+   case(273) ; call gideon_fd_face_ur(6, q(1:6), r)
+   case(274) ; call gideon_fd_face_ul(6, q(-5:0), r)
+   case(275) ; call gideon_fd_face_ur(7, q(1:7), r)
+   case(276) ; call gideon_fd_face_ul(7, q(-6:0), r)
+   case(277) ; call gideon_fd_face_ur(8, q(1:8), r)
+   case(278) ; call gideon_fd_face_ul(8, q(-7:0), r)
+   case(279) ; call gideon_fd_face_ur(9, q(1:9), r)
+   case(280) ; call gideon_fd_face_ul(9, q(-8:0), r)
+   case(281) ; call gideon_fd_face_br(3, q(0:2), r)
+   case(282) ; call gideon_fd_face_bl(3, q(-1:1), r)
+   case(283) ; call gideon_fd_face_br(5, q(-1:3), r)
+   case(284) ; call gideon_fd_face_bl(5, q(-2:2), r)
+   case(285) ; call gideon_fd_face_br(7, q(-2:4), r)
+   case(286) ; call gideon_fd_face_bl(7, q(-3:3), r)
+   case(287) ; call gideon_fd_face_br(9, q(-3:5), r)
+   case(288) ; call gideon_fd_face_bl(9, q(-4:4), r)
    case default ; error stop 'no such kernel'
    endselect
    endsubroutine apply_dispatch
@@ -1495,6 +1715,51 @@ contains
    case(241) ; call gideon_fd_average_c(14, q(-6:6), r)
    case(242) ; call gideon_fv_point_c(14, q(-6:6), r)
    case(243) ; call gideon_fd_average_c(14, q(-6:6), r)
+   case(244) ; call gideon_fd_face_d1_c(12, q(-5:6), ds, r)
+   case(245) ; call gideon_fd_face_d1_c(12, q(-5:6), ds, r)
+   case(246) ; call gideon_fd_face_d1_c(12, q(-5:6), ds, r)
+   case(247) ; call gideon_fd_face_d1_c(12, q(-5:6), ds, r)
+   case(248) ; call gideon_fd_face_d1_c(12, q(-5:6), ds, r)
+   case(249) ; call gideon_fd_face_d2_c(10, q(-5:6), ds, r)
+   case(250) ; call gideon_fd_face_d2_c(10, q(-5:6), ds, r)
+   case(251) ; call gideon_fd_face_d2_c(10, q(-5:6), ds, r)
+   case(252) ; call gideon_fd_face_d2_c(10, q(-5:6), ds, r)
+   case(253) ; call gideon_fd_face_d3_c(10, q(-5:6), ds, r)
+   case(254) ; call gideon_fd_face_d3_c(10, q(-5:6), ds, r)
+   case(255) ; call gideon_fd_face_d3_c(10, q(-5:6), ds, r)
+   case(256) ; call gideon_fd_face_d3_c(10, q(-5:6), ds, r)
+   case(257) ; call gideon_fd_face_d4_c(8, q(-5:6), ds, r)
+   case(258) ; call gideon_fd_face_d4_c(8, q(-5:6), ds, r)
+   case(259) ; call gideon_fd_face_d4_c(8, q(-5:6), ds, r)
+   case(260) ; call gideon_fd_face_d5_c(8, q(-5:6), ds, r)
+   case(261) ; call gideon_fd_face_d5_c(8, q(-5:6), ds, r)
+   case(262) ; call gideon_fd_face_d5_c(8, q(-5:6), ds, r)
+   case(263) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(264) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(265) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(266) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(267) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(268) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(269) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(270) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(271) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(272) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(273) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(274) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(275) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(276) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(277) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(278) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(279) ; call gideon_fd_face_ur(10, q(1:10), r)
+   case(280) ; call gideon_fd_face_ul(10, q(-9:0), r)
+   case(281) ; call gideon_fd_face_br(10, q(-4:6), r)
+   case(282) ; call gideon_fd_face_bl(10, q(-5:5), r)
+   case(283) ; call gideon_fd_face_br(10, q(-4:6), r)
+   case(284) ; call gideon_fd_face_bl(10, q(-5:5), r)
+   case(285) ; call gideon_fd_face_br(10, q(-4:6), r)
+   case(286) ; call gideon_fd_face_bl(10, q(-5:5), r)
+   case(287) ; call gideon_fd_face_br(10, q(-4:6), r)
+   case(288) ; call gideon_fd_face_bl(10, q(-5:5), r)
    case default ; error stop 'no such kernel'
    endselect
    endsubroutine apply_dispatch_bad

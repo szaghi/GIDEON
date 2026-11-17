@@ -245,6 +245,51 @@
 | `gideon_fd_average_c10` | point values | cell average | centred | 10 | `q(-4:4)` | `gideon_fd_average_c` |
 | `gideon_fv_point_c12` | cell averages | point value at the cell centre | centred | 12 | `q(-5:5)` | `gideon_fv_point_c` |
 | `gideon_fd_average_c12` | point values | cell average | centred | 12 | `q(-5:5)` | `gideon_fd_average_c` |
+| `gideon_fd_face_d1_c2` | point values | d1 at the face | centred | 2 | `q(0:1)` | `gideon_fd_face_d1_c` |
+| `gideon_fd_face_d1_c4` | point values | d1 at the face | centred | 4 | `q(-1:2)` | `gideon_fd_face_d1_c` |
+| `gideon_fd_face_d1_c6` | point values | d1 at the face | centred | 6 | `q(-2:3)` | `gideon_fd_face_d1_c` |
+| `gideon_fd_face_d1_c8` | point values | d1 at the face | centred | 8 | `q(-3:4)` | `gideon_fd_face_d1_c` |
+| `gideon_fd_face_d1_c10` | point values | d1 at the face | centred | 10 | `q(-4:5)` | `gideon_fd_face_d1_c` |
+| `gideon_fd_face_d2_c2` | point values | d2 at the face | centred | 2 | `q(-1:2)` | `gideon_fd_face_d2_c` |
+| `gideon_fd_face_d2_c4` | point values | d2 at the face | centred | 4 | `q(-2:3)` | `gideon_fd_face_d2_c` |
+| `gideon_fd_face_d2_c6` | point values | d2 at the face | centred | 6 | `q(-3:4)` | `gideon_fd_face_d2_c` |
+| `gideon_fd_face_d2_c8` | point values | d2 at the face | centred | 8 | `q(-4:5)` | `gideon_fd_face_d2_c` |
+| `gideon_fd_face_d3_c2` | point values | d3 at the face | centred | 2 | `q(-1:2)` | `gideon_fd_face_d3_c` |
+| `gideon_fd_face_d3_c4` | point values | d3 at the face | centred | 4 | `q(-2:3)` | `gideon_fd_face_d3_c` |
+| `gideon_fd_face_d3_c6` | point values | d3 at the face | centred | 6 | `q(-3:4)` | `gideon_fd_face_d3_c` |
+| `gideon_fd_face_d3_c8` | point values | d3 at the face | centred | 8 | `q(-4:5)` | `gideon_fd_face_d3_c` |
+| `gideon_fd_face_d4_c2` | point values | d4 at the face | centred | 2 | `q(-2:3)` | `gideon_fd_face_d4_c` |
+| `gideon_fd_face_d4_c4` | point values | d4 at the face | centred | 4 | `q(-3:4)` | `gideon_fd_face_d4_c` |
+| `gideon_fd_face_d4_c6` | point values | d4 at the face | centred | 6 | `q(-4:5)` | `gideon_fd_face_d4_c` |
+| `gideon_fd_face_d5_c2` | point values | d5 at the face | centred | 2 | `q(-2:3)` | `gideon_fd_face_d5_c` |
+| `gideon_fd_face_d5_c4` | point values | d5 at the face | centred | 4 | `q(-3:4)` | `gideon_fd_face_d5_c` |
+| `gideon_fd_face_d5_c6` | point values | d5 at the face | centred | 6 | `q(-4:5)` | `gideon_fd_face_d5_c` |
+| `gideon_fd_face_ur1` | point values | value at the face | right side | 1 | `q(1:1)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul1` | point values | value at the face | left side | 1 | `q(0:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur2` | point values | value at the face | right side | 2 | `q(1:2)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul2` | point values | value at the face | left side | 2 | `q(-1:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur3` | point values | value at the face | right side | 3 | `q(1:3)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul3` | point values | value at the face | left side | 3 | `q(-2:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur4` | point values | value at the face | right side | 4 | `q(1:4)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul4` | point values | value at the face | left side | 4 | `q(-3:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur5` | point values | value at the face | right side | 5 | `q(1:5)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul5` | point values | value at the face | left side | 5 | `q(-4:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur6` | point values | value at the face | right side | 6 | `q(1:6)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul6` | point values | value at the face | left side | 6 | `q(-5:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur7` | point values | value at the face | right side | 7 | `q(1:7)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul7` | point values | value at the face | left side | 7 | `q(-6:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur8` | point values | value at the face | right side | 8 | `q(1:8)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul8` | point values | value at the face | left side | 8 | `q(-7:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_ur9` | point values | value at the face | right side | 9 | `q(1:9)` | `gideon_fd_face_ur` |
+| `gideon_fd_face_ul9` | point values | value at the face | left side | 9 | `q(-8:0)` | `gideon_fd_face_ul` |
+| `gideon_fd_face_br3` | point values | value at the face | biased right | 3 | `q(0:2)` | `gideon_fd_face_br` |
+| `gideon_fd_face_bl3` | point values | value at the face | biased left | 3 | `q(-1:1)` | `gideon_fd_face_bl` |
+| `gideon_fd_face_br5` | point values | value at the face | biased right | 5 | `q(-1:3)` | `gideon_fd_face_br` |
+| `gideon_fd_face_bl5` | point values | value at the face | biased left | 5 | `q(-2:2)` | `gideon_fd_face_bl` |
+| `gideon_fd_face_br7` | point values | value at the face | biased right | 7 | `q(-2:4)` | `gideon_fd_face_br` |
+| `gideon_fd_face_bl7` | point values | value at the face | biased left | 7 | `q(-3:3)` | `gideon_fd_face_bl` |
+| `gideon_fd_face_br9` | point values | value at the face | biased right | 9 | `q(-3:5)` | `gideon_fd_face_br` |
+| `gideon_fd_face_bl9` | point values | value at the face | biased left | 9 | `q(-4:4)` | `gideon_fd_face_bl` |
 | `gideon_fd_gradient_c2` | point values, one stencil per axis | gradient | centred | 2 | `(-1:1)` per axis | `gideon_fd_gradient_c` |
 | `gideon_fd_gradient_c4` | point values, one stencil per axis | gradient | centred | 4 | `(-2:2)` per axis | `gideon_fd_gradient_c` |
 | `gideon_fd_gradient_c6` | point values, one stencil per axis | gradient | centred | 6 | `(-3:3)` per axis | `gideon_fd_gradient_c` |

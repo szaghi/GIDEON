@@ -5,7 +5,8 @@ module gideon_tables
 !<
 !< Centred rows hold half the stencil in pair form (index m multiplies the pair of offsets m and -m
 !< for a node or cell, m and 1-m for a face; index 0 the centre); upwind rows hold the right-side
-!< stencil, cells 1..S, the face nearest first; the left-side kernels read the same rows mirrored.
+!< stencil, cells (or points) 1..S, the face nearest first; biased rows hold the right-biased stencil by
+!< offset; the left-side kernels read the same rows mirrored.
 !< See docs/guide/conventions.md.
 use penf, only : R_P
 implicit none
@@ -282,4 +283,90 @@ real(R_P), parameter :: FV_POINT_S5(0:5) = [258697183._R_P/227082240._R_P, -3729
 real(R_P), parameter :: FD_AVERAGE_S5(0:5) = [9038561117._R_P/10218700800._R_P, 147010729._R_P/2270822400._R_P, &
                                                  -41765827._R_P/5109350400._R_P, 7793123._R_P/5839257600._R_P, &
                                                  -10156403._R_P/61312204800._R_P, 1295803._R_P/122624409600._R_P]
+!< gideon_fd_face_d1_c2 (pairs)
+real(R_P), parameter :: FD_FACE_D1_S1(1:1) = [1._R_P]
+!< gideon_fd_face_d1_c4 (pairs)
+real(R_P), parameter :: FD_FACE_D1_S2(1:2) = [9._R_P/8._R_P, -1._R_P/24._R_P]
+!< gideon_fd_face_d1_c6 (pairs)
+real(R_P), parameter :: FD_FACE_D1_S3(1:3) = [75._R_P/64._R_P, -25._R_P/384._R_P, 3._R_P/640._R_P]
+!< gideon_fd_face_d1_c8 (pairs)
+real(R_P), parameter :: FD_FACE_D1_S4(1:4) = [1225._R_P/1024._R_P, -245._R_P/3072._R_P, 49._R_P/5120._R_P, &
+                                                 -5._R_P/7168._R_P]
+!< gideon_fd_face_d1_c10 (pairs)
+real(R_P), parameter :: FD_FACE_D1_S5(1:5) = [19845._R_P/16384._R_P, -735._R_P/8192._R_P, 567._R_P/40960._R_P, &
+                                                 -405._R_P/229376._R_P, 35._R_P/294912._R_P]
+!< gideon_fd_face_d2_c2 (pairs)
+real(R_P), parameter :: FD_FACE_D2_S2(1:2) = [-1._R_P/2._R_P, 1._R_P/2._R_P]
+!< gideon_fd_face_d2_c4 (pairs)
+real(R_P), parameter :: FD_FACE_D2_S3(1:3) = [-17._R_P/24._R_P, 13._R_P/16._R_P, -5._R_P/48._R_P]
+!< gideon_fd_face_d2_c6 (pairs)
+real(R_P), parameter :: FD_FACE_D2_S4(1:4) = [-1891._R_P/2304._R_P, 1299._R_P/1280._R_P, -499._R_P/2304._R_P, &
+                                                 259._R_P/11520._R_P]
+!< gideon_fd_face_d2_c8 (pairs)
+real(R_P), parameter :: FD_FACE_D2_S5(1:5) = [-4561._R_P/5120._R_P, 26611._R_P/23040._R_P, -1135._R_P/3584._R_P, &
+                                                 589._R_P/10240._R_P, -3229._R_P/645120._R_P]
+!< gideon_fd_face_d3_c2 (pairs)
+real(R_P), parameter :: FD_FACE_D3_S2(1:2) = [-3._R_P, 1._R_P]
+!< gideon_fd_face_d3_c4 (pairs)
+real(R_P), parameter :: FD_FACE_D3_S3(1:3) = [-17._R_P/4._R_P, 13._R_P/8._R_P, -1._R_P/8._R_P]
+!< gideon_fd_face_d3_c6 (pairs)
+real(R_P), parameter :: FD_FACE_D3_S4(1:4) = [-1891._R_P/384._R_P, 1299._R_P/640._R_P, -499._R_P/1920._R_P, &
+                                                 37._R_P/1920._R_P]
+!< gideon_fd_face_d3_c8 (pairs)
+real(R_P), parameter :: FD_FACE_D3_S5(1:5) = [-13683._R_P/2560._R_P, 26611._R_P/11520._R_P, -681._R_P/1792._R_P, &
+                                                 1767._R_P/35840._R_P, -3229._R_P/967680._R_P]
+!< gideon_fd_face_d4_c2 (pairs)
+real(R_P), parameter :: FD_FACE_D4_S3(1:3) = [1._R_P, -3._R_P/2._R_P, 1._R_P/2._R_P]
+!< gideon_fd_face_d4_c4 (pairs)
+real(R_P), parameter :: FD_FACE_D4_S4(1:4) = [83._R_P/48._R_P, -45._R_P/16._R_P, 59._R_P/48._R_P, -7._R_P/48._R_P]
+!< gideon_fd_face_d4_c6 (pairs)
+real(R_P), parameter :: FD_FACE_D4_S5(1:5) = [4307._R_P/1920._R_P, -1229._R_P/320._R_P, 377._R_P/192._R_P, &
+                                                 -1547._R_P/3840._R_P, 47._R_P/1280._R_P]
+!< gideon_fd_face_d5_c2 (pairs)
+real(R_P), parameter :: FD_FACE_D5_S3(1:3) = [10._R_P, -5._R_P, 1._R_P]
+!< gideon_fd_face_d5_c4 (pairs)
+real(R_P), parameter :: FD_FACE_D5_S4(1:4) = [415._R_P/24._R_P, -75._R_P/8._R_P, 59._R_P/24._R_P, -5._R_P/24._R_P]
+!< gideon_fd_face_d5_c6 (pairs)
+real(R_P), parameter :: FD_FACE_D5_S5(1:5) = [4307._R_P/192._R_P, -1229._R_P/96._R_P, 377._R_P/96._R_P, &
+                                                 -221._R_P/384._R_P, 47._R_P/1152._R_P]
+!< gideon_fd_face_ur1 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S1(1:1) = [1._R_P]
+!< gideon_fd_face_ur2 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S2(1:2) = [3._R_P/2._R_P, -1._R_P/2._R_P]
+!< gideon_fd_face_ur3 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S3(1:3) = [15._R_P/8._R_P, -5._R_P/4._R_P, 3._R_P/8._R_P]
+!< gideon_fd_face_ur4 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S4(1:4) = [35._R_P/16._R_P, -35._R_P/16._R_P, 21._R_P/16._R_P, -5._R_P/16._R_P]
+!< gideon_fd_face_ur5 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S5(1:5) = [315._R_P/128._R_P, -105._R_P/32._R_P, 189._R_P/64._R_P, &
+                                               -45._R_P/32._R_P, 35._R_P/128._R_P]
+!< gideon_fd_face_ur6 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S6(1:6) = [693._R_P/256._R_P, -1155._R_P/256._R_P, 693._R_P/128._R_P, &
+                                               -495._R_P/128._R_P, 385._R_P/256._R_P, -63._R_P/256._R_P]
+!< gideon_fd_face_ur7 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S7(1:7) = [3003._R_P/1024._R_P, -3003._R_P/512._R_P, 9009._R_P/1024._R_P, &
+                                               -2145._R_P/256._R_P, 5005._R_P/1024._R_P, -819._R_P/512._R_P, &
+                                               231._R_P/1024._R_P]
+!< gideon_fd_face_ur8 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S8(1:8) = [6435._R_P/2048._R_P, -15015._R_P/2048._R_P, 27027._R_P/2048._R_P, &
+                                               -32175._R_P/2048._R_P, 25025._R_P/2048._R_P, -12285._R_P/2048._R_P, &
+                                               3465._R_P/2048._R_P, -429._R_P/2048._R_P]
+!< gideon_fd_face_ur9 (points 1..S, the face nearest first)
+real(R_P), parameter :: FD_UFACE_S9(1:9) = [109395._R_P/32768._R_P, -36465._R_P/4096._R_P, 153153._R_P/8192._R_P, &
+                                               -109395._R_P/4096._R_P, 425425._R_P/16384._R_P, &
+                                               -69615._R_P/4096._R_P, 58905._R_P/8192._R_P, -7293._R_P/4096._R_P, &
+                                               6435._R_P/32768._R_P]
+!< gideon_fd_face_br3 (points 0..2, by offset)
+real(R_P), parameter :: FD_BFACE_S1(0:2) = [3._R_P/8._R_P, 3._R_P/4._R_P, -1._R_P/8._R_P]
+!< gideon_fd_face_br5 (points -1..3, by offset)
+real(R_P), parameter :: FD_BFACE_S2(-1:3) = [-5._R_P/128._R_P, 15._R_P/32._R_P, 45._R_P/64._R_P, -5._R_P/32._R_P, &
+                                                3._R_P/128._R_P]
+!< gideon_fd_face_br7 (points -2..4, by offset)
+real(R_P), parameter :: FD_BFACE_S3(-2:4) = [7._R_P/1024._R_P, -35._R_P/512._R_P, 525._R_P/1024._R_P, &
+                                                175._R_P/256._R_P, -175._R_P/1024._R_P, 21._R_P/512._R_P, &
+                                                -5._R_P/1024._R_P]
+!< gideon_fd_face_br9 (points -3..5, by offset)
+real(R_P), parameter :: FD_BFACE_S4(-3:5) = [-45._R_P/32768._R_P, 63._R_P/4096._R_P, -735._R_P/8192._R_P, &
+                                                2205._R_P/4096._R_P, 11025._R_P/16384._R_P, -735._R_P/4096._R_P, &
+                                                441._R_P/8192._R_P, -45._R_P/4096._R_P, 35._R_P/32768._R_P]
 endmodule gideon_tables

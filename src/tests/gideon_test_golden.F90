@@ -15,23 +15,26 @@ program gideon_test_golden
 !<
 !< A golden file is never edited: a deliberate change of results gets a new file and this test's default path.
 !< v1 (2026-11-17): the 243 kernels of the first release, written by the optimised gfortran build; r16_v1 the same in
-!< quadruple precision (the host-only verification kind).
+!< quadruple precision (the host-only verification kind). v2 (2026-11-17, phase 2): the 288 kernels with the FD face
+!< derivatives and the one-sided and biased FD face values, the first 243 in v1's order and with v1's values (checked
+!< when v2 was written); v1 is kept, as every superseded golden file is.
 use, intrinsic :: iso_fortran_env, only : compiler_version, compiler_options
 use penf, only : I4P, I8P, R4P, R8P, R_P
 use gideon_test_registry
 implicit none
 integer(I4P), parameter :: NST = 8_I4P
+character(*), parameter :: VERSION = 'v2' !< The version of the golden files this test reads and writes.
 real(R_P),    parameter :: DS = 0.75_R_P
 #if defined _R_P_IS_R4P
-character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_r4_v1.txt'
+character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_r4_v2.txt'
 real(R_P),    parameter :: TOL = 1.e-5_R_P
 character(*), parameter :: FMT = '(A24,1X,I2,1X,ES16.8E3)'
 #elif defined _R_P_IS_R16P
-character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_r16_v1.txt'
+character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_r16_v2.txt'
 real(R_P),    parameter :: TOL = 1.e-30_R_P
 character(*), parameter :: FMT = '(A24,1X,I2,1X,ES45.36E4)'
 #else
-character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_v1.txt'
+character(*), parameter :: GOLDEN = 'src/tests/golden/gideon_golden_v2.txt'
 real(R_P),    parameter :: TOL = 1.e-13_R_P
 character(*), parameter :: FMT = '(A24,1X,I2,1X,ES25.17E3)'
 #endif
@@ -54,7 +57,7 @@ if (trim(arg) == 'write') then
    call get_command_argument(2, path)
    open(newunit=u, file=trim(path), status='new', action='write', iostat=ios)
    if (ios /= 0) error stop 'gideon_test_golden: cannot create the file (it exists?): never overwrite a golden file'
-   write(u, '(A)') '# GIDEON golden values v1: kernel, window, value. Written by '//compiler_version()
+   write(u, '(A)') '# GIDEON golden values '//VERSION//': kernel, window, value. Written by '//compiler_version()
    write(u, '(A)') '# options: '//compiler_options()
    do id=1, NK
       do k=1, NST

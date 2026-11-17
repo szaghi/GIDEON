@@ -10,6 +10,7 @@ module gideon_dispatch
 use penf, only : I4P, R_P
 use gideon_kind_parameters, only : GIDEON_NAN
 use gideon_fd_centred
+use gideon_fd_upwind
 use gideon_fv_centred
 use gideon_fv_upwind
 use gideon_deconvolution
@@ -60,6 +61,15 @@ public :: gideon_fv_d6_ur
 public :: gideon_fv_d6_ul
 public :: gideon_fv_point_c
 public :: gideon_fd_average_c
+public :: gideon_fd_face_d1_c
+public :: gideon_fd_face_d2_c
+public :: gideon_fd_face_d3_c
+public :: gideon_fd_face_d4_c
+public :: gideon_fd_face_d5_c
+public :: gideon_fd_face_ur
+public :: gideon_fd_face_ul
+public :: gideon_fd_face_br
+public :: gideon_fd_face_bl
 contains
    pure subroutine gideon_fd_face_c(order, q, f)
    !< Run-time order dispatch to gideon_fd_face_c<order>, order in {2, 4, 6, 8, 10}.
@@ -882,5 +892,163 @@ contains
    case default ; v = GIDEON_NAN
    endselect
    endsubroutine gideon_fd_average_c
+
+   pure subroutine gideon_fd_face_d1_c(order, q, ds, d)
+   !< Run-time order dispatch to gideon_fd_face_d1_c<order>, order in {2, 4, 6, 8, 10}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1-(order/2):order/2) !< Data by offset, the window of that order.
+   real(R_P),    intent(in)  :: ds    !< Grid step.
+   real(R_P),    intent(out) :: d     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(2) ; call gideon_fd_face_d1_c2(q, ds, d)
+   case(4) ; call gideon_fd_face_d1_c4(q, ds, d)
+   case(6) ; call gideon_fd_face_d1_c6(q, ds, d)
+   case(8) ; call gideon_fd_face_d1_c8(q, ds, d)
+   case(10) ; call gideon_fd_face_d1_c10(q, ds, d)
+   case default ; d = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_d1_c
+
+   pure subroutine gideon_fd_face_d2_c(order, q, ds, d)
+   !< Run-time order dispatch to gideon_fd_face_d2_c<order>, order in {2, 4, 6, 8}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1-(order/2+1):order/2+1) !< Data by offset, the window of that order.
+   real(R_P),    intent(in)  :: ds    !< Grid step.
+   real(R_P),    intent(out) :: d     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(2) ; call gideon_fd_face_d2_c2(q, ds, d)
+   case(4) ; call gideon_fd_face_d2_c4(q, ds, d)
+   case(6) ; call gideon_fd_face_d2_c6(q, ds, d)
+   case(8) ; call gideon_fd_face_d2_c8(q, ds, d)
+   case default ; d = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_d2_c
+
+   pure subroutine gideon_fd_face_d3_c(order, q, ds, d)
+   !< Run-time order dispatch to gideon_fd_face_d3_c<order>, order in {2, 4, 6, 8}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1-(order/2+1):order/2+1) !< Data by offset, the window of that order.
+   real(R_P),    intent(in)  :: ds    !< Grid step.
+   real(R_P),    intent(out) :: d     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(2) ; call gideon_fd_face_d3_c2(q, ds, d)
+   case(4) ; call gideon_fd_face_d3_c4(q, ds, d)
+   case(6) ; call gideon_fd_face_d3_c6(q, ds, d)
+   case(8) ; call gideon_fd_face_d3_c8(q, ds, d)
+   case default ; d = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_d3_c
+
+   pure subroutine gideon_fd_face_d4_c(order, q, ds, d)
+   !< Run-time order dispatch to gideon_fd_face_d4_c<order>, order in {2, 4, 6}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1-(order/2+2):order/2+2) !< Data by offset, the window of that order.
+   real(R_P),    intent(in)  :: ds    !< Grid step.
+   real(R_P),    intent(out) :: d     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(2) ; call gideon_fd_face_d4_c2(q, ds, d)
+   case(4) ; call gideon_fd_face_d4_c4(q, ds, d)
+   case(6) ; call gideon_fd_face_d4_c6(q, ds, d)
+   case default ; d = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_d4_c
+
+   pure subroutine gideon_fd_face_d5_c(order, q, ds, d)
+   !< Run-time order dispatch to gideon_fd_face_d5_c<order>, order in {2, 4, 6}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1-(order/2+2):order/2+2) !< Data by offset, the window of that order.
+   real(R_P),    intent(in)  :: ds    !< Grid step.
+   real(R_P),    intent(out) :: d     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(2) ; call gideon_fd_face_d5_c2(q, ds, d)
+   case(4) ; call gideon_fd_face_d5_c4(q, ds, d)
+   case(6) ; call gideon_fd_face_d5_c6(q, ds, d)
+   case default ; d = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_d5_c
+
+   pure subroutine gideon_fd_face_ur(order, q, f)
+   !< Run-time order dispatch to gideon_fd_face_ur<order>, order in {1, 2, 3, 4, 5, 6, 7, 8, 9}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(1:order) !< Data by offset, the window of that order.
+   real(R_P),    intent(out) :: f     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(1) ; call gideon_fd_face_ur1(q, f)
+   case(2) ; call gideon_fd_face_ur2(q, f)
+   case(3) ; call gideon_fd_face_ur3(q, f)
+   case(4) ; call gideon_fd_face_ur4(q, f)
+   case(5) ; call gideon_fd_face_ur5(q, f)
+   case(6) ; call gideon_fd_face_ur6(q, f)
+   case(7) ; call gideon_fd_face_ur7(q, f)
+   case(8) ; call gideon_fd_face_ur8(q, f)
+   case(9) ; call gideon_fd_face_ur9(q, f)
+   case default ; f = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_ur
+
+   pure subroutine gideon_fd_face_ul(order, q, f)
+   !< Run-time order dispatch to gideon_fd_face_ul<order>, order in {1, 2, 3, 4, 5, 6, 7, 8, 9}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(-(order-1):0) !< Data by offset, the window of that order.
+   real(R_P),    intent(out) :: f     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(1) ; call gideon_fd_face_ul1(q, f)
+   case(2) ; call gideon_fd_face_ul2(q, f)
+   case(3) ; call gideon_fd_face_ul3(q, f)
+   case(4) ; call gideon_fd_face_ul4(q, f)
+   case(5) ; call gideon_fd_face_ul5(q, f)
+   case(6) ; call gideon_fd_face_ul6(q, f)
+   case(7) ; call gideon_fd_face_ul7(q, f)
+   case(8) ; call gideon_fd_face_ul8(q, f)
+   case(9) ; call gideon_fd_face_ul9(q, f)
+   case default ; f = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_ul
+
+   pure subroutine gideon_fd_face_br(order, q, f)
+   !< Run-time order dispatch to gideon_fd_face_br<order>, order in {3, 5, 7, 9}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(2-(order/2+1):order/2+1) !< Data by offset, the window of that order.
+   real(R_P),    intent(out) :: f     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(3) ; call gideon_fd_face_br3(q, f)
+   case(5) ; call gideon_fd_face_br5(q, f)
+   case(7) ; call gideon_fd_face_br7(q, f)
+   case(9) ; call gideon_fd_face_br9(q, f)
+   case default ; f = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_br
+
+   pure subroutine gideon_fd_face_bl(order, q, f)
+   !< Run-time order dispatch to gideon_fd_face_bl<order>, order in {3, 5, 7, 9}.
+   integer(I4P), intent(in)  :: order !< Order of accuracy.
+   real(R_P),    intent(in)  :: q(-(order/2):order/2) !< Data by offset, the window of that order.
+   real(R_P),    intent(out) :: f     !< Result; GIDEON_NAN for an order without a kernel.
+   !$acc routine seq
+   !$omp declare target
+   select case(order)
+   case(3) ; call gideon_fd_face_bl3(q, f)
+   case(5) ; call gideon_fd_face_bl5(q, f)
+   case(7) ; call gideon_fd_face_bl7(q, f)
+   case(9) ; call gideon_fd_face_bl9(q, f)
+   case default ; f = GIDEON_NAN
+   endselect
+   endsubroutine gideon_fd_face_bl
 
 endmodule gideon_dispatch
