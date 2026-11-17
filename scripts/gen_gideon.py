@@ -923,7 +923,7 @@ def emit_registry(ks: list[Kernel]) -> str:
            'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
            'public :: NK, WMAX, kname, kdata, kbias, kgeom, ktarget, kn, korder, klo, khi, kdegree, ksumabs',
            'public :: kzero_const, kerror',
-           'public :: kmirror, apply, apply_dispatch, apply_dispatch_bad',
+           'public :: kmirror, apply, apply_dev, apply_dispatch, apply_dispatch_bad',
            f'integer(I4P), parameter :: NK = {nk} !< Number of kernels.',
            'integer(I4P), parameter :: WMAX = 16 !< Half-width of the windows the tests pass.']
 
@@ -969,7 +969,16 @@ def emit_registry(ks: list[Kernel]) -> str:
     for i, k, *_ in meta:
         call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
         out.append(f'   case({i}) ; {call}')
-    out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply', '']
+    out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply', '',
+            '   pure subroutine apply_dev(id, q, ds, r)',
+            '   !< apply, device-callable: the same calls, GIDEON_NAN for an unknown id (no error stop on a device).',
+            '   integer(I4P), intent(in)  :: id', '   real(R_P),    intent(in)  :: q(-WMAX:WMAX)',
+            '   real(R_P),    intent(in)  :: ds', '   real(R_P),    intent(out) :: r',
+            '   !$acc routine seq', '   !$omp declare target', '   select case(id)']
+    for i, k, *_ in meta:
+        call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
+        out.append(f'   case({i}) ; {call}')
+    out += ['   case default ; r = GIDEON_NAN', '   endselect', '   endsubroutine apply_dev', '']
     gs = groups(ks)
     for bad in (False, True):
         sub = 'apply_dispatch_bad' if bad else 'apply_dispatch'
