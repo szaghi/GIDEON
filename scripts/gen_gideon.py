@@ -615,8 +615,10 @@ def emit_kernel(k: Kernel) -> str:
                  else 'Average over cell 0 from point values')
     else:
         title = f'{ordinal(k.n).capitalize()} {where}, {bias_doc}'
-    L = [f'   pure subroutine {k.name}{args}',
-         f'   !< {title}, order {k.order}, from {data_doc} q({k.lo}:{k.hi}).',
+    doc = f'   !< {title}, order {k.order}, from {data_doc} q({k.lo}:{k.hi}).'
+    if len(doc) > 118:
+        doc = f'   !< {title}, order {k.order},\n   !< from {data_doc} q({k.lo}:{k.hi}).'
+    L = [f'   pure subroutine {k.name}{args}', doc,
          f'   real(R_P),    intent(in)  :: q({k.lo}:{k.hi}) !< Data by offset (docs/guide/conventions.md).']
     if has_ds:
         L.append('   real(R_P),    intent(in)  :: ds       !< Grid step.')
@@ -795,6 +797,115 @@ def emit_dispatch(ks: list[Kernel]) -> str:
     return '\n'.join(out) + '\n'
 
 
+OPS3D = ('gradient', 'divergence', 'curl', 'laplacian')
+
+
+def kernels_3d(ks: list[Kernel]) -> list[tuple[str, str, str, int, int]]:
+    """(name, data, op, order, s) of the 3-D operators: centred, over the 1-D d1 (d2 for the Laplacian) kernels."""
+    out = []
+    for data, fam in (('fd', 'fd_node_c'), ('fv', 'fv_cell_c')):
+        for op in OPS3D:
+            n = 2 if op == 'laplacian' else 1
+            for k in ks:
+                if k.family == fam and k.n == n:
+                    out.append((f'gideon_{data}_{op}_c{k.order}', data, op, k.order, k.s))
+    return out
+
+
+def emit_operators_3d(ks: list[Kernel]) -> str:
+    """Gradient, divergence, curl, Laplacian over directional stencils (ADAM's FNL signature and sum order)."""
+    title = '!< GIDEON, the 3-D operators: gradient, divergence, curl and Laplacian over directional stencils.'
+    out = [HEADER + title, 'module gideon_operators_3d', title, '!<',
+           '!< The caller gathers one contiguous stencil per direction and component (ADAM\'s FNL signature: no',
+           '!< non-contiguous section inside a device routine), cell or node 0 the point of the result: `qx(-S:S)`',
+           '!< the field along x, `vy_x(-S:S)` the y component along x. Each operator is the 1-D kernels summed in',
+           '!< ADAM\'s order (x, y, z), so it reproduces ADAM\'s value bitwise; the run-time order dispatchers follow.',
+           'use penf, only : I4P, R_P', 'use gideon_kind_parameters, only : GIDEON_NAN', 'use gideon_fd_centred',
+           'use gideon_fv_centred', 'implicit none', 'private']
+    k3 = kernels_3d(ks)
+    names = [x[0] for x in k3]
+    disp = sorted({re.sub(r'\d+$', '', nm) for nm in names})
+    out += [f'public :: {nm}' for nm in names + disp]
+    out.append('contains')
+    for name, data, op, order, s in k3:
+        w = f'-{s}:{s}'
+        d1 = f'gideon_{data}_d1_c{order}'
+        d2 = f'gideon_{data}_d2_c{order}'
+        what = 'point values' if data == 'fd' else 'cell averages'
+        if op == 'gradient':
+            out += [f'   pure subroutine {name}(qx, qy, qz, dxyz, g)',
+                    f'   !< Gradient at point 0, centred, order {order}, from {what} along x, y, z.',
+                    f'   real(R_P), intent(in)  :: qx({w}), qy({w}), qz({w}) !< The field along x, y, z.',
+                    '   real(R_P), intent(in)  :: dxyz(3) !< Steps.',
+                    '   real(R_P), intent(out) :: g(3)    !< Gradient.',
+                    '   !$acc routine seq', '   !$omp declare target',
+                    f'   call {d1}(qx, dxyz(1), g(1))', f'   call {d1}(qy, dxyz(2), g(2))',
+                    f'   call {d1}(qz, dxyz(3), g(3))']
+        elif op == 'divergence':
+            out += [f'   pure subroutine {name}(vx_x, vy_y, vz_z, dxyz, div)',
+                    f'   !< Divergence at point 0, centred, order {order}, from {what}.',
+                    f'   real(R_P), intent(in)  :: vx_x({w}), vy_y({w}), vz_z({w}) !< Each component along its axis.',
+                    '   real(R_P), intent(in)  :: dxyz(3) !< Steps.',
+                    '   real(R_P), intent(out) :: div     !< Divergence.',
+                    '   real(R_P)              :: dx, dy, dz',
+                    '   !$acc routine seq', '   !$omp declare target',
+                    f'   call {d1}(vx_x, dxyz(1), dx)', f'   call {d1}(vy_y, dxyz(2), dy)',
+                    f'   call {d1}(vz_z, dxyz(3), dz)', '   div = dx + dy + dz']
+        elif op == 'curl':
+            out += [f'   pure subroutine {name}(vy_x, vz_x, vx_y, vz_y, vx_z, vy_z, dxyz, c)',
+                    f'   !< Curl at point 0, centred, order {order}, from {what}: the six off-axis component stencils.',
+                    f'   real(R_P), intent(in)  :: vy_x({w}), vz_x({w}) !< v_y, v_z along x.',
+                    f'   real(R_P), intent(in)  :: vx_y({w}), vz_y({w}) !< v_x, v_z along y.',
+                    f'   real(R_P), intent(in)  :: vx_z({w}), vy_z({w}) !< v_x, v_y along z.',
+                    '   real(R_P), intent(in)  :: dxyz(3) !< Steps.',
+                    '   real(R_P), intent(out) :: c(3)    !< Curl.',
+                    '   real(R_P)              :: dvx_dy, dvx_dz, dvy_dx, dvy_dz, dvz_dx, dvz_dy',
+                    '   !$acc routine seq', '   !$omp declare target',
+                    f'   call {d1}(vx_y, dxyz(2), dvx_dy)', f'   call {d1}(vx_z, dxyz(3), dvx_dz)',
+                    f'   call {d1}(vy_x, dxyz(1), dvy_dx)', f'   call {d1}(vy_z, dxyz(3), dvy_dz)',
+                    f'   call {d1}(vz_x, dxyz(1), dvz_dx)', f'   call {d1}(vz_y, dxyz(2), dvz_dy)',
+                    '   c(1) = dvz_dy - dvy_dz', '   c(2) = dvx_dz - dvz_dx', '   c(3) = dvy_dx - dvx_dy']
+        else:
+            out += [f'   pure subroutine {name}(qx, qy, qz, dxyz, lap)',
+                    f'   !< Laplacian at point 0, centred, order {order}, from {what} along x, y, z.',
+                    f'   real(R_P), intent(in)  :: qx({w}), qy({w}), qz({w}) !< The field along x, y, z.',
+                    '   real(R_P), intent(in)  :: dxyz(3) !< Steps.',
+                    '   real(R_P), intent(out) :: lap     !< Laplacian.',
+                    '   real(R_P)              :: dx, dy, dz',
+                    '   !$acc routine seq', '   !$omp declare target',
+                    f'   call {d2}(qx, dxyz(1), dx)', f'   call {d2}(qy, dxyz(2), dy)',
+                    f'   call {d2}(qz, dxyz(3), dz)', '   lap = dx + dy + dz']
+        out += [f'   endsubroutine {name}', '']
+    for dn in disp:
+        group = [x for x in k3 if re.sub(r'\d+$', '', x[0]) == dn]
+        op = group[0][2]
+        hi = 'order/2' if op != 'laplacian' else 'order/2'
+        w = f'-({hi}):{hi}'
+        for x in group:
+            if x[4] != x[3] // 2:
+                raise AssertionError(f'{x[0]}: half-stencil is not order/2')
+        sig = {'gradient': ('(order, qx, qy, qz, dxyz, g)', ['qx', 'qy', 'qz'], 'g(3)', 'g = GIDEON_NAN'),
+               'divergence': ('(order, vx_x, vy_y, vz_z, dxyz, div)', ['vx_x', 'vy_y', 'vz_z'], 'div',
+                              'div = GIDEON_NAN'),
+               'curl': ('(order, vy_x, vz_x, vx_y, vz_y, vx_z, vy_z, dxyz, c)',
+                        ['vy_x', 'vz_x', 'vx_y', 'vz_y', 'vx_z', 'vy_z'], 'c(3)', 'c = GIDEON_NAN'),
+               'laplacian': ('(order, qx, qy, qz, dxyz, lap)', ['qx', 'qy', 'qz'], 'lap', 'lap = GIDEON_NAN')}[op]
+        args, ins, res, nan = sig
+        out += [f'   pure subroutine {dn}{args}',
+                f'   !< Run-time order dispatch to {dn}<order>, order in {{{", ".join(str(x[3]) for x in group)}}}.',
+                '   integer(I4P), intent(in)  :: order !< Order of accuracy.',
+                *[f'   real(R_P),    intent(in)  :: {a}({w}) !< Stencil of that order.' for a in ins],
+                '   real(R_P),    intent(in)  :: dxyz(3) !< Steps.',
+                f'   real(R_P),    intent(out) :: {res} !< Result; GIDEON_NAN for an order without a kernel.',
+                '   !$acc routine seq', '   !$omp declare target', '   select case(order)']
+        call_args = args.replace('(order, ', '(')
+        for x in group:
+            out.append(f'   case({x[3]}) ; call {x[0]}{call_args}')
+        out += [f'   case default ; {nan}', '   endselect', f'   endsubroutine {dn}', '']
+    out.append('endmodule gideon_operators_3d')
+    return '\n'.join(out) + '\n'
+
+
 def emit_registry(ks: list[Kernel]) -> str:
     """Test registry: metadata of every kernel and one routine that applies kernel `id` to a wide window."""
     nk = len(ks)
@@ -911,6 +1022,7 @@ def write_sources(ks: list[Kernel]) -> list[str]:
     for mod in MODULES:
         files[ROOT / f'src/lib/{mod}.F90'] = emit_module(mod, ks)
     files[ROOT / 'src/lib/gideon_dispatch.F90'] = emit_dispatch(ks)
+    files[ROOT / 'src/lib/gideon_operators_3d.F90'] = emit_operators_3d(ks)
     files[ROOT / 'src/tests/gideon_test_registry.F90'] = emit_registry(ks)
     back = parse_emitted_tables(files[ROOT / 'src/lib/gideon_tables.F90'])
     for k in ks:

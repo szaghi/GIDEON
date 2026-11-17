@@ -51,3 +51,8 @@ main = "gideon_test_properties.F90"
 name = "gideon_test_dispatch"
 source-dir = "src/tests"
 main = "gideon_test_dispatch.F90"
+
+[[test]]
+name = "gideon_test_operators_3d"
+source-dir = "src/tests"
+main = "gideon_test_operators_3d.F90"

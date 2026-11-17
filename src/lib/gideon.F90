@@ -18,6 +18,7 @@ use gideon_fv_centred
 use gideon_fv_upwind
 use gideon_deconvolution
 use gideon_dispatch
+use gideon_operators_3d
 implicit none
 public
 endmodule gideon

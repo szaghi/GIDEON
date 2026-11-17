@@ -402,7 +402,8 @@ contains
    endsubroutine gideon_fv_face_ul9
 
    pure subroutine gideon_fv_face_d1_ur1(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1, from cell averages q(1:2).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1,
+   !< from cell averages q(1:2).
    real(R_P),    intent(in)  :: q(1:2) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -417,7 +418,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur1
 
    pure subroutine gideon_fv_face_d1_ul1(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1, from cell averages q(-1:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1,
+   !< from cell averages q(-1:0).
    real(R_P),    intent(in)  :: q(-1:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -432,7 +434,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul1
 
    pure subroutine gideon_fv_face_d1_ur2(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2, from cell averages q(1:3).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2,
+   !< from cell averages q(1:3).
    real(R_P),    intent(in)  :: q(1:3) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -447,7 +450,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur2
 
    pure subroutine gideon_fv_face_d1_ul2(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2, from cell averages q(-2:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2,
+   !< from cell averages q(-2:0).
    real(R_P),    intent(in)  :: q(-2:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -462,7 +466,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul2
 
    pure subroutine gideon_fv_face_d1_ur3(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3, from cell averages q(1:4).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3,
+   !< from cell averages q(1:4).
    real(R_P),    intent(in)  :: q(1:4) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -477,7 +482,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur3
 
    pure subroutine gideon_fv_face_d1_ul3(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3, from cell averages q(-3:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3,
+   !< from cell averages q(-3:0).
    real(R_P),    intent(in)  :: q(-3:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -492,7 +498,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul3
 
    pure subroutine gideon_fv_face_d1_ur4(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4, from cell averages q(1:5).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4,
+   !< from cell averages q(1:5).
    real(R_P),    intent(in)  :: q(1:5) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -507,7 +514,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur4
 
    pure subroutine gideon_fv_face_d1_ul4(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4, from cell averages q(-4:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4,
+   !< from cell averages q(-4:0).
    real(R_P),    intent(in)  :: q(-4:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -522,7 +530,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul4
 
    pure subroutine gideon_fv_face_d1_ur5(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5, from cell averages q(1:6).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5,
+   !< from cell averages q(1:6).
    real(R_P),    intent(in)  :: q(1:6) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -537,7 +546,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur5
 
    pure subroutine gideon_fv_face_d1_ul5(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5, from cell averages q(-5:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5,
+   !< from cell averages q(-5:0).
    real(R_P),    intent(in)  :: q(-5:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -552,7 +562,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul5
 
    pure subroutine gideon_fv_face_d1_ur6(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6, from cell averages q(1:7).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6,
+   !< from cell averages q(1:7).
    real(R_P),    intent(in)  :: q(1:7) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -567,7 +578,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur6
 
    pure subroutine gideon_fv_face_d1_ul6(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6, from cell averages q(-6:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6,
+   !< from cell averages q(-6:0).
    real(R_P),    intent(in)  :: q(-6:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -582,7 +594,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul6
 
    pure subroutine gideon_fv_face_d1_ur7(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 7, from cell averages q(1:8).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 7,
+   !< from cell averages q(1:8).
    real(R_P),    intent(in)  :: q(1:8) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -597,7 +610,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur7
 
    pure subroutine gideon_fv_face_d1_ul7(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 7, from cell averages q(-7:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 7,
+   !< from cell averages q(-7:0).
    real(R_P),    intent(in)  :: q(-7:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -612,7 +626,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul7
 
    pure subroutine gideon_fv_face_d1_ur8(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 8, from cell averages q(1:9).
+   !< First derivative at the face between cells 0 and 1, upwind, right-side stencil, order 8,
+   !< from cell averages q(1:9).
    real(R_P),    intent(in)  :: q(1:9) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -627,7 +642,8 @@ contains
    endsubroutine gideon_fv_face_d1_ur8
 
    pure subroutine gideon_fv_face_d1_ul8(q, ds, d)
-   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 8, from cell averages q(-8:0).
+   !< First derivative at the face between cells 0 and 1, upwind, left-side stencil, order 8,
+   !< from cell averages q(-8:0).
    real(R_P),    intent(in)  :: q(-8:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -642,7 +658,8 @@ contains
    endsubroutine gideon_fv_face_d1_ul8
 
    pure subroutine gideon_fv_face_d2_ur1(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1, from cell averages q(1:3).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1,
+   !< from cell averages q(1:3).
    real(R_P),    intent(in)  :: q(1:3) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -657,7 +674,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur1
 
    pure subroutine gideon_fv_face_d2_ul1(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1, from cell averages q(-2:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1,
+   !< from cell averages q(-2:0).
    real(R_P),    intent(in)  :: q(-2:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -672,7 +690,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul1
 
    pure subroutine gideon_fv_face_d2_ur2(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2, from cell averages q(1:4).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2,
+   !< from cell averages q(1:4).
    real(R_P),    intent(in)  :: q(1:4) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -687,7 +706,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur2
 
    pure subroutine gideon_fv_face_d2_ul2(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2, from cell averages q(-3:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2,
+   !< from cell averages q(-3:0).
    real(R_P),    intent(in)  :: q(-3:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -702,7 +722,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul2
 
    pure subroutine gideon_fv_face_d2_ur3(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3, from cell averages q(1:5).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3,
+   !< from cell averages q(1:5).
    real(R_P),    intent(in)  :: q(1:5) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -717,7 +738,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur3
 
    pure subroutine gideon_fv_face_d2_ul3(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3, from cell averages q(-4:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3,
+   !< from cell averages q(-4:0).
    real(R_P),    intent(in)  :: q(-4:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -732,7 +754,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul3
 
    pure subroutine gideon_fv_face_d2_ur4(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4, from cell averages q(1:6).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4,
+   !< from cell averages q(1:6).
    real(R_P),    intent(in)  :: q(1:6) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -747,7 +770,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur4
 
    pure subroutine gideon_fv_face_d2_ul4(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4, from cell averages q(-5:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4,
+   !< from cell averages q(-5:0).
    real(R_P),    intent(in)  :: q(-5:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -762,7 +786,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul4
 
    pure subroutine gideon_fv_face_d2_ur5(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5, from cell averages q(1:7).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5,
+   !< from cell averages q(1:7).
    real(R_P),    intent(in)  :: q(1:7) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -777,7 +802,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur5
 
    pure subroutine gideon_fv_face_d2_ul5(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5, from cell averages q(-6:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5,
+   !< from cell averages q(-6:0).
    real(R_P),    intent(in)  :: q(-6:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -792,7 +818,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul5
 
    pure subroutine gideon_fv_face_d2_ur6(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6, from cell averages q(1:8).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6,
+   !< from cell averages q(1:8).
    real(R_P),    intent(in)  :: q(1:8) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -807,7 +834,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur6
 
    pure subroutine gideon_fv_face_d2_ul6(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6, from cell averages q(-7:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6,
+   !< from cell averages q(-7:0).
    real(R_P),    intent(in)  :: q(-7:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -822,7 +850,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul6
 
    pure subroutine gideon_fv_face_d2_ur7(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 7, from cell averages q(1:9).
+   !< Second derivative at the face between cells 0 and 1, upwind, right-side stencil, order 7,
+   !< from cell averages q(1:9).
    real(R_P),    intent(in)  :: q(1:9) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -837,7 +866,8 @@ contains
    endsubroutine gideon_fv_face_d2_ur7
 
    pure subroutine gideon_fv_face_d2_ul7(q, ds, d)
-   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 7, from cell averages q(-8:0).
+   !< Second derivative at the face between cells 0 and 1, upwind, left-side stencil, order 7,
+   !< from cell averages q(-8:0).
    real(R_P),    intent(in)  :: q(-8:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -852,7 +882,8 @@ contains
    endsubroutine gideon_fv_face_d2_ul7
 
    pure subroutine gideon_fv_face_d3_ur1(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1, from cell averages q(1:4).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1,
+   !< from cell averages q(1:4).
    real(R_P),    intent(in)  :: q(1:4) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -867,7 +898,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur1
 
    pure subroutine gideon_fv_face_d3_ul1(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1, from cell averages q(-3:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1,
+   !< from cell averages q(-3:0).
    real(R_P),    intent(in)  :: q(-3:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -882,7 +914,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul1
 
    pure subroutine gideon_fv_face_d3_ur2(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2, from cell averages q(1:5).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2,
+   !< from cell averages q(1:5).
    real(R_P),    intent(in)  :: q(1:5) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -897,7 +930,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur2
 
    pure subroutine gideon_fv_face_d3_ul2(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2, from cell averages q(-4:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2,
+   !< from cell averages q(-4:0).
    real(R_P),    intent(in)  :: q(-4:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -912,7 +946,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul2
 
    pure subroutine gideon_fv_face_d3_ur3(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3, from cell averages q(1:6).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3,
+   !< from cell averages q(1:6).
    real(R_P),    intent(in)  :: q(1:6) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -927,7 +962,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur3
 
    pure subroutine gideon_fv_face_d3_ul3(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3, from cell averages q(-5:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3,
+   !< from cell averages q(-5:0).
    real(R_P),    intent(in)  :: q(-5:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -942,7 +978,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul3
 
    pure subroutine gideon_fv_face_d3_ur4(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4, from cell averages q(1:7).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4,
+   !< from cell averages q(1:7).
    real(R_P),    intent(in)  :: q(1:7) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -957,7 +994,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur4
 
    pure subroutine gideon_fv_face_d3_ul4(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4, from cell averages q(-6:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4,
+   !< from cell averages q(-6:0).
    real(R_P),    intent(in)  :: q(-6:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -972,7 +1010,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul4
 
    pure subroutine gideon_fv_face_d3_ur5(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5, from cell averages q(1:8).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5,
+   !< from cell averages q(1:8).
    real(R_P),    intent(in)  :: q(1:8) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -987,7 +1026,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur5
 
    pure subroutine gideon_fv_face_d3_ul5(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5, from cell averages q(-7:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5,
+   !< from cell averages q(-7:0).
    real(R_P),    intent(in)  :: q(-7:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1002,7 +1042,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul5
 
    pure subroutine gideon_fv_face_d3_ur6(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6, from cell averages q(1:9).
+   !< Third derivative at the face between cells 0 and 1, upwind, right-side stencil, order 6,
+   !< from cell averages q(1:9).
    real(R_P),    intent(in)  :: q(1:9) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1017,7 +1058,8 @@ contains
    endsubroutine gideon_fv_face_d3_ur6
 
    pure subroutine gideon_fv_face_d3_ul6(q, ds, d)
-   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6, from cell averages q(-8:0).
+   !< Third derivative at the face between cells 0 and 1, upwind, left-side stencil, order 6,
+   !< from cell averages q(-8:0).
    real(R_P),    intent(in)  :: q(-8:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1032,7 +1074,8 @@ contains
    endsubroutine gideon_fv_face_d3_ul6
 
    pure subroutine gideon_fv_face_d4_ur1(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1, from cell averages q(1:5).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1,
+   !< from cell averages q(1:5).
    real(R_P),    intent(in)  :: q(1:5) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1047,7 +1090,8 @@ contains
    endsubroutine gideon_fv_face_d4_ur1
 
    pure subroutine gideon_fv_face_d4_ul1(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1, from cell averages q(-4:0).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1,
+   !< from cell averages q(-4:0).
    real(R_P),    intent(in)  :: q(-4:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1062,7 +1106,8 @@ contains
    endsubroutine gideon_fv_face_d4_ul1
 
    pure subroutine gideon_fv_face_d4_ur2(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2, from cell averages q(1:6).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2,
+   !< from cell averages q(1:6).
    real(R_P),    intent(in)  :: q(1:6) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1077,7 +1122,8 @@ contains
    endsubroutine gideon_fv_face_d4_ur2
 
    pure subroutine gideon_fv_face_d4_ul2(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2, from cell averages q(-5:0).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2,
+   !< from cell averages q(-5:0).
    real(R_P),    intent(in)  :: q(-5:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1092,7 +1138,8 @@ contains
    endsubroutine gideon_fv_face_d4_ul2
 
    pure subroutine gideon_fv_face_d4_ur3(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3, from cell averages q(1:7).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3,
+   !< from cell averages q(1:7).
    real(R_P),    intent(in)  :: q(1:7) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1107,7 +1154,8 @@ contains
    endsubroutine gideon_fv_face_d4_ur3
 
    pure subroutine gideon_fv_face_d4_ul3(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3, from cell averages q(-6:0).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3,
+   !< from cell averages q(-6:0).
    real(R_P),    intent(in)  :: q(-6:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1122,7 +1170,8 @@ contains
    endsubroutine gideon_fv_face_d4_ul3
 
    pure subroutine gideon_fv_face_d4_ur4(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4, from cell averages q(1:8).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4,
+   !< from cell averages q(1:8).
    real(R_P),    intent(in)  :: q(1:8) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1137,7 +1186,8 @@ contains
    endsubroutine gideon_fv_face_d4_ur4
 
    pure subroutine gideon_fv_face_d4_ul4(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4, from cell averages q(-7:0).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4,
+   !< from cell averages q(-7:0).
    real(R_P),    intent(in)  :: q(-7:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1152,7 +1202,8 @@ contains
    endsubroutine gideon_fv_face_d4_ul4
 
    pure subroutine gideon_fv_face_d4_ur5(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5, from cell averages q(1:9).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 5,
+   !< from cell averages q(1:9).
    real(R_P),    intent(in)  :: q(1:9) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1167,7 +1218,8 @@ contains
    endsubroutine gideon_fv_face_d4_ur5
 
    pure subroutine gideon_fv_face_d4_ul5(q, ds, d)
-   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5, from cell averages q(-8:0).
+   !< Fourth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 5,
+   !< from cell averages q(-8:0).
    real(R_P),    intent(in)  :: q(-8:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1182,7 +1234,8 @@ contains
    endsubroutine gideon_fv_face_d4_ul5
 
    pure subroutine gideon_fv_face_d5_ur1(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1, from cell averages q(1:6).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 1,
+   !< from cell averages q(1:6).
    real(R_P),    intent(in)  :: q(1:6) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1197,7 +1250,8 @@ contains
    endsubroutine gideon_fv_face_d5_ur1
 
    pure subroutine gideon_fv_face_d5_ul1(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1, from cell averages q(-5:0).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 1,
+   !< from cell averages q(-5:0).
    real(R_P),    intent(in)  :: q(-5:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1212,7 +1266,8 @@ contains
    endsubroutine gideon_fv_face_d5_ul1
 
    pure subroutine gideon_fv_face_d5_ur2(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2, from cell averages q(1:7).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 2,
+   !< from cell averages q(1:7).
    real(R_P),    intent(in)  :: q(1:7) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1227,7 +1282,8 @@ contains
    endsubroutine gideon_fv_face_d5_ur2
 
    pure subroutine gideon_fv_face_d5_ul2(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2, from cell averages q(-6:0).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 2,
+   !< from cell averages q(-6:0).
    real(R_P),    intent(in)  :: q(-6:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1242,7 +1298,8 @@ contains
    endsubroutine gideon_fv_face_d5_ul2
 
    pure subroutine gideon_fv_face_d5_ur3(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3, from cell averages q(1:8).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 3,
+   !< from cell averages q(1:8).
    real(R_P),    intent(in)  :: q(1:8) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1257,7 +1314,8 @@ contains
    endsubroutine gideon_fv_face_d5_ur3
 
    pure subroutine gideon_fv_face_d5_ul3(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3, from cell averages q(-7:0).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 3,
+   !< from cell averages q(-7:0).
    real(R_P),    intent(in)  :: q(-7:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1272,7 +1330,8 @@ contains
    endsubroutine gideon_fv_face_d5_ul3
 
    pure subroutine gideon_fv_face_d5_ur4(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4, from cell averages q(1:9).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, right-side stencil, order 4,
+   !< from cell averages q(1:9).
    real(R_P),    intent(in)  :: q(1:9) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
@@ -1287,7 +1346,8 @@ contains
    endsubroutine gideon_fv_face_d5_ur4
 
    pure subroutine gideon_fv_face_d5_ul4(q, ds, d)
-   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4, from cell averages q(-8:0).
+   !< Fifth derivative at the face between cells 0 and 1, upwind, left-side stencil, order 4,
+   !< from cell averages q(-8:0).
    real(R_P),    intent(in)  :: q(-8:0) !< Data by offset (docs/guide/conventions.md).
    real(R_P),    intent(in)  :: ds       !< Grid step.
    real(R_P),    intent(out) :: d        !< Result.
