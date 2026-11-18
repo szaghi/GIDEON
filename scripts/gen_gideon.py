@@ -1235,6 +1235,239 @@ def emit_registry(ks: list[Kernel]) -> str:
     return '\n'.join(out) + '\n'
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# the line solvers (#2, 0.3): one template, two variants (constant band, variable coefficients), so the two cannot
+# drift; `$x(i)` is a band coefficient: `x(i)` in the variable variant, the scalar `x` in the constant one
+# ---------------------------------------------------------------------------------------------------------------------
+SOLVER_TEMPLATES = {
+    'tri_factor': ('(n, a, b, c, d, w)', 'abc', '''\
+   !< Bounded tridiagonal solve (Thomas), the factor kept in w for tri_resolve{V}: rows 1..n of
+   !< a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), a(1) and c(n) never read; d: the right side in, x out.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch: the factor.
+   real(R_P)                   :: p    !< Pivot.
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   w(1) = $c(1)/$b(1)
+   d(1) = d(1)/$b(1)
+   do i=2, n
+      p = $b(i) - $a(i)*w(i-1)
+      w(i) = 0._R_P
+      if (i < n) w(i) = $c(i)/p
+      d(i) = (d(i) - $a(i)*d(i-1))/p
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - w(i)*d(i+1)
+   enddo'''),
+    'tri_resolve': ('(n, a, b, c, d, w)', 'abc', '''\
+   !< Bounded tridiagonal solve of another right side with the factor w of tri_factor{V} (the same operations).
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(in)    :: w(n) !< The factor.
+   real(R_P)                   :: p    !< Pivot.
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d(1) = d(1)/$b(1)
+   do i=2, n
+      p = $b(i) - $a(i)*w(i-1)
+      d(i) = (d(i) - $a(i)*d(i-1))/p
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - w(i)*d(i+1)
+   enddo'''),
+    'gideon_tri_bounded': ('(n, a, b, c, d, w)', 'abc', '''\
+   !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
+   !< never read. Thomas' algorithm without pivoting: for diagonally dominant bands. One line per call.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch.
+   !$acc routine seq
+   !$omp declare target
+   call tri_factor{V}(n, a, b, c, d, w)'''),
+    'gideon_tri_periodic': ('(n, a, b, c, d, w, z)', 'abc', '''\
+   !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
+   !< x(n+1) = x(1). The interior x(1:n-1) solved as a bounded line for the right side and for the column of x(n)
+   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant bands.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch.
+   real(R_P),    intent(out)   :: z(n) !< Scratch.
+   real(R_P)                   :: xn   !< x(n).
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      z(i) = 0._R_P
+   enddo
+   z(1) = $a(1)
+   z(n-1) = z(n-1) + $c(n-1)
+   call tri_factor{V}(n-1, a, b, c, d, w)
+   call tri_resolve{V}(n-1, a, b, c, z, w)
+   xn = (d(n) - $a(n)*d(n-1) - $c(n)*d(1))/($b(n) - $a(n)*z(n-1) - $c(n)*z(1))
+   do i=1, n-1
+      d(i) = d(i) - z(i)*xn
+   enddo
+   d(n) = xn'''),
+    'penta_factor': ('(n, e, a, b, c, f, d, u1, u2)', 'eabcf', '''\
+   !< Bounded pentadiagonal solve (Gaussian elimination without pivoting), the factor kept in u1, u2 for
+   !< penta_resolve{V}: rows 1..n of e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i), the
+   !< coefficients outside the line never read.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch: the factor, coefficient of x(i+1) in the reduced row i.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch: the factor, coefficient of x(i+2) in the reduced row i.
+   real(R_P)                   :: ap, bp, cp !< The row reduced.
+   integer(I4P)                :: i     !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      ap = 0._R_P ; bp = $b(i) ; cp = 0._R_P
+      if (i < n) cp = $c(i)
+      if (i >= 2) ap = $a(i)
+      if (i >= 3) then
+         ap = ap - $e(i)*u1(i-2)
+         bp = bp - $e(i)*u2(i-2)
+         d(i) = d(i) - $e(i)*d(i-2)
+      endif
+      if (i >= 2) then
+         bp = bp - ap*u1(i-1)
+         cp = cp - ap*u2(i-1)
+         d(i) = d(i) - ap*d(i-1)
+      endif
+      u1(i) = cp/bp
+      u2(i) = 0._R_P
+      if (i < n-1) u2(i) = $f(i)/bp
+      d(i) = d(i)/bp
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - u1(i)*d(i+1)
+      if (i < n-1) d(i) = d(i) - u2(i)*d(i+2)
+   enddo'''),
+    'penta_resolve': ('(n, e, a, b, c, f, d, u1, u2)', 'eabcf', '''\
+   !< Bounded pentadiagonal solve of another right side with the factor u1, u2 of penta_factor{V}.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(in)    :: u1(n) !< The factor.
+   real(R_P),    intent(in)    :: u2(n) !< The factor.
+   real(R_P)                   :: ap, bp !< The row reduced.
+   integer(I4P)                :: i     !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      ap = 0._R_P ; bp = $b(i)
+      if (i >= 2) ap = $a(i)
+      if (i >= 3) then
+         ap = ap - $e(i)*u1(i-2)
+         bp = bp - $e(i)*u2(i-2)
+         d(i) = d(i) - $e(i)*d(i-2)
+      endif
+      if (i >= 2) then
+         bp = bp - ap*u1(i-1)
+         d(i) = d(i) - ap*d(i-1)
+      endif
+      d(i) = d(i)/bp
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - u1(i)*d(i+1)
+      if (i < n-1) d(i) = d(i) - u2(i)*d(i+2)
+   enddo'''),
+    'gideon_penta_bounded': ('(n, e, a, b, c, f, d, u1, u2)', 'eabcf', '''\
+   !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
+   !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
+   !< pivoting: for diagonally dominant bands. One line per call.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch.
+   !$acc routine seq
+   !$omp declare target
+   call penta_factor{V}(n, e, a, b, c, f, d, u1, u2)'''),
+    'gideon_penta_periodic': ('(n, e, a, b, c, f, d, u1, u2, z1, z2)', 'eabcf', '''\
+   !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
+   !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
+   !< the columns of x(n-1) and x(n) (one factor), then those two from the last two rows (their 2x2 Schur
+   !< complement). For diagonally dominant bands.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+{DECL}
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch.
+   real(R_P),    intent(out)   :: z1(n) !< Scratch.
+   real(R_P),    intent(out)   :: z2(n) !< Scratch.
+   real(R_P)                   :: s11, s12, s21, s22, r1, r2, det, x1, x2 !< The border's 2x2 system.
+   integer(I4P)                :: i, m  !< Counter, interior unknowns.
+   !$acc routine seq
+   !$omp declare target
+   m = n - 2
+   do i=1, n
+      z1(i) = 0._R_P ; z2(i) = 0._R_P
+   enddo
+   z1(1) = $e(1)             ! row 1 reaches x(-1) = x(n-1) and x(0) = x(n)
+   z2(1) = $a(1)
+   z2(2) = z2(2) + $e(2)     ! row 2 reaches x(0) = x(n)
+   z1(m-1) = z1(m-1) + $f(m-1) ! row n-3 reaches x(n-1)
+   z1(m) = z1(m) + $c(m)     ! row n-2 reaches x(n-1) and x(n)
+   z2(m) = z2(m) + $f(m)
+   call penta_factor{V}(m, e, a, b, c, f, d, u1, u2)
+   call penta_resolve{V}(m, e, a, b, c, f, z1, u1, u2)
+   call penta_resolve{V}(m, e, a, b, c, f, z2, u1, u2)
+   ! row n-1 reaches x(n-3), x(n-2) and x(n+1) = x(1); row n reaches x(n-2), x(n+1) = x(1) and x(n+2) = x(2)
+   r1 = d(n-1) - ($e(n-1)*d(m-1) + $a(n-1)*d(m) + $f(n-1)*d(1))
+   r2 = d(n) - ($e(n)*d(m) + $c(n)*d(1) + $f(n)*d(2))
+   s11 = $b(n-1) - ($e(n-1)*z1(m-1) + $a(n-1)*z1(m) + $f(n-1)*z1(1))
+   s12 = $c(n-1) - ($e(n-1)*z2(m-1) + $a(n-1)*z2(m) + $f(n-1)*z2(1))
+   s21 = $a(n) - ($e(n)*z1(m) + $c(n)*z1(1) + $f(n)*z1(2))
+   s22 = $b(n) - ($e(n)*z2(m) + $c(n)*z2(1) + $f(n)*z2(2))
+   det = s11*s22 - s12*s21
+   x1 = (r1*s22 - s12*r2)/det
+   x2 = (s11*r2 - s21*r1)/det
+   do i=1, m
+      d(i) = d(i) - z1(i)*x1 - z2(i)*x2
+   enddo
+   d(n-1) = x1
+   d(n) = x2'''),
+}
+
+
+def emit_line_solvers() -> str:
+    """The line solvers: tridiagonal and pentadiagonal, bounded and periodic, constant band and variable coefficients."""
+    title = '!< GIDEON, the line solvers: tridiagonal and pentadiagonal, bounded and periodic lines.'
+    out = [HEADER + title, 'module gideon_line_solvers', title, '!<',
+           '!< The solve of a compact (implicit) operator A x = r along one line: the caller computes the right side r',
+           '!< with the operator\'s per-point kernel, then calls one of these. `_const`: the band a constant (scalars,',
+           '!< the compact operators); `_var`: one coefficient per row (arrays, a band with rows replaced). Every routine',
+           '!< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller\'s',
+           '!< arrays, no allocation. Elimination without pivoting: for diagonally dominant bands (every operator of',
+           '!< GIDEON\'s). Generated from one template for both variants; docs/guide/lines.md.',
+           'use penf, only : I4P, R_P', 'implicit none', 'private']
+    pub = [n for n in SOLVER_TEMPLATES if n.startswith('gideon_')]
+    out += [f'public :: {n}{v}' for n in pub for v in ('_const', '_var')]
+    out.append('contains')
+    for name, (args, coefs, body) in SOLVER_TEMPLATES.items():
+        for v in ('_const', '_var'):
+            decl = (f'   real(R_P),    intent(in)    :: {", ".join(coefs)} !< The band, offsets '
+                    f'{"-1, 0, +1" if coefs == "abc" else "-2, -1, 0, +1, +2"}.' if v == '_const' else
+                    f'   real(R_P),    intent(in)    :: {", ".join(c + "(n)" for c in coefs)} !< The band by row, offsets '
+                    f'{"-1, 0, +1" if coefs == "abc" else "-2, -1, 0, +1, +2"}.')
+            text = body.replace('{DECL}', decl).replace('{V}', v)
+            text = re.sub(r'\$([a-f])\(([^()]*(?:\([^()]*\))?[^()]*)\)', (lambda m: f'{m.group(1)}({m.group(2)})')
+                          if v == '_var' else (lambda m: m.group(1)), text)
+            kind = 'pure subroutine'
+            out += [f'   {kind} {name}{v}{args}', text, f'   endsubroutine {name}{v}', '']
+    out.append('endmodule gideon_line_solvers')
+    return '\n'.join(out) + '\n'
+
+
 def parse_emitted_tables(text: str) -> dict[str, list[Fr]]:
     """Read the emitted rows back (G1: the text written is the row derived)."""
     out: dict[str, list[Fr]] = {}
@@ -1308,6 +1541,7 @@ def write_sources(ks: list[Kernel]) -> list[str]:
         files[ROOT / f'src/lib/{mod}.F90'] = emit_module(mod, ks)
     files[ROOT / 'src/lib/gideon_dispatch.F90'] = emit_dispatch(ks)
     files[ROOT / 'src/lib/gideon_operators_3d.F90'] = emit_operators_3d(ks)
+    files[ROOT / 'src/lib/gideon_line_solvers.F90'] = emit_line_solvers()
     files[ROOT / 'src/tests/gideon_test_registry.F90'] = emit_registry(ks)
     files[ROOT / 'docs/guide/_operators-table.md'] = emit_docs_table(ks)
     back = parse_emitted_tables(files[ROOT / 'src/lib/gideon_tables.F90'])
