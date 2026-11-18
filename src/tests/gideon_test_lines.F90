@@ -16,6 +16,9 @@ program gideon_test_lines
 !<   wavenumber is real (no dissipation) within the same tolerance.
 !< - L5 (device): the right sides of NP random windows (64 eps sum|w| max|q| / h^n), and NLD periodic lines solved one
 !<   per thread (that times F), on the device against the host (bitwise without OpenACC).
+!< Compact filters (alpha_f at run time, band [alpha_f, 1, alpha_f]): L1 at alpha_f = 0, 0.3, 0.45 (the leading
+!< residual lerror + alpha_f lerror_alpha), L2, L4, L5 at alpha_f = AF = 0.45; L4 also: the transfer function is real
+!< and in [0, 1] within the tolerance, and the odd-even mode (-1)^i is removed within it.
 !< F = (1 + sum|alpha| / s) / s, s = min over xi of |band symbol|: the round-off of the right side (relative eps) and
 !< the solve's backward error (relative eps to the band, on a solution of size sum|w| max|q| / h^n / s), both through
 !< the inverse band, whose norm is 1/s. (The first version of this test, before any run, had F = 1/s: it omitted the
@@ -27,6 +30,7 @@ real(R_P),    parameter :: PI = 3.14159265358979323846264338327950288_R_P
 real(R_P),    parameter :: X0 = 0.3_R_P       !< The first unknown of a periodic line.
 integer(I4P), parameter :: KMAX = 14_I4P      !< N = 2^(k+2), k = 1..KMAX.
 integer(I4P), parameter :: NSYM = 64_I4P      !< Line of the symbol check.
+real(R_P),    parameter :: AF = 0.45_R_P      !< alpha_f of the filters in L2, L4, L5.
 integer(I4P)            :: fails, checks
 
 fails = 0 ; checks = 0
@@ -62,16 +66,43 @@ contains
    if (j > n) v = v*x**(j - n)
    endfunction dmono
 
-   pure function floor_factor(id) result(f)
+   pure function band(id, af, o) result(a)
+   !< The band of operator id at offset o (a filter's: [af, 1, af]).
+   integer(I4P), intent(in) :: id, o
+   real(R_P),    intent(in) :: af
+   real(R_P)                :: a
+   if (lalpha_free(id)) then
+      a = merge(1._R_P, merge(af, 0._R_P, abs(o) == 1), o == 0)
+   else
+      a = lleft(o,id)
+   endif
+   endfunction band
+
+   pure function sumabs(id, af) result(s)
+   !< sum|w| of the right side (a filter's at af).
+   integer(I4P), intent(in) :: id
+   real(R_P),    intent(in) :: af
+   real(R_P)                :: s
+   s = lsumabs(id) + abs(af)*lsumabs_alpha(id)
+   endfunction sumabs
+
+   pure function floor_factor(id, af) result(f)
    !< F = (1 + sum|alpha|/s)/s, s the band's smallest symbol: the amplification of the round-off through the solve.
    integer(I4P), intent(in) :: id
-   real(R_P)                :: f
-   f = (1._R_P + sum(abs(lleft(:,id)))/band_min(id))/band_min(id)
+   real(R_P),    intent(in) :: af
+   real(R_P)                :: f, sa
+   integer(I4P)             :: o
+   sa = 0._R_P
+   do o=-2, 2
+      sa = sa + abs(band(id, af, o))
+   enddo
+   f = (1._R_P + sa/band_min(id, af))/band_min(id, af)
    endfunction floor_factor
 
-   pure function band_min(id) result(s)
+   pure function band_min(id, af) result(s)
    !< min over xi of |sum_o alpha_o e^(i o xi)|: the inverse of the band's amplification of the right side's errors.
    integer(I4P), intent(in) :: id
+   real(R_P),    intent(in) :: af
    real(R_P)                :: s, re, im, xi
    integer(I4P)             :: j, o
    s = huge(1._R_P)
@@ -79,7 +110,7 @@ contains
       xi = j*PI/512
       re = 0._R_P ; im = 0._R_P
       do o=-2, 2
-         re = re + lleft(o,id)*cos(o*xi) ; im = im + lleft(o,id)*sin(o*xi)
+         re = re + band(id, af, o)*cos(o*xi) ; im = im + band(id, af, o)*sin(o*xi)
       enddo
       s = min(s, sqrt(re**2 + im**2))
    enddo
@@ -87,9 +118,12 @@ contains
 
    subroutine check_rows
    !< L1: every row exact on the monomials up to its degree, its residual beyond it the derived one.
-   real(R_P)    :: q(-LWMAX:LWMAX), r, left, tmax, tol, a, b
-   integer(I4P) :: id, j, o, kdeg
+   real(R_P)    :: q(-LWMAX:LWMAX), r, left, tmax, tol, a, b, af, sa
+   real(R_P), parameter :: AFS(3) = [0._R_P, 0.3_R_P, 0.45_R_P]
+   integer(I4P) :: id, j, o, kdeg, ia
    do id=1, NL
+   do ia=1, merge(3, 1, lalpha_free(id))
+      af = AFS(ia)
       kdeg = lorder(id) + ln(id) - 1
       do j=0, kdeg + 1
          q = 0._R_P
@@ -100,24 +134,26 @@ contains
             case(3) ; a = o - 1._R_P ; b = o ; q(o) = (b**(j + 1) - a**(j + 1))/(j + 1)
             endselect
          enddo
-         left = 0._R_P ; tmax = 0._R_P
+         left = 0._R_P ; tmax = 0._R_P ; sa = 0._R_P
          do o=-2, 2
-            left = left + lleft(o,id)*dmono(ln(id), j, real(o, R_P))
+            left = left + band(id, af, o)*dmono(ln(id), j, real(o, R_P))
             tmax = max(tmax, abs(dmono(ln(id), j, real(o, R_P))))
+            sa = sa + abs(band(id, af, o))
          enddo
-         call line_rhs(id, q, 1._R_P, r)
-         tol = 64*epsilon(1._R_P)*(lsumabs(id)*max(maxval(abs(q)), 1._R_P) + sum(abs(lleft(:,id)))*tmax)
+         call line_rhs(id, q, 1._R_P, af, r)
+         tol = 64*epsilon(1._R_P)*(sumabs(id, af)*max(maxval(abs(q)), 1._R_P) + sa*tmax)
          checks = checks + 1
          if (j <= kdeg) then
             if (abs(left - r) > tol) then
                fails = fails + 1
                print '(A,A,A,I0,A,ES10.2)', 'ROW NOT EXACT ', trim(lname(id)), ' on x^', j, ': ', abs(left - r)
             endif
-         elseif (abs((left - r) - lerror(id)) > tol) then
+         elseif (abs((left - r) - (lerror(id) + af*lerror_alpha(id))) > tol) then
             fails = fails + 1
             print '(A,A,A,I0,2ES12.4)', 'ROW LEADING ERROR ', trim(lname(id)), ' on x^', j, left - r, lerror(id)
          endif
       enddo
+   enddo
    enddo
    endsubroutine check_rows
 
@@ -151,9 +187,9 @@ contains
       do o=llo(id), lhi(id)
          win(o) = q(modulo(i + o - 1, n) + 1)
       enddo
-      call line_rhs(id, win, h, u(i))
+      call line_rhs(id, win, h, AF, u(i))
    enddo
-   call line_solve(id, n, u, w(:,1), w(:,2), w(:,3), w(:,4))
+   call line_solve(id, n, AF, u, w(:,1), w(:,2), w(:,3), w(:,4))
    endsubroutine apply_line
 
    subroutine check_orders
@@ -164,7 +200,7 @@ contains
    integer(I4P) :: id, k, n, i, kbest, unresolved
    unresolved = 0
    do id=1, NL
-      ff = floor_factor(id)
+      ff = floor_factor(id, AF)
       ok = .false. ; e = 0._R_P
       do k=1, KMAX
          n = 2**(k + 2)
@@ -178,7 +214,7 @@ contains
             ex = max(ex, abs(u(i) - gp(ln(id), X0 + (i - 1)*h)))
          enddo
          e(k) = ex
-         noise(k) = epsilon(1._R_P)*(lsumabs(id)*(maxval(abs(q)) + merge(2/h, 0._R_P, lgeom(id) == 3))/h**ln(id)*ff &
+         noise(k) = epsilon(1._R_P)*(sumabs(id, AF)*(maxval(abs(q)) + merge(2/h, 0._R_P, lgeom(id) == 3))/h**ln(id)*ff &
                                      + emax)
          ok(k) = e(k) > 10*noise(k) .and. 3*(lhi(id) - llo(id) + 1)*h <= 1._R_P
          deallocate(q, u, w)
@@ -220,7 +256,7 @@ contains
    integer(I4P) :: id, kk, i, o
    h = 2*PI/NSYM
    do id=1, NL
-      tol = 64*epsilon(1._R_P)*lsumabs(id)/h**ln(id)*floor_factor(id)
+      tol = 64*epsilon(1._R_P)*sumabs(id, AF)/h**ln(id)*floor_factor(id, AF)
       do kk=1, NSYM/2 - 1
          xi = kk*h
          do i=1, NSYM ! the mode cos(k x), sin(k x) through the geometry of the data, the unknown 1 at x = 0
@@ -236,14 +272,14 @@ contains
          do o=llo(id), lhi(id)
             win(o) = qc(modulo(o, NSYM) + 1)
          enddo
-         call line_rhs(id, win, h, rc)
+         call line_rhs(id, win, h, AF, rc)
          do o=llo(id), lhi(id)
             win(o) = qs(modulo(o, NSYM) + 1)
          enddo
-         call line_rhs(id, win, h, rs)
+         call line_rhs(id, win, h, AF, rs)
          lre = 0._R_P ; lim = 0._R_P
          do o=-2, 2
-            lre = lre + lleft(o,id)*cos(o*xi) ; lim = lim + lleft(o,id)*sin(o*xi)
+            lre = lre + band(id, AF, o)*cos(o*xi) ; lim = lim + band(id, AF, o)*sin(o*xi)
          enddo
          ! the response to e^(ikx) is (rc + i rs)/(lre + i lim) e^(ikx)
          pre = (rc*lre + rs*lim)/(lre**2 + lim**2)
@@ -260,7 +296,13 @@ contains
             fails = fails + 1
             print '(A,A,A,I0,A,ES10.2)', 'SYMBOL ', trim(lname(id)), ' k = ', kk, ': ', err
          endif
-         if (lgeom(id) == 1 .and. (ln(id) == 1 .or. ln(id) == 2)) then
+         if (lalpha_free(id)) then ! a filter: its transfer function real, in [0, 1]
+            checks = checks + 1
+            if (abs(pim) > tol .or. pre < -tol .or. pre > 1 + tol) then
+               fails = fails + 1
+               print '(A,A,A,I0,2ES12.4)', 'TRANSFER ', trim(lname(id)), ' k = ', kk, pre, pim
+            endif
+         elseif (lgeom(id) == 1 .and. (ln(id) == 1 .or. ln(id) == 2)) then
             ! centred: d1's modified wavenumber -i h (pre + i pim) real, d2's -h^2 (pre + i pim) real
             sfac = h**ln(id)
             if (ln(id) == 1) then
@@ -275,6 +317,17 @@ contains
             endif
          endif
       enddo
+      if (lalpha_free(id)) then ! the odd-even mode removed
+         do i=1, NSYM
+            qc(i) = real(1 - 2*modulo(i, 2), R_P)
+         enddo
+         call apply_line_mode(id, h, qc, uc, w)
+         checks = checks + 1
+         if (maxval(abs(uc)) > tol) then
+            fails = fails + 1
+            print '(A,A,ES12.4)', 'ODD-EVEN MODE NOT REMOVED ', trim(lname(id)), maxval(abs(uc))
+         endif
+      endif
    enddo
    endsubroutine check_symbols
 
@@ -305,12 +358,12 @@ contains
    do id=1, NL
       !$acc parallel loop copyin(q) copyout(rd)
       do i=1, NP
-         call line_rhs_dev(id, q(:,i), ds, rd(i))
+         call line_rhs_dev(id, q(:,i), ds, AF, rd(i))
       enddo
       do i=1, NP
-         call line_rhs(id, q(:,i), ds, rh(i))
+         call line_rhs(id, q(:,i), ds, AF, rh(i))
       enddo
-      tol = 64*epsilon(1._R_P)*lsumabs(id)/ds**ln(id)
+      tol = 64*epsilon(1._R_P)*sumabs(id, AF)/ds**ln(id)
       do i=1, NP
          checks = checks + 1
          if (rd(i) == rh(i)) nbit = nbit + 1
@@ -328,18 +381,18 @@ contains
             do o=llo(id), lhi(id)
                win(o,l) = ql(modulo(i + o - 1, NN) + 1,l)
             enddo
-            call line_rhs_dev(id, win(:,l), ds, ud(i,l))
+            call line_rhs_dev(id, win(:,l), ds, AF, ud(i,l))
          enddo
-         call line_solve(id, NN, ud(:,l), w(:,1,l), w(:,2,l), w(:,3,l), w(:,4,l))
+         call line_solve(id, NN, AF, ud(:,l), w(:,1,l), w(:,2,l), w(:,3,l), w(:,4,l))
       enddo
       do l=1, NLD
          call apply_line(id, NN, ds, ql(:,l), uh(:,l), w(:,:,l))
       enddo
-      tol = tol*floor_factor(id)
+      tol = tol*floor_factor(id, AF)
       do l=1, NLD
          checks = checks + 1
          if (all(ud(:,l) == uh(:,l))) nbitl = nbitl + 1
-         worst = max(worst, maxval(abs(ud(:,l) - uh(:,l)))/(lsumabs(id)/ds**ln(id)*floor_factor(id)))
+         worst = max(worst, maxval(abs(ud(:,l) - uh(:,l)))/(sumabs(id, AF)/ds**ln(id)*floor_factor(id, AF)))
          if (maxval(abs(ud(:,l) - uh(:,l))) > tol) then
             fails = fails + 1
             if (fails <= 10) print '(A,A,1X,I0)', 'DEVICE LINE ', trim(lname(id)), l

@@ -11,26 +11,50 @@ use gideon
 implicit none
 private
 public :: NL, LWMAX, lname, lgeom, ln, lorder, lhalf, llo, lhi, lleft, lerror, lsumabs, lalpha_free
+public :: lerror_alpha, lsumabs_alpha
 public :: line_rhs, line_rhs_dev, line_solve
-integer(I4P), parameter :: NL = 8 !< Number of compact operators.
+integer(I4P), parameter :: NL = 13 !< Number of compact operators.
 integer(I4P), parameter :: LWMAX = 8 !< Half-width of the windows the tests pass.
 character(len=24), parameter :: lname(NL) = ['fd_d1_p4                ', 'fd_d1_p6                ', &
                                                'fd_d1_p8                ', 'fd_d1_p10               ', &
                                                'fd_d2_p4                ', 'fd_d2_p6                ', &
-                                               'fd_d2_p8                ', 'fd_d2_p10               ']
-integer(I4P), parameter :: lgeom(NL) = [1, 1, 1, 1, 1, 1, 1, 1]
-integer(I4P), parameter :: ln(NL) = [1, 1, 1, 1, 2, 2, 2, 2]
-integer(I4P), parameter :: lorder(NL) = [4, 6, 8, 10, 4, 6, 8, 10]
-integer(I4P), parameter :: lhalf(NL) = [1, 1, 2, 2, 1, 1, 2, 2]
-integer(I4P), parameter :: llo(NL) = [-1, -2, -2, -3, -1, -2, -2, -3]
-integer(I4P), parameter :: lhi(NL) = [1, 2, 2, 3, 1, 2, 2, 3]
-logical, parameter :: lalpha_free(NL) = [.false., .false., .false., .false., .false., .false., .false., .false.]
+                                               'fd_d2_p8                ', 'fd_d2_p10               ', &
+                                               'fd_filter_p2            ', 'fd_filter_p4            ', &
+                                               'fd_filter_p6            ', 'fd_filter_p8            ', &
+                                               'fd_filter_p10           ']
+integer(I4P), parameter :: lgeom(NL) = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+integer(I4P), parameter :: ln(NL) = [1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0]
+integer(I4P), parameter :: lorder(NL) = [4, 6, 8, 10, 4, 6, 8, 10, 2, 4, 6, 8, 10]
+integer(I4P), parameter :: lhalf(NL) = [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1]
+integer(I4P), parameter :: llo(NL) = [-1, -2, -2, -3, -1, -2, -2, -3, -1, -2, -3, -4, -5]
+integer(I4P), parameter :: lhi(NL) = [1, 2, 2, 3, 1, 2, 2, 3, 1, 2, 3, 4, 5]
+logical, parameter :: lalpha_free(NL) = [.false., .false., .false., .false., .false., .false., .false., &
+                                           .false., .true., .true., .true., .true., .true.]
 real(R_P), parameter :: lsumabs(NL) = [1.50000000000000000_R_P*1e+00_R_P, 1.61111111111111116_R_P*1e+00_R_P, &
                                          1.71296296296296302_R_P*1e+00_R_P, 1.75666666666666660_R_P*1e+00_R_P, &
                                          4.79999999999999982_R_P*1e+00_R_P, 4.63636363636363669_R_P*1e+00_R_P, &
-                                         4.04580152671755755_R_P*1e+00_R_P, 3.54344333209739215_R_P*1e+00_R_P]
+                                         4.04580152671755755_R_P*1e+00_R_P, 3.54344333209739215_R_P*1e+00_R_P, &
+                                         1.00000000000000000_R_P*1e+00_R_P, 1.25000000000000000_R_P*1e+00_R_P, &
+                                         1.37500000000000000_R_P*1e+00_R_P, 1.45312500000000000_R_P*1e+00_R_P, &
+                                         1.50781250000000000_R_P*1e+00_R_P]
 real(R_P), parameter :: lerror(NL) = [1._R_P, -4._R_P, 16._R_P, -144._R_P, 18._R_P/5._R_P, -184._R_P/11._R_P, &
-                                        12640._R_P/131._R_P, -891360._R_P/899._R_P]
+                                        12640._R_P/131._R_P, -891360._R_P/899._R_P, -1._R_P/2._R_P, &
+                                        3._R_P/2._R_P, -45._R_P/4._R_P, 315._R_P/2._R_P, -14175._R_P/4._R_P]
+real(R_P), parameter :: lerror_alpha(NL) = [0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
+                                              1._R_P, -3._R_P, 45._R_P/2._R_P, -315._R_P, 14175._R_P/2._R_P]
+real(R_P), parameter :: lsumabs_alpha(NL) = [0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               2.00000000000000000_R_P*1e+00_R_P, &
+                                               2.00000000000000000_R_P*1e+00_R_P, &
+                                               2.12500000000000000_R_P*1e+00_R_P, &
+                                               2.25000000000000000_R_P*1e+00_R_P, &
+                                               2.35937500000000000_R_P*1e+00_R_P]
 real(R_P), parameter :: lleft(-2:2,NL) = reshape([ &
    0._R_P, FD_D1_P4_LEFT(1), FD_D1_P4_LEFT(0), FD_D1_P4_LEFT(1), 0._R_P, 0._R_P, FD_D1_P6_LEFT(1), &
    FD_D1_P6_LEFT(0), FD_D1_P6_LEFT(1), 0._R_P, FD_D1_P8_LEFT(2), FD_D1_P8_LEFT(1), FD_D1_P8_LEFT(0), &
@@ -38,13 +62,15 @@ real(R_P), parameter :: lleft(-2:2,NL) = reshape([ &
    FD_D1_P10_LEFT(1), FD_D1_P10_LEFT(2), 0._R_P, FD_D2_P4_LEFT(1), FD_D2_P4_LEFT(0), FD_D2_P4_LEFT(1), &
    0._R_P, 0._R_P, FD_D2_P6_LEFT(1), FD_D2_P6_LEFT(0), FD_D2_P6_LEFT(1), 0._R_P, FD_D2_P8_LEFT(2), &
    FD_D2_P8_LEFT(1), FD_D2_P8_LEFT(0), FD_D2_P8_LEFT(1), FD_D2_P8_LEFT(2), FD_D2_P10_LEFT(2), &
-   FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(0), FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(2)], [5, NL])
+   FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(0), FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(2), 0._R_P, 0._R_P, 0._R_P, &
+   0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
+   0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P], [5, NL])
 contains
-   subroutine line_rhs(id, q, ds, r)
-   !< The right side of operator id at the point of offset 0 of q.
+   subroutine line_rhs(id, q, ds, af, r)
+   !< The right side of operator id at the point of offset 0 of q (af: alpha_f of a filter, else ignored).
    integer(I4P), intent(in)  :: id
    real(R_P),    intent(in)  :: q(-LWMAX:LWMAX)
-   real(R_P),    intent(in)  :: ds
+   real(R_P),    intent(in)  :: ds, af
    real(R_P),    intent(out) :: r
    select case(id)
    case(1) ; call gideon_fd_d1_p4(q(-1:1), ds, r)
@@ -55,15 +81,20 @@ contains
    case(6) ; call gideon_fd_d2_p6(q(-2:2), ds, r)
    case(7) ; call gideon_fd_d2_p8(q(-2:2), ds, r)
    case(8) ; call gideon_fd_d2_p10(q(-3:3), ds, r)
+   case(9) ; call gideon_fd_filter_p2(q(-1:1), af, r)
+   case(10) ; call gideon_fd_filter_p4(q(-2:2), af, r)
+   case(11) ; call gideon_fd_filter_p6(q(-3:3), af, r)
+   case(12) ; call gideon_fd_filter_p8(q(-4:4), af, r)
+   case(13) ; call gideon_fd_filter_p10(q(-5:5), af, r)
    case default ; error stop 'line_rhs: no such operator'
    endselect
    endsubroutine line_rhs
 
-   pure subroutine line_rhs_dev(id, q, ds, r)
+   pure subroutine line_rhs_dev(id, q, ds, af, r)
    !< line_rhs, device-callable (GIDEON_NAN for an unknown id).
    integer(I4P), intent(in)  :: id
    real(R_P),    intent(in)  :: q(-LWMAX:LWMAX)
-   real(R_P),    intent(in)  :: ds
+   real(R_P),    intent(in)  :: ds, af
    real(R_P),    intent(out) :: r
    !$acc routine seq
    !$omp declare target
@@ -76,19 +107,28 @@ contains
    case(6) ; call gideon_fd_d2_p6(q(-2:2), ds, r)
    case(7) ; call gideon_fd_d2_p8(q(-2:2), ds, r)
    case(8) ; call gideon_fd_d2_p10(q(-3:3), ds, r)
+   case(9) ; call gideon_fd_filter_p2(q(-1:1), af, r)
+   case(10) ; call gideon_fd_filter_p4(q(-2:2), af, r)
+   case(11) ; call gideon_fd_filter_p6(q(-3:3), af, r)
+   case(12) ; call gideon_fd_filter_p8(q(-4:4), af, r)
+   case(13) ; call gideon_fd_filter_p10(q(-5:5), af, r)
    case default ; r = GIDEON_NAN
    endselect
    endsubroutine line_rhs_dev
 
-   pure subroutine line_solve(id, n, d, w1, w2, w3, w4)
-   !< Solve the band of operator id on a periodic line of n unknowns, d the right side in, the solution out.
+   pure subroutine line_solve(id, n, af, d, w1, w2, w3, w4)
+   !< Solve the band of operator id on a periodic line of n unknowns, d the right side in, the solution out
+   !< (a filter's band [af, 1, af]).
    integer(I4P), intent(in)    :: id, n
+   real(R_P),    intent(in)    :: af
    real(R_P),    intent(inout) :: d(n)
    real(R_P),    intent(out)   :: w1(n), w2(n), w3(n), w4(n)
    !$acc routine seq
    !$omp declare target
    w3 = 0._R_P ; w4 = 0._R_P
-   if (lhalf(id) == 1) then
+   if (lalpha_free(id)) then
+      call gideon_tri_periodic_const(n, af, 1._R_P, af, d, w1, w2)
+   elseif (lhalf(id) == 1) then
       call gideon_tri_periodic_const(n, lleft(-1,id), lleft(0,id), lleft(1,id), d, w1, w2)
    else
       call gideon_penta_periodic_const(n, lleft(-2,id), lleft(-1,id), lleft(0,id), lleft(1,id), lleft(2,id), &

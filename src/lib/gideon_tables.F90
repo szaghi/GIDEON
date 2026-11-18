@@ -420,7 +420,8 @@ real(R_P), parameter :: FV_BDISS_S2 = -1._R_P/60._R_P
 real(R_P), parameter :: FV_BDISS_S3 = 1._R_P/280._R_P
 !< gideon_fv_face_diss_bl9: gideon_fv_face_bl9 = gideon_fv_face_c10 + FV_BDISS_S4 delta^9 (the right-biased: minus).
 real(R_P), parameter :: FV_BDISS_S4 = -1._R_P/1260._R_P
-!< The compact operators: <NAME>_LEFT the band (the left side), <NAME>_RIGHT the row of the right side.
+!< The compact operators: <NAME>_LEFT the band (the left side), <NAME>_RIGHT the row of the right side; the
+!< compact filters: the band [alpha_f, 1, alpha_f] at run time, the right side <NAME>_RIGHT + alpha_f <NAME>_ALPHA.
 !< gideon_fd_d1_p4, band (pairs (j, -j), index 0 the diagonal)
 real(R_P), parameter :: FD_D1_P4_LEFT(0:1) = [1._R_P, 1._R_P/4._R_P]
 !< gideon_fd_d1_p4, right side (pairs (m, -m), index 0 the centre)
@@ -454,4 +455,29 @@ real(R_P), parameter :: FD_D2_P10_LEFT(0:2) = [1._R_P, 334._R_P/899._R_P, 43._R_
 !< gideon_fd_d2_p10, right side (pairs (m, -m), index 0 the centre)
 real(R_P), parameter :: FD_D2_P10_RIGHT(0:3) = [-14335._R_P/8091._R_P, 1065._R_P/1798._R_P, 519._R_P/1798._R_P, &
                                                    79._R_P/16182._R_P]
+!< gideon_fd_filter_p2, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P2_RIGHT(0:1) = [1._R_P/2._R_P, 1._R_P/4._R_P]
+!< gideon_fd_filter_p2, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P2_ALPHA(0:1) = [1._R_P, 1._R_P/2._R_P]
+!< gideon_fd_filter_p4, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P4_RIGHT(0:2) = [5._R_P/8._R_P, 1._R_P/4._R_P, -1._R_P/16._R_P]
+!< gideon_fd_filter_p4, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P4_ALPHA(0:2) = [3._R_P/4._R_P, 1._R_P/2._R_P, 1._R_P/8._R_P]
+!< gideon_fd_filter_p6, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P6_RIGHT(0:3) = [11._R_P/16._R_P, 15._R_P/64._R_P, -3._R_P/32._R_P, &
+                                                      1._R_P/64._R_P]
+!< gideon_fd_filter_p6, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P6_ALPHA(0:3) = [5._R_P/8._R_P, 17._R_P/32._R_P, 3._R_P/16._R_P, -1._R_P/32._R_P]
+!< gideon_fd_filter_p8, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P8_RIGHT(0:4) = [93._R_P/128._R_P, 7._R_P/32._R_P, -7._R_P/64._R_P, &
+                                                      1._R_P/32._R_P, -1._R_P/256._R_P]
+!< gideon_fd_filter_p8, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P8_ALPHA(0:4) = [35._R_P/64._R_P, 9._R_P/16._R_P, 7._R_P/32._R_P, &
+                                                      -1._R_P/16._R_P, 1._R_P/128._R_P]
+!< gideon_fd_filter_p10, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P10_RIGHT(0:5) = [193._R_P/256._R_P, 105._R_P/512._R_P, -15._R_P/128._R_P, &
+                                                       45._R_P/1024._R_P, -5._R_P/512._R_P, 1._R_P/1024._R_P]
+!< gideon_fd_filter_p10, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_FILTER_P10_ALPHA(0:5) = [63._R_P/128._R_P, 151._R_P/256._R_P, 15._R_P/64._R_P, &
+                                                       -45._R_P/512._R_P, 5._R_P/256._R_P, -1._R_P/512._R_P]
 endmodule gideon_tables

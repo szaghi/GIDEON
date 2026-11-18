@@ -19,6 +19,11 @@ public :: gideon_fd_d2_p4
 public :: gideon_fd_d2_p6
 public :: gideon_fd_d2_p8
 public :: gideon_fd_d2_p10
+public :: gideon_fd_filter_p2
+public :: gideon_fd_filter_p4
+public :: gideon_fd_filter_p6
+public :: gideon_fd_filter_p8
+public :: gideon_fd_filter_p10
 contains
    pure subroutine gideon_fd_d1_p4(q, ds, r)
    !< Right side of the compact first derivative at node 0, centred, order 4, from
@@ -147,5 +152,80 @@ contains
    enddo
    r = r/ds/ds
    endsubroutine gideon_fd_d2_p10
+
+   pure subroutine gideon_fd_filter_p2(q, alpha, r)
+   !< Right side of the compact filtered value at node 0, centred, order 2, from
+   !< point values q(-1:1); the unknowns of the line solve with the band [alpha, 1, alpha].
+   real(R_P),    intent(in)  :: q(-1:1) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: alpha    !< The filter's parameter alpha_f, |alpha_f| < 1/2.
+   real(R_P),    intent(out) :: r        !< The right side at this point.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   r = (FD_FILTER_P2_RIGHT(0) + alpha*FD_FILTER_P2_ALPHA(0))*q(0)
+   do m=1, 1
+      r = r + (FD_FILTER_P2_RIGHT(m) + alpha*FD_FILTER_P2_ALPHA(m))*(q(m) + q(-m))
+   enddo
+   endsubroutine gideon_fd_filter_p2
+
+   pure subroutine gideon_fd_filter_p4(q, alpha, r)
+   !< Right side of the compact filtered value at node 0, centred, order 4, from
+   !< point values q(-2:2); the unknowns of the line solve with the band [alpha, 1, alpha].
+   real(R_P),    intent(in)  :: q(-2:2) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: alpha    !< The filter's parameter alpha_f, |alpha_f| < 1/2.
+   real(R_P),    intent(out) :: r        !< The right side at this point.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   r = (FD_FILTER_P4_RIGHT(0) + alpha*FD_FILTER_P4_ALPHA(0))*q(0)
+   do m=1, 2
+      r = r + (FD_FILTER_P4_RIGHT(m) + alpha*FD_FILTER_P4_ALPHA(m))*(q(m) + q(-m))
+   enddo
+   endsubroutine gideon_fd_filter_p4
+
+   pure subroutine gideon_fd_filter_p6(q, alpha, r)
+   !< Right side of the compact filtered value at node 0, centred, order 6, from
+   !< point values q(-3:3); the unknowns of the line solve with the band [alpha, 1, alpha].
+   real(R_P),    intent(in)  :: q(-3:3) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: alpha    !< The filter's parameter alpha_f, |alpha_f| < 1/2.
+   real(R_P),    intent(out) :: r        !< The right side at this point.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   r = (FD_FILTER_P6_RIGHT(0) + alpha*FD_FILTER_P6_ALPHA(0))*q(0)
+   do m=1, 3
+      r = r + (FD_FILTER_P6_RIGHT(m) + alpha*FD_FILTER_P6_ALPHA(m))*(q(m) + q(-m))
+   enddo
+   endsubroutine gideon_fd_filter_p6
+
+   pure subroutine gideon_fd_filter_p8(q, alpha, r)
+   !< Right side of the compact filtered value at node 0, centred, order 8, from
+   !< point values q(-4:4); the unknowns of the line solve with the band [alpha, 1, alpha].
+   real(R_P),    intent(in)  :: q(-4:4) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: alpha    !< The filter's parameter alpha_f, |alpha_f| < 1/2.
+   real(R_P),    intent(out) :: r        !< The right side at this point.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   r = (FD_FILTER_P8_RIGHT(0) + alpha*FD_FILTER_P8_ALPHA(0))*q(0)
+   do m=1, 4
+      r = r + (FD_FILTER_P8_RIGHT(m) + alpha*FD_FILTER_P8_ALPHA(m))*(q(m) + q(-m))
+   enddo
+   endsubroutine gideon_fd_filter_p8
+
+   pure subroutine gideon_fd_filter_p10(q, alpha, r)
+   !< Right side of the compact filtered value at node 0, centred, order 10, from
+   !< point values q(-5:5); the unknowns of the line solve with the band [alpha, 1, alpha].
+   real(R_P),    intent(in)  :: q(-5:5) !< Data by offset (docs/guide/conventions.md).
+   real(R_P),    intent(in)  :: alpha    !< The filter's parameter alpha_f, |alpha_f| < 1/2.
+   real(R_P),    intent(out) :: r        !< The right side at this point.
+   integer(I4P)              :: m        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   r = (FD_FILTER_P10_RIGHT(0) + alpha*FD_FILTER_P10_ALPHA(0))*q(0)
+   do m=1, 5
+      r = r + (FD_FILTER_P10_RIGHT(m) + alpha*FD_FILTER_P10_ALPHA(m))*(q(m) + q(-m))
+   enddo
+   endsubroutine gideon_fd_filter_p10
 
 endmodule gideon_compact

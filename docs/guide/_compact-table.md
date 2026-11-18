@@ -10,3 +10,8 @@
 | `gideon_fd_d2_p6` | d2 at the nodes | point values | centred | 6 | tridiagonal, `FD_D2_P6_LEFT` | `q(-2:2)` |
 | `gideon_fd_d2_p8` | d2 at the nodes | point values | centred | 8 | pentadiagonal, `FD_D2_P8_LEFT` | `q(-2:2)` |
 | `gideon_fd_d2_p10` | d2 at the nodes | point values | centred | 10 | pentadiagonal, `FD_D2_P10_LEFT` | `q(-3:3)` |
+| `gideon_fd_filter_p2` | filtered values at the nodes | point values | centred | 2 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-1:1)` |
+| `gideon_fd_filter_p4` | filtered values at the nodes | point values | centred | 4 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-2:2)` |
+| `gideon_fd_filter_p6` | filtered values at the nodes | point values | centred | 6 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-3:3)` |
+| `gideon_fd_filter_p8` | filtered values at the nodes | point values | centred | 8 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-4:4)` |
+| `gideon_fd_filter_p10` | filtered values at the nodes | point values | centred | 10 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-5:5)` |
