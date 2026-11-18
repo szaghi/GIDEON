@@ -2,7 +2,7 @@
 
 | Build | Checks | Failures |
 |---|---|---|
-| gfortran, R4P | 18548 | 0 |
-| gfortran, R8P | 18548 | 0 |
-| gfortran, R16P | 18548 | 0 |
-| nvfortran -acc, R8P | 18544 | 0 |
+| gfortran, R4P | 36376 | 0 |
+| gfortran, R8P | 36376 | 0 |
+| gfortran, R16P | 36376 | 0 |
+| nvfortran -acc, R8P | 36368 | 0 |

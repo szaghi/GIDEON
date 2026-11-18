@@ -37,9 +37,10 @@ solved by `gideon_tri_periodic_const`. [Line operators](/guide/conventions#line-
   1/15 of `c6`'s on the same grid ($1.7 \cdot 10^{-9}$ against $2.5 \cdot 10^{-8}$ at 128 nodes): the band buys the
   resolution of the short waves. `p4`, with three points, is more accurate than
   `c6` on the coarsest grid (16 nodes, where the short waves dominate), less on the finer ones, where order wins.
-- **The cost.** A solve per line: about two sweeps over the line for a tridiagonal band, more for a pentadiagonal one
-  ([Performance](/guide/performance)). Where the band is not worth its solve, an explicit operator of higher order is
-  the alternative.
+- **The cost.** A solve per line. Here each grid has one line, so `_const` is the natural call; when many lines share
+  the band and the length (every line of a grid direction), factor the band once with `gideon_tri_periodic_factor`
+  and solve each line with `gideon_tri_periodic_solve`, multiplications only: `p6` then costs about 3 times `c6` per
+  point on a CPU core, 5 times on a GPU ([Compact operators](/guide/compact), [Performance](/guide/performance)).
 
 **Next.** A compact filter after each step of a central scheme: [Filtering a central scheme](/cookbook/filters);
 compact rows coupled with a nonlinear scheme at a step: [Compact-WENO rows](/cookbook/compact-weno).

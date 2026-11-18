@@ -32,7 +32,7 @@ ones. The Fortran text is read back and compared with the derived rows. The pipe
 | `gideon_dissipation` | the undivided odd face differences $\delta^{2k-1}$, the flux of a dissipation of order $2k$; the dissipation part of every upwind-biased face value | $\delta^1$ … $\delta^9$; parts of biased 3, 5, 7, 9 | 26 |
 | `gideon_filters` | explicit centred filters: exact below degree $2k$, the odd-even mode removed | 2–10 (even) | 10 |
 | `gideon_compact` | the right sides of the compact operators: node d1, d2; filters ($\alpha_f$ at run time); face values and face d1 from point values; face values from cell averages, centred and upwind-biased | 4–10; filters 2–10; biased 5, 7 | 29 |
-| `gideon_line_solvers` | tridiagonal and pentadiagonal lines, bounded and periodic, constant band, variable coefficients, masked rows | — | 12 (+ 12 private) |
+| `gideon_line_solvers` | tridiagonal and pentadiagonal lines, bounded and periodic, constant band, variable coefficients, masked rows; a constant band factored once and every line solved with it | — | 20 (+ 16 private) |
 | `gideon_operators_3d` | gradient, divergence, curl, Laplacian, FD and FV, over directional stencils | 2–10 (even) | 40 + 8 dispatchers |
 | `gideon_dispatch` | run-time order dispatchers of every 1-D operator | — | 64 |
 

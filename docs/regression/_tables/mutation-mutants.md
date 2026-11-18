@@ -55,3 +55,6 @@
 | `mirror-fv-face-pbl7` | `gideon_compact.F90` | `q(1-m)` → `q(m-1)` | coupling, lines, lines_golden | 3 |
 | `band-fv-face-pbl5` | `gideon_tables.F90` | `1._R_P/2._R_P` → `0.5001_R_P` | coupling, lines, lines_golden | 3 |
 | `band-fv-face-p6` | `gideon_tables.F90` | `1._R_P/3._R_P` → `0.3334_R_P` | lines, lines_golden | 2 |
+| `factor-pivot-tri` | `gideon_line_solvers.F90` | `fac(i,1) = 1._R_P/(b - a*wp)` → `fac(i,1) = 1._R_P/(b + a*wp)` | solvers | 1 |
+| `factor-carry-penta` | `gideon_line_solvers.F90` | `u1pp = u1p ; u2pp = u2p` → `u1pp = u1 ; u2pp = u2` | solvers | 1 |
+| `factored-border-penta` | `gideon_line_solvers.F90` | `x1 = (r1 - fac(n-1,2)*x2)*fac(n-1,1)` → `x1 = (r1 + fac(n-1,2)*x2)*fac(n-1,1)` | solvers | 1 |

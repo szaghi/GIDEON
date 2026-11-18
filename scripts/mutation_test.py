@@ -117,6 +117,13 @@ MUTANTS = [
     ('mirror-fv-face-pbl7', CMP, 'pure subroutine gideon_fv_face_pbl7', 'q(1-m)', 'q(m-1)'),
     ('band-fv-face-pbl5', T, 'FV_FACE_PBL5_LEFT(-1:1)', '1._R_P/2._R_P', '0.5001_R_P'),
     ('band-fv-face-p6', T, 'FV_FACE_P6_LEFT(0:1)', '1._R_P/3._R_P', '0.3334_R_P'),
+    # #2 decision 4a: factor once, solve many (a pivot, the carry of row i-2, the periodic border)
+    ('factor-pivot-tri', LS, 'pure subroutine tri_factor_rows', 'fac(i,1) = 1._R_P/(b - a*wp)',
+     'fac(i,1) = 1._R_P/(b + a*wp)'),
+    ('factor-carry-penta', LS, 'pure subroutine penta_factor_rows', 'u1pp = u1p ; u2pp = u2p',
+     'u1pp = u1 ; u2pp = u2'),
+    ('factored-border-penta', LS, 'pure subroutine gideon_penta_periodic_solve', 'x1 = (r1 - fac(n-1,2)*x2)*fac(n-1,1)',
+     'x1 = (r1 + fac(n-1,2)*x2)*fac(n-1,1)'),
 ]
 
 

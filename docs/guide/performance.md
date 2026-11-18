@@ -46,7 +46,7 @@ path (1.093 x 0.532 on the GPU, 1.183 x 0.425 with gfortran). A faster dispatch 
 loop: one loop per order in the caller, or a procedure pointer chosen once (not device code). Left to the owner.
 The first, as code: [A run-time order, fast](/cookbook/run-time-order).
 
-## Compact operators: budget missed
+## Compact operators: the band factored once, budget met
 
 Program `src/bench/gideon_bench_compact.F90` (modes `bench-compact-nvf-oac`, `bench-compact-nvf`, `bench-compact-gnu`),
 raw outputs `notes/bench-data/compact-*`. 2^24 points as 65536 periodic lines of 256, a line contiguous (`q(i,l)`, the
@@ -70,10 +70,22 @@ The right side of a compact operator costs what an explicit kernel costs; the ex
 of the periodic solve carries dependent divisions (two in the factor, one more in the resolve of the border column)
 over three sweeps of the line; on the GPU, one thread per line reads addresses 256 values apart, so the loads of a warp
 are not coalesced. Per unit of accuracy the comparison is different (`p6` is about 15 times more accurate than `c6` on
-the same grid: [T7](/tutorials/compact-derivative)), but the budget was set per point, and it is missed.
+the same grid: [T7](/tutorials/compact-derivative)), but the budget was set per point, and with `_const` it is missed.
 
-The remedy is measured, not built: for a constant band the factor depends only on the band and the line length, so it
-can be computed once and every line solved with multiplications alone. A scratch prototype of that, on one gfortran
-core, agrees with `gideon_tri_periodic_const` to $9 \cdot 10^{-16}$ and costs `p6` 4.7 ns per point instead of 11.4:
-2.2–2.8 x `c6`, inside the budget. For the GPU, a layout with the line index fastest or a parallel solve (cyclic
-reduction, decision D6's second option) is the next measurement. Both are API decisions, left to the owner.
+For a constant band the factor depends only on the band and the line length, so it is computed once
+(`gideon_{tri,penta}_periodic_factor`) and every line solved with it by multiplications alone
+(`gideon_{tri,penta}_periodic_solve`; roadmap #2, decision 4a). Measured in the same program, the same runs, cases
+9–12 (raw outputs `notes/bench-data/compact2-*`, where cases 1–8 were measured again):
+
+| Ratio to the explicit operator of equal order (median of four; range) | one core, gfortran | one core, nvfortran | RTX 4070 |
+|---|---|---|---|
+| `fd_d1_p6`, factored solve only | 1.96 (1.93–1.99) | 1.70 (1.47–1.86) | 3.95 (3.75–4.07) |
+| **`fd_d1_p6`, both, factored** (budget 4 / 8) | **2.96** (2.91–3.05) | **2.71** (2.38–2.92) | **4.81** (4.54–4.95) |
+| `fd_d1_p8`, both, factored (against `c8`) | 2.81 (2.77–2.83) | 2.87 (2.10–3.17) | 3.36 (3.32–3.40) |
+| `fd_filter_p8`, both, factored (against `fd_filter_c8`) | 2.96 (2.75–3.13) | 2.75 (2.39–3.07) | 7.39 (7.32–7.42) |
+
+**Budget met, on both**, with the factored solve. On the GPU the factor also removes the per-line scratch arrays:
+one factor, read by every thread, stays in the cache, and the pentadiagonal `p8` drops from 32 to 3.4 times its
+explicit twin. The loads of the line itself are still uncoalesced (one line per thread, a line contiguous); a layout
+with the line index fastest is the next measurement, with no budget pending. Use `_const` for a single line or a band
+that changes from line to line, `_factor` + `_solve` whenever lines share the band and the length.

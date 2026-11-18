@@ -35,7 +35,7 @@ modules behind it can be used one by one; all but `gideon_kind_parameters` and `
 | `gideon_filters` | `gideon_{fd,fv}_filter_c<2k>` (explicit centred filters) | 10 |
 | `gideon_dispatch` | the run-time order dispatchers of the 1-D kernels | 64 |
 | `gideon_compact` | the right sides of the compact operators, `gideon_fd_d{1,2}_p<o>`, `gideon_fd_filter_p<2N>`, `gideon_fd_face_p<o>`, `gideon_fd_face_d1_p<o>`, `gideon_fv_face_p<o>`, `gideon_fv_face_{pbr,pbl}<o>` | 29 |
-| `gideon_line_solvers` | `gideon_{tri,penta}_{bounded,periodic}_{const,var,masked}` | 12 |
+| `gideon_line_solvers` | `gideon_{tri,penta}_{bounded,periodic}_{const,var,masked}`; `gideon_{tri,penta}_{bounded,periodic}_{factor,solve}` | 20 |
 | `gideon_operators_3d` | `gideon_{fd,fv}_{gradient,divergence,curl,laplacian}_c<p>` and their 8 dispatchers | 48 |
 
 Every procedure is a `pure subroutine` with `!$acc routine seq` and `!$omp declare target`: callable from host code,
@@ -118,6 +118,10 @@ pure subroutine gideon_fd_filter_p<2N>(q, alpha, r)          ! a compact filter'
 pure subroutine gideon_tri_periodic_const(n, a, b, c, d, w, z) ! a x(i-1) + b x(i) + c x(i+1) = d(i), indices mod n
 pure subroutine gideon_tri_periodic_masked(n, a, b, c, mask, d, w, z) ! the rows where mask(i): x(i) = d(i)
 pure subroutine gideon_penta_periodic_const(n, e, a, b, c, f, d, u1, u2, z1, z2)
+pure subroutine gideon_tri_periodic_factor(n, a, b, c, fac)    ! once per band and length: fac(n,3)
+pure subroutine gideon_tri_periodic_solve(n, a, c, fac, d)     ! per line, multiplications only
+pure subroutine gideon_penta_periodic_factor(n, e, a, b, c, f, fac) ! fac(n,6)
+pure subroutine gideon_penta_periodic_solve(n, e, a, c, f, fac, d)
 ```
 
 `d` is the right side in and the solution out; the scratch arrays are the caller's (length `n` each). The `_var`

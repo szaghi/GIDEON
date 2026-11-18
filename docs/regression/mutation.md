@@ -21,8 +21,9 @@ constant itself, and the wiring of the 3-D operators; for the FD face kernels of
 new row type, the pair sign and step of a face derivative, the mirror read of a one-sided and of a biased kernel, and a
 biased dispatcher's case; and for roadmap #2, a face-difference row, a dissipation part's sign and constant, an FV
 biased row and its mirror, a filter row and pair sign, a dissipation dispatcher's case, the line solvers' pivot,
-periodic column, border, factor reuse and masks, and a compact operator's band, right side, pair sign, step,
-$\alpha_f$ row and term and biased mirror.
+periodic column, border, factor reuse and masks, a compact operator's band, right side, pair sign, step,
+$\alpha_f$ row and term and biased mirror; and for the factored solves (#2 decision 4a), a pivot of the tridiagonal
+factor, the pentadiagonal factor's carry of row $i-2$, and the periodic pentadiagonal border.
 
 | Item | Choice | Code |
 |---|---|---|
@@ -41,10 +42,11 @@ The tables below are those of the newest recorded run that lists exactly the cur
 
 ## Results
 
-The recorded run of the current suite and its 53 mutants, `notes/mutation-run-2026-11-18-p2.txt`. The earlier
+The recorded run of the current suite and its 56 mutants, `notes/mutation-run-2026-11-18-factored.txt`. The earlier
 runs stay recorded: the first release's 22 mutants (`notes/mutation-run-2026-11-17.txt`), the same against the suite
-with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`) and phase 2's 30
-(`notes/mutation-run-2026-11-17-phase2.txt`), every mutant killed in each.
+with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`), phase 2's 30
+(`notes/mutation-run-2026-11-17-phase2.txt`) and roadmap #2's 53 (`notes/mutation-run-2026-11-18-p2.txt`), every
+mutant killed in each.
 
 <!--@include: ./_tables/mutation-total.md-->
 
@@ -78,5 +80,7 @@ with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`) and phase 
   masked mutants: the compact operators' tests use the constant-band solvers, and the coupling test's masked band is
   tridiagonal with a unit diagonal, on which `merge(1, b, mask)` equals `b` and the pentadiagonal mutant is absent.
   Every compact mutant is killed by `gideon_test_lines` and its golden test, the biased ones also by the coupling test.
+- The factored solves' mutants are killed by `gideon_test_solvers` alone: the compact operators' tests use `_const`
+  (the benchmark uses the factored solves, but it is not a test).
 - `gideon_vv_advection` kills no mutant on its own: it is a demonstration with frozen physical bounds, and every
   defect it would see is already caught by the contracts.

@@ -6,8 +6,8 @@
 
 ## Case and scope
 
-Every compact operator ends in a solve along a line. This case checks the twelve solvers of `gideon_line_solvers`
-(tridiagonal and pentadiagonal, bounded and periodic, constant band, variable coefficients, masked rows) against a
+Every compact operator ends in a solve along a line. This case checks the twenty solvers of `gideon_line_solvers`
+(tridiagonal and pentadiagonal, bounded and periodic, constant band, variable coefficients, masked rows, factored) against a
 dense solve that shares no code with them, on bands harder than any GIDEON operator's, and on the device against the
 host (roadmap #2, gates L3 and L5).
 
@@ -22,6 +22,7 @@ host (roadmap #2, gates L3 and L5).
 | Never read | on a bounded line, the coefficients outside it are NaN in the variable variant | |
 | Variants | `_const` = `_var` on the same band, bitwise; `_masked` (30 % of the rows the identity) = `_var` on that band, bitwise, and each masked row returns exactly the value given | |
 | Device | 4 × 4096 lines in one `!$acc parallel loop`, one line per thread, against the host within the forward bound | |
+| Factored | on every constant band, one `_factor` and three right sides solved with it by `_solve`, each within the forward and residual bounds; on the device, one factor copied in once and 4 × 4096 lines solved with it, against the host | |
 
 ## Program
 
@@ -44,6 +45,11 @@ On the GPU (the OpenACC build):
 - The periodic pentadiagonal border was first solved by Cramer's rule: a border row replaced by the identity came back
   rounded off its given value (`r1*s22/det` is not `r1`). Elimination with the first border row as pivot returns it
   exactly; the Schur complement of a dominant band is dominant, so no pivoting is needed.
+- The factored solves (`_factor` once, `_solve` per line) meet the same bounds; one factor serves every line, on the
+  device as on the host. Their first pentadiagonal factor read the previous rows of `fac` back inside its row loop, and
+  nvfortran 26.9 at `-O2` vectorised that loop as if its iterations were independent (rows 2–4 unreduced; right at
+  `-O0`, with gfortran and with ifx): this test caught it on the nvfortran builds. The previous rows are now carried in
+  scalars.
 - Every GIDEON band is diagonally dominant or symmetric positive definite (`gideon_fd_d1_p10`'s is the latter only):
   elimination without pivoting is stable for both. The test's bands are dominant; the positive definite one is
   exercised by [A4](./lines).

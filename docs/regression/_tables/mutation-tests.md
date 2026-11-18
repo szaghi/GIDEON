@@ -11,7 +11,7 @@
 | `gideon_test_lines_golden` | 12 | 0 |
 | `gideon_test_operators_3d` | 10 | 0 |
 | `gideon_test_split` | 9 | 0 |
-| `gideon_test_solvers` | 6 | 3 |
+| `gideon_test_solvers` | 9 | 6 |
 | `gideon_test_dispatch` | 5 | 3 |
 | `gideon_test_spectral` | 4 | 0 |
 | `gideon_test_coupling` | 2 | 0 |

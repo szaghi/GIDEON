@@ -1,0 +1,58 @@
+baseline green in /tmp/claude-1000/-home-stefano-fortran-GIDEON/572418cd-5b30-4292-9973-524ac370856d/scratchpad/mutall2
+row-fd-d1-c6                 killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_tables
+row-fd-d1-c10-tail           killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_tables
+row-fv-face-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+row-fv-uface-3               killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+row-fv-point-c6              killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+pair-sign-fd-d2-c4           killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+pair-offset-fd-face-c8       killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+pair-sign-fd-average-c6      killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+flux-face-offset-fv-d1-c6    killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+scale-fd-d3-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties
+scale-fv-d2-c4               killed by gideon_test_adam, gideon_test_golden, gideon_test_operators_3d, gideon_test_order, gideon_test_properties
+scale-fv-d6-ur2              killed by gideon_test_golden, gideon_test_properties
+mirror-fv-face-ul3           killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+mirror-sign-fv-face-d1-ul2   killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+difference-order-fv-d2-ul2   killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+face-offset-fv-d1-ur3        killed by gideon_test_adam, gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_spectral, gideon_test_tables
+dispatch-wrong-kernel        killed by gideon_test_adam, gideon_test_dispatch
+dispatch-no-nan              killed by gideon_test_dispatch
+nan-constant                 killed by gideon_test_dispatch, gideon_test_operators_3d
+curl-component               killed by gideon_test_adam, gideon_test_operators_3d
+divergence-step              killed by gideon_test_adam, gideon_test_operators_3d
+laplacian-direction          killed by gideon_test_adam, gideon_test_operators_3d
+row-fd-face-d1-c4            killed by gideon_test_golden, gideon_test_order, gideon_test_tables
+row-fd-uface-3               killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+row-fd-bface-5-tail          killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+pair-sign-fd-face-d2-c4      killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+scale-fd-face-d2-c4          killed by gideon_test_golden, gideon_test_order, gideon_test_properties
+mirror-fd-face-ul3           killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+mirror-fd-face-bl5           killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+dispatch-wrong-kernel-bl     killed by gideon_test_dispatch
+row-face-diff-5              killed by gideon_test_golden, gideon_test_order, gideon_test_split, gideon_test_tables
+bdiss-sign-fd-br5            killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+bdiss-constant-fv-3          killed by gideon_test_golden, gideon_test_order, gideon_test_split, gideon_test_tables
+row-fv-bface-5               killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+mirror-fv-face-bl5           killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_split, gideon_test_tables
+row-filter-c6                killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+pair-sign-fv-filter-c4       killed by gideon_test_golden, gideon_test_order, gideon_test_properties, gideon_test_tables
+dispatch-wrong-kernel-diss   killed by gideon_test_dispatch
+thomas-pivot                 killed by gideon_test_lines, gideon_test_lines_golden, gideon_test_solvers
+tri-periodic-column          killed by gideon_test_solvers
+penta-resolve-pivot          killed by gideon_test_lines, gideon_test_lines_golden, gideon_test_solvers
+penta-border                 killed by gideon_test_lines, gideon_test_lines_golden, gideon_test_solvers
+masked-diagonal              killed by gideon_test_solvers
+masked-offdiagonal           killed by gideon_test_solvers
+band-fd-d1-p8                killed by gideon_test_lines, gideon_test_lines_golden
+right-fd-d2-p6               killed by gideon_test_lines, gideon_test_lines_golden
+pair-sign-fd-face-d1-p6      killed by gideon_test_lines, gideon_test_lines_golden
+scale-fd-d2-p4               killed by gideon_test_lines, gideon_test_lines_golden
+filter-alpha-row-p6          killed by gideon_test_lines, gideon_test_lines_golden
+filter-alpha-term-p4         killed by gideon_test_lines, gideon_test_lines_golden
+mirror-fv-face-pbl7          killed by gideon_test_coupling, gideon_test_lines, gideon_test_lines_golden
+band-fv-face-pbl5            killed by gideon_test_coupling, gideon_test_lines, gideon_test_lines_golden
+band-fv-face-p6              killed by gideon_test_lines, gideon_test_lines_golden
+factor-pivot-tri             killed by gideon_test_solvers
+factor-carry-penta           killed by gideon_test_solvers
+factored-border-penta        killed by gideon_test_solvers
+56 of 56 mutants killed

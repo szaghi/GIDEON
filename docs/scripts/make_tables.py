@@ -550,11 +550,16 @@ def p2_tables(r: Report) -> None:
             d = re.match(r'gideon_test_solvers: device, half-band (\d), periodic (\w): lines bitwise (\d+) of (\d+), '
                          r'worst error / \(cond max\|x\|\)\s+(\S+)', ln)
             if d:
-                dev.append([lab, {'1': 'tridiagonal', '2': 'pentadiagonal'}[d.group(1)],
+                dev.append([lab, '`_var`', {'1': 'tridiagonal', '2': 'pentadiagonal'}[d.group(1)],
                             'periodic' if d.group(2) == 'T' else 'bounded', f'{d.group(3)} of {d.group(4)}',
                             sci(float(d.group(5)))])
+            d = re.match(r'gideon_test_solvers: device, factored, half-band (\d), periodic (\w): lines bitwise (\d+) of '
+                         r'(\d+)', ln)
+            if d:
+                dev.append([lab, '`_factor` + `_solve`', {'1': 'tridiagonal', '2': 'pentadiagonal'}[d.group(1)],
+                            'periodic' if d.group(2) == 'T' else 'bounded', f'{d.group(3)} of {d.group(4)}', ''])
     write(VT / 'solvers-builds.md', table(['Build', 'Checks', 'Failures'], b))
-    write(VT / 'solvers-device.md', table(['Build', 'Band', 'Line', 'Lines bitwise equal to the host',
+    write(VT / 'solvers-device.md', table(['Build', 'Solver', 'Band', 'Line', 'Lines bitwise equal to the host',
                                            'Worst error / (cond max|x|)'], dev))
     # A4: the compact operators
     geom = {'node': 'nodes, from point values', 'fdface': 'faces, from point values', 'fvface': 'faces, from cell averages'}

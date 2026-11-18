@@ -27,6 +27,18 @@ enddo
 call gideon_tri_periodic_const(n, FD_D1_P6_LEFT(1), FD_D1_P6_LEFT(0), FD_D1_P6_LEFT(1), du, w1, w2)
 ```
 
+When many lines share the band and the length (every line of a grid direction), factor the band once and solve each
+line with multiplications only: the factor depends on nothing else.
+
+```fortran
+real(R_P) :: fac(n,3)                         ! the factor: (n,3) tridiagonal, (n,6) pentadiagonal
+call gideon_tri_periodic_factor(n, FD_D1_P6_LEFT(1), FD_D1_P6_LEFT(0), FD_D1_P6_LEFT(1), fac)   ! once
+do l=1, nlines
+   ! ... the right side of line l into du(:,l), as above ...
+   call gideon_tri_periodic_solve(n, FD_D1_P6_LEFT(1), FD_D1_P6_LEFT(1), fac, du(:,l))         ! per line
+enddo
+```
+
 ## The operators
 
 <!--@include: ./_compact-table.md-->
@@ -64,6 +76,11 @@ Every routine, the private helpers included (they are generated in the same thre
 
 <!--@include: ./_solvers-table.md-->
 
+- `_factor` / `_solve` (a constant band): the factor once per band and length, every line solved with it by
+  multiplications only; the factor is one caller array of leading dimension `n`, read only by the solves, so on a GPU
+  one copy serves every thread. The solve multiplies by reciprocal pivots where `_const` divides: the two agree within
+  round-off, not bitwise ([C8](/verification/solvers)). This is the fast path for the compact operators
+  ([Performance](/guide/performance)).
 - `_const`: the band a constant (scalars): the compact operators. `_var`: one coefficient per row (arrays). `_masked`:
   the constant band, with the rows where `mask(i)` replaced by the identity: their right side is the value the caller
   gives there (below). The three are emitted from one template by the generator, so they cannot drift: on the same
