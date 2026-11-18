@@ -56,3 +56,13 @@
 | `fd_face_ul` | 9 | 1-9 | `q(-(order-1):0)` | 10 |
 | `fd_face_br` | 4 | 3-9 | `q(2-(order/2+1):order/2+1)` | 10 |
 | `fd_face_bl` | 4 | 3-9 | `q(-(order/2):order/2)` | 10 |
+| `fd_face_diss_c` | 5 | 2-10 (even) | `q(1-(order/2):order/2)` | 12 |
+| `fv_face_diss_c` | 5 | 2-10 (even) | `q(1-(order/2):order/2)` | 12 |
+| `fv_face_br` | 4 | 3-9 | `q(2-(order/2+1):order/2+1)` | 10 |
+| `fv_face_bl` | 4 | 3-9 | `q(-(order/2):order/2)` | 10 |
+| `fd_face_diss_br` | 4 | 3-9 | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fd_face_diss_bl` | 4 | 3-9 | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fv_face_diss_br` | 4 | 3-9 | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fv_face_diss_bl` | 4 | 3-9 | `q(1-(order/2+1):order/2+1)` | 10 |
+| `fd_filter_c` | 5 | 2-10 (even) | `q(-(order/2):order/2)` | 12 |
+| `fv_filter_c` | 5 | 2-10 (even) | `q(-(order/2):order/2)` | 12 |

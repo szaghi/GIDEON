@@ -25,13 +25,17 @@ modules behind it can be used one by one; all but `gideon_kind_parameters` and `
 |---|---|---|
 | `gideon` | everything below, and `I4P`, `I8P`, `R4P`, `R8P` from PENF | — |
 | `gideon_kind_parameters` | `R_P`, `GIDEON_NAN` | 2 |
-| `gideon_tables` | the rows, `FD_*`, `FV_*` (and `R_P`: the module's default accessibility is public) | 134 |
+| `gideon_tables` | the rows, `FD_*`, `FV_*`, `FACE_DIFF_*`, `FILTER_*`; the dissipation constants `{FD,FV}_BDISS_S<k>`; the compact operators' bands and right sides, `<NAME>_LEFT`, `<NAME>_RIGHT`, `<NAME>_ALPHA` (and `R_P`: the module's default accessibility is public) | 212 |
 | `gideon_fd_centred` | `gideon_fd_face_c<p>`, `gideon_fd_dN_c<p>`, `gideon_fd_face_dN_c<p>` | 48 |
 | `gideon_fd_upwind` | `gideon_fd_face_{ur,ul}<p>` (one-sided), `gideon_fd_face_{bl,br}<p>` (upwind-biased) | 26 |
 | `gideon_fv_centred` | `gideon_fv_face_c<p>`, `gideon_fv_face_dN_c<p>`, `gideon_fv_dN_c<p>` | 48 |
-| `gideon_fv_upwind` | `gideon_fv_face_{ur,ul}<p>`, `gideon_fv_face_dN_{ur,ul}<p>`, `gideon_fv_dN_{ur,ul}<p>` | 156 |
+| `gideon_fv_upwind` | `gideon_fv_face_{ur,ul}<p>`, `gideon_fv_face_dN_{ur,ul}<p>`, `gideon_fv_dN_{ur,ul}<p>`, `gideon_fv_face_{bl,br}<p>` (upwind-biased) | 164 |
 | `gideon_deconvolution` | `gideon_fv_point_c<p>`, `gideon_fd_average_c<p>` | 10 |
-| `gideon_dispatch` | the run-time order dispatchers of the 1-D kernels | 54 |
+| `gideon_dissipation` | `gideon_{fd,fv}_face_diss_c<2k>` (undivided face differences), `gideon_{fd,fv}_face_diss_{bl,br}<p>` (the dissipation parts of the biased face values) | 26 |
+| `gideon_filters` | `gideon_{fd,fv}_filter_c<2k>` (explicit centred filters) | 10 |
+| `gideon_dispatch` | the run-time order dispatchers of the 1-D kernels | 64 |
+| `gideon_compact` | the right sides of the compact operators, `gideon_fd_d{1,2}_p<o>`, `gideon_fd_filter_p<2N>`, `gideon_fd_face_p<o>`, `gideon_fd_face_d1_p<o>`, `gideon_fv_face_p<o>`, `gideon_fv_face_{pbr,pbl}<o>` | 29 |
+| `gideon_line_solvers` | `gideon_{tri,penta}_{bounded,periodic}_{const,var,masked}` | 12 |
 | `gideon_operators_3d` | `gideon_{fd,fv}_{gradient,divergence,curl,laplacian}_c<p>` and their 8 dispatchers | 48 |
 
 Every procedure is a `pure subroutine` with `!$acc routine seq` and `!$omp declare target`: callable from host code,
@@ -56,9 +60,10 @@ real(R_P), intent(in)  :: ds       ! the grid step: derivatives only (dN, face_d
 real(R_P), intent(out) :: r        ! the result: f (face value), d (derivative), v (point value, average)
 ```
 
-288 kernels; the name, the window and the order of each are in the table of [Operators](/guide/operators#every-kernel).
+332 kernels; the name, the window and the order of each are in the table of [Operators](/guide/operators#every-kernel).
 The result is a derivative divided by `ds**N` inside the kernel (`/ds/ds` for `fd`, `/(ds*ds)` for `fv`), so `ds = 1`
-gives the undivided difference.
+gives the undivided difference. The dissipation kernels (`face_diss`) take no step: they are the undivided
+differences.
 
 ```fortran
 use gideon
@@ -104,6 +109,20 @@ call the d1 kernel of the order along each axis, the Laplacian the d2 kernel, th
 off-axis stencils, summed in x, y, z order (ADAM's, so the values are ADAM's bitwise). The dispatchers
 `gideon_<data>_<op>_c(order, ...)` take the same stencils with bounds `-(order/2):order/2` and return `GIDEON_NAN` in
 every component for an order without a kernel.
+
+## Compact operators and line solvers
+
+```fortran
+pure subroutine gideon_<data>_<op>_p<o>(q, [ds,] r)          ! the right side at one point; the band <NAME>_LEFT
+pure subroutine gideon_fd_filter_p<2N>(q, alpha, r)          ! a compact filter's right side; the band [alpha, 1, alpha]
+pure subroutine gideon_tri_periodic_const(n, a, b, c, d, w, z) ! a x(i-1) + b x(i) + c x(i+1) = d(i), indices mod n
+pure subroutine gideon_tri_periodic_masked(n, a, b, c, mask, d, w, z) ! the rows where mask(i): x(i) = d(i)
+pure subroutine gideon_penta_periodic_const(n, e, a, b, c, f, d, u1, u2, z1, z2)
+```
+
+`d` is the right side in and the solution out; the scratch arrays are the caller's (length `n` each). The `_var`
+variants take one coefficient per row (arrays), the `_bounded` ones a line without wrap-around. Every routine, the
+operators and the coupling: [Compact operators](/guide/compact).
 
 ## Rows
 

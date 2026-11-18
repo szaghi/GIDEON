@@ -1,0 +1,6 @@
+a bump and a square wave advected once around 100 cells, CFL 0.4, SSP-RK3
+scheme           bump error  square overshoot  undershoot  mass conserved
+central c6          0.01415           0.15593     0.12166               T
+biased bl5          0.00082           0.08175     0.08179               T
+sensor c6 + s d     0.00053           0.10387     0.09296               T
+JST on c2           0.02472           0.21184     0.00000               T

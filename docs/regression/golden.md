@@ -2,7 +2,7 @@
 
 | ID | Group | Type | Backends | Figure | Program |
 |---|---|---|---|---|---|
-| R1 | Regression | C | CPU (gfortran R4P, R8P, R16P; nvfortran); the CI matrix | no | `gideon_test_golden` |
+| R1 | Regression | C | CPU (gfortran R4P, R8P, R16P; nvfortran); the CI matrix | no | `gideon_test_golden`, `gideon_test_lines_golden` |
 
 ## Case and scope
 
@@ -18,7 +18,8 @@ compared with a file written once by a reference build.
 | Windows | 8 windows of 33 values, made by an integer linear congruential generator: multiples of $2^{-10}$ in $[-32, 32)$, exact in every kind and with every compiler (no libm, no `random_number`); $\Delta s = 0.75$, a dyadic step |
 | Comparison | $\vert r - g\vert \le {\rm TOL}\cdot\sum_k\vert c_k\vert\max\vert q\vert/\Delta s^n$, TOL per kind (below): other compilers and flags contract multiply-adds differently from the writer |
 | Reported | the values bitwise equal to the file, the worst difference relative to the magnitude |
-| Files | `src/tests/golden/`, chosen by the build's kind: `gideon_golden_v2.txt` (R8P), `gideon_golden_r4_v2.txt` (R4P), `gideon_golden_r16_v2.txt` (R16P); each starts with the compiler and options that wrote it |
+| Files | `src/tests/golden/`, chosen by the build's kind: `gideon_golden_v3.txt` (R8P), `gideon_golden_r4_v3.txt` (R4P), `gideon_golden_r16_v3.txt` (R16P); each starts with the compiler and options that wrote it |
+| Compact operators | `gideon_test_lines_golden`: every compact operator's right side on 8 windows of the same generator, and one periodic line of 16 values solved with its band (a filter's $\alpha_f = 0.45$); the tolerance of a solved value times the band's amplification $F$ ([A4](/verification/lines)); `gideon_golden_lines_v1.txt`, `_r4_v1`, `_r16_v1` |
 
 <!--@include: ./_tables/golden-count.md-->
 
@@ -30,7 +31,7 @@ A golden file is never edited. A deliberate change of results (a new kernel, a c
 by the test itself, and the test's default path moves to it:
 
 ```bash
-./exe/gideon_test_golden write src/tests/golden/gideon_golden_v3.txt   # refuses to overwrite an existing file
+./exe/gideon_test_golden write src/tests/golden/gideon_golden_v4.txt   # refuses to overwrite an existing file
 ```
 
 The writer opens the file with `status='new'`: an existing file stops it with an error, so a committed version cannot
@@ -40,7 +41,10 @@ of the new kernels.
 
 v1 holds the first release's 243 kernels. v2 (phase 2) adds the FD face derivatives and the one-sided and biased FD
 face values, 288 kernels; written by the same three builds and options as v1, its first 243 kernels equal v1's line
-for line in all three kinds. v1 is kept. Then `GOLDEN` in `gideon_test_golden.F90` points to it, for each kind.
+for line in all three kinds. v3 (roadmap #2) adds the face differences, the FV biased face values, the dissipation
+parts and the explicit filters, 332 kernels; its first 288 equal v2's line for line in all three kinds. v1 and v2 are
+kept. Then `GOLDEN` in `gideon_test_golden.F90` points to the newest, for each kind. The compact operators have their
+own files, v1, read by `gideon_test_lines_golden`.
 
 ## Program
 
@@ -51,6 +55,10 @@ for line in all three kinds. v1 is kept. Then `GOLDEN` in `gideon_test_golden.F9
 ## Results
 
 <!--@include: ./_tables/golden-builds.md-->
+
+The compact operators:
+
+<!--@include: ./_tables/golden-lines-builds.md-->
 
 ## Findings
 

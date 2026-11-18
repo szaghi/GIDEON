@@ -44,6 +44,12 @@ The findings that change how the kernels are used, each documented on its page:
   right ([C5](./adam)).
 - **A run-time order costs a `select case` per call**, and an order without a kernel returns a NaN, never a number
   ([C4](./dispatch)).
+- **An upwind-biased face value is the centred one plus one face difference**, exactly: a sensor can dial the
+  dissipation between the two. The one-sided values do not split this way ([C7](./split)).
+- **The compact operators reach their orders on periodic lines**, the centred ones without dissipation, the biased ones
+  dissipative on their upwind side; the line solves are bitwise equal on the device ([A4](./lines), [C8](./solvers)).
+- **Rows replaced by given values keep the compact order away from them**: the band's inverse decays geometrically
+  ([A5](./coupling)).
 
 ## Contracts
 
@@ -64,6 +70,10 @@ values, the device.
 
 [<strong>C6 Host and device</strong><span>every kernel in an OpenACC loop on the GPU against the host</span><em>contract</em>](./device)
 
+[<strong>C7 The upwind–central split</strong><span>every biased face value = the centred one + one face difference, proven exactly; the one-sided ones do not split</span><em>contract</em>](./split)
+
+[<strong>C8 The line solvers</strong><span>tridiagonal and pentadiagonal, bounded and periodic, three variants, against a dense solve and on the GPU</span><em>contract</em>](./solvers)
+
 </div>
 
 ## Accuracy
@@ -77,6 +87,10 @@ The design order of every kernel and every 3-D operator, and how the operators t
 [<strong>A2 3-D operators</strong><span>gradient, divergence, curl, Laplacian, FD and FV, every order, exact on polynomials with unequal steps</span><em>accuracy</em>](./operators-3d)
 
 [![Spectral properties](/verification/spectral-upwind.png)<strong>A3 Spectral properties</strong><span>dispersion and dissipation of the first and second derivatives, from the rows and from the compiled kernels; a wave packet advected</span><em>accuracy</em>](./spectral)
+
+[<strong>A4 Compact operators</strong><span>29 compact operators: rows exact, orders on periodic lines, symbols, filters' transfer functions, on the GPU</span><em>accuracy</em>](./lines)
+
+[<strong>A5 Compact-WENO coupling</strong><span>compact rows where smooth, given values at a step: the values kept, conservation, the order away from the step</span><em>accuracy</em>](./coupling)
 
 </div>
 
@@ -107,7 +121,12 @@ The programs and the page of each:
 | `gideon_test_order` | [A1 Orders of accuracy](./orders) | every |
 | `gideon_test_operators_3d` | [A2 3-D operators](./operators-3d) | every |
 | `gideon_test_spectral`, `gideon_vv_advection` | [A3 Spectral properties](./spectral) | every |
+| `scripts/gen_gideon.py --check`, `gideon_test_split` | [C7 The upwind–central split](./split) | Python 3; every |
+| `gideon_test_solvers` | [C8 The line solvers](./solvers) | every (on the device with OpenACC) |
+| `gideon_test_lines` | [A4 Compact operators](./lines) | every (on the device with OpenACC) |
+| `gideon_test_coupling` | [A5 Compact-WENO coupling](./coupling) | every (on the device with OpenACC) |
 | `gideon_test_golden` | [Golden values](/regression/golden) | every (one golden file per kind) |
+| `gideon_test_lines_golden` | [Golden values](/regression/golden) | every (the compact operators) |
 | `gideon_test_kinds` | the kinds reach a client through `use gideon` | every |
 
 ## From the data to the pages

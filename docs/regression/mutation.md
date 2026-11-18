@@ -17,9 +17,12 @@ Each mutant replaces the first occurrence of a text after an anchor in code (nev
 is an equivalent mutant). They cover one coefficient of each row family (one of them the smallest coefficient of
 the widest FD first derivative), the pair signs and offsets of the centred kernels, the division by the step, the
 mirror of a left-side kernel and its sign, the order of a flux difference, a dispatcher's case and its NaN, the NaN
-constant itself, and the wiring of the 3-D operators; and, for the FD face kernels of phase 2, a coefficient of each
+constant itself, and the wiring of the 3-D operators; for the FD face kernels of phase 2, a coefficient of each
 new row type, the pair sign and step of a face derivative, the mirror read of a one-sided and of a biased kernel, and a
-biased dispatcher's case.
+biased dispatcher's case; and for roadmap #2, a face-difference row, a dissipation part's sign and constant, an FV
+biased row and its mirror, a filter row and pair sign, a dissipation dispatcher's case, the line solvers' pivot,
+periodic column, border, factor reuse and masks, and a compact operator's band, right side, pair sign, step,
+$\alpha_f$ row and term and biased mirror.
 
 | Item | Choice | Code |
 |---|---|---|
@@ -38,9 +41,10 @@ The tables below are those of the newest recorded run that lists exactly the cur
 
 ## Results
 
-The recorded run of the current suite and its 30 mutants, `notes/mutation-run-2026-11-17-phase2.txt`. The earlier
-runs stay recorded: the first release's 22 mutants (`notes/mutation-run-2026-11-17.txt`) and the same against the suite
-with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`), every mutant killed in each.
+The recorded run of the current suite and its 53 mutants, `notes/mutation-run-2026-11-18-p2.txt`. The earlier
+runs stay recorded: the first release's 22 mutants (`notes/mutation-run-2026-11-17.txt`), the same against the suite
+with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`) and phase 2's 30
+(`notes/mutation-run-2026-11-17-phase2.txt`), every mutant killed in each.
 
 <!--@include: ./_tables/mutation-total.md-->
 
@@ -66,5 +70,13 @@ with the spectral test (`notes/mutation-run-2026-11-17-spectral.txt`), every mut
   rebuilt with this mutant by hand, fails on it (observed order 0, design 2).
 - The mutant `dispatch-wrong-kernel` (a d2 kernel in a d1 dispatcher's case) is caught by the dispatch test and by
   the comparison with ADAM, whose run-time-order operators the test calls through the dispatchers.
+- One mutant of roadmap #2's first draft was equivalent and was replaced: dropping the guard before a solver's read of
+  a coefficient outside the line (`if (i < n-1) u2(i) = f(i)/bp`) changes only factor entries that back substitution
+  never uses, so no result can change and no test of results can kill it. The guard keeps a corner of the band from
+  being read at all; its replacement, `penta-resolve-pivot`, mutates the factor's reuse for the border columns.
+- The P2 mutants are killed by the new programs. `gideon_test_solvers` alone kills the periodic-column and the two
+  masked mutants: the compact operators' tests use the constant-band solvers, and the coupling test's masked band is
+  tridiagonal with a unit diagonal, on which `merge(1, b, mask)` equals `b` and the pentadiagonal mutant is absent.
+  Every compact mutant is killed by `gideon_test_lines` and its golden test, the biased ones also by the coupling test.
 - `gideon_vv_advection` kills no mutant on its own: it is a demonstration with frozen physical bounds, and every
   defect it would see is already caught by the contracts.

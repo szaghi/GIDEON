@@ -2,7 +2,7 @@
 
 | Build | Where | Kernels | Values | Bitwise equal to the host | Worst difference / magnitude | Failures |
 |---|---|---|---|---|---|---|
-| gfortran, R4P | host (no OpenACC) | 288 | 18874368 | 18874368 (100.0 %) | 0 | 0 |
-| gfortran, R8P | host (no OpenACC) | 288 | 18874368 | 18874368 (100.0 %) | 0 | 0 |
-| gfortran, R16P | host (no OpenACC) | 288 | 18874368 | 18874368 (100.0 %) | 0 | 0 |
-| nvfortran -acc, R8P | device (OpenACC) | 288 | 18874368 | 15311431 (81.1 %) | $4.3\cdot10^{-16}$ | 0 |
+| gfortran, R4P | host (no OpenACC) | 332 | 21757952 | 21757952 (100.0 %) | 0 | 0 |
+| gfortran, R8P | host (no OpenACC) | 332 | 21757952 | 21757952 (100.0 %) | 0 | 0 |
+| gfortran, R16P | host (no OpenACC) | 332 | 21757952 | 21757952 (100.0 %) | 0 | 0 |
+| nvfortran -acc, R8P | device (OpenACC) | 332 | 21757952 | 17983050 (82.7 %) | $4.3\cdot10^{-16}$ | 0 |

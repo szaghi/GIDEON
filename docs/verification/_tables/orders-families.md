@@ -14,3 +14,10 @@
 | FV upwind, face derivatives d1-d5 | 60 | 2 | 30 | 60 | -0.031 |
 | FV upwind, cell-average derivatives d1-d6 | 78 | 2 | 30 | 78 | -0.028 |
 | Deconvolution (point value, cell average) | 10 | 0 | 2 | 10 | -0.001 |
+| FV upwind-biased, face value | 8 | 0 | 4 | 8 | -0.004 |
+| FD undivided face differences (dissipation fluxes) | 5 | 0 | 3 | 5 | -0.007 |
+| FV undivided face differences (dissipation fluxes) | 5 | 0 | 2 | 5 | -0.019 |
+| FD dissipation parts of the biased face values | 8 | 0 | 4 | 8 | -0.007 |
+| FV dissipation parts of the biased face values | 8 | 0 | 2 | 8 | -0.019 |
+| FD explicit filters | 5 | 1 | 3 | 5 | -0.014 |
+| FV explicit filters | 5 | 1 | 2 | 5 | -0.000 |

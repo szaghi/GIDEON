@@ -2,7 +2,7 @@
 
 | Build | Kernels | Checks (x^0 … x^(K+1)) | Failures |
 |---|---|---|---|
-| gfortran, R4P | 288 | 2276 | 0 |
-| gfortran, R8P | 288 | 2276 | 0 |
-| gfortran, R16P | 288 | 2276 | 0 |
-| nvfortran -acc, R8P | 288 | 2276 | 0 |
+| gfortran, R4P | 332 | 2626 | 0 |
+| gfortran, R8P | 332 | 2626 | 0 |
+| gfortran, R16P | 332 | 2626 | 0 |
+| nvfortran -acc, R8P | 332 | 2626 | 0 |

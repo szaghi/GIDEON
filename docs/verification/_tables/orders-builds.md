@@ -2,7 +2,7 @@
 
 | Build | Kernels | Measured (a plateau) | Unresolved in this precision | Failures |
 |---|---|---|---|---|
-| gfortran, R4P | 288 | 17 | 271 | 0 |
-| gfortran, R8P | 288 | 119 | 169 | 0 |
-| gfortran, R16P | 288 | 288 | 0 | 0 |
-| nvfortran -acc, R8P | 288 | 119 | 169 | 0 |
+| gfortran, R4P | 332 | 19 | 313 | 0 |
+| gfortran, R8P | 332 | 139 | 193 | 0 |
+| gfortran, R16P | 332 | 332 | 0 | 0 |
+| nvfortran -acc, R8P | 332 | 139 | 193 | 0 |

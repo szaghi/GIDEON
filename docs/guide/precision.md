@@ -50,9 +50,9 @@ of the kind's ε (64 ε of the scale for exactness and the leading error), or pe
 $10^{-5}$, $10^{-30}$ relative to the magnitude), so the same test asserts the same property in each.
 
 The orders are the exception: an order is observed only where truncation dominates round-off over three successive
-halvings. In R8P that holds for 119 of the 288 kernels, in R4P for 17; the widest one-sided stencils (7 to 9 cells)
+halvings. In R8P that holds for 139 of the 332 kernels, in R4P for 19; the widest one-sided stencils (7 to 9 cells)
 leave their pre-asymptotic range only where R8P's round-off already dominates, whatever the function, since
-truncation over round-off depends on $kh$ alone. R16P resolves all 288: that is where the order of every compiled
+truncation over round-off depends on $kh$ alone. R16P resolves all 332: that is where the order of every compiled
 kernel is observed ([Orders of accuracy](/verification/orders)), and CI runs it. The generator measures the rows
 themselves at 100 digits, before any kind is involved.
 

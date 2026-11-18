@@ -13,12 +13,17 @@ gideon_<data>_<op>_<bias><order>
 | Part | Values | Meaning |
 |---|---|---|
 | `data` | `fd`, `fv` | point values (finite differences) or cell averages (finite volumes) |
-| `op` | `face`, `dN`, `face_dN`, `point`, `average`, `gradient`, `divergence`, `curl`, `laplacian` | the value at a face; the N-th derivative at the node (`fd`) or averaged over the cell (`fv`); the N-th derivative at a face; the point value at a cell centre from averages; the cell average from point values; the 3-D operators |
-| `bias` | `c`, `ur`, `ul`, `br`, `bl` | centred; upwind (or one-sided) with the stencil on the **right** side; the same on the **left** side; upwind-biased with one point more on the **right**; the same on the **left** |
-| `order` | integer | the order of accuracy, measured by the generator (not a stencil half-width) |
+| `op` | `face`, `dN`, `face_dN`, `point`, `average`, `face_diss`, `filter`, `gradient`, `divergence`, `curl`, `laplacian` | the value at a face; the N-th derivative at the node (`fd`) or averaged over the cell (`fv`); the N-th derivative at a face; the point value at a cell centre from averages; the cell average from point values; an undivided face difference, the flux of a dissipation; a filtered value; the 3-D operators |
+| `bias` | `c`, `ur`, `ul`, `br`, `bl`, `p`, `pbr`, `pbl` | centred; upwind (or one-sided) with the stencil on the **right** side; the same on the **left** side; upwind-biased with one point more on the **right**; the same on the **left**; compact (Padé) centred; compact upwind-biased, right and left |
+| `order` | integer | the order of accuracy, measured by the generator (not a stencil half-width); for the dissipation kernels the number is named in their row below |
 
 `gideon_fd_d1_c6` is the sixth-order centred first derivative at a node from point values; `gideon_fv_face_ul3` the
 third-order value at a face from the three cells on its left (the upwind value when the flow goes to the right).
+
+Two families carry a number that is not their order of accuracy, and say so: `gideon_<data>_face_diss_c<2k>` is the
+undivided difference $\delta^{2k-1}$ at the face, the flux of a dissipation of order $2k$ (as a derivative
+approximation, $\delta^{2k-1}/h^{2k-1}$ is of order 2); `gideon_<data>_face_diss_b<s><p>` is the dissipation part of
+`gideon_<data>_face_b<s><p>`, the number the biased kernel's order. Their dispatchers dispatch on that number.
 
 The upwind bias is named by **where the stencil lies**, never by the face it reconstructs; a biased stencil by the side
 that holds the extra point (`gideon_fd_face_bl3` reads two points left of the face and one right: the upwind value
@@ -68,6 +73,15 @@ The windows drawn, offsets on the axis, the data each kernel reads and the point
 ![The windows of gideon_fv_face_c4, q(-1:2) with cell o on [o - 1, o] and the face between cells 0 and 1, and of gideon_fv_d1_c4, q(-2:2) with cell o on [o - 1/2, o + 1/2] and the average over cell 0](/guide/windows-fv.png)
 
 ![The windows of the upwind FV operators of three cells: gideon_fv_face_ur3, q(1:3), and its mirror gideon_fv_face_ul3, q(-2:0), at the face x = 0; gideon_fv_d1_ur3, q(0:3), and gideon_fv_d1_ul3, q(-3:0), over cell 0](/guide/windows-upwind.png)
+
+## Line operators
+
+A compact operator is not one kernel but three parts ([Compact operators](/guide/compact)): its right side, a kernel
+like every other (`gideon_fd_d1_p6(q, ds, r)`, the window by offset, the unknown at offset 0: node 0, or the face
+between data 0 and 1); its band, `<NAME>_LEFT` in `gideon_tables` (pairs when symmetric, by offset when not); and a
+solve along the line, `gideon_line_solvers`. The unknown at offset $o$ of the band sits at $x = o$ in units of the
+step: nodes and faces are both numbered by their own index. Lines are periodic in this release (the bounded solvers
+exist, the boundary closures do not).
 
 ## Arithmetic
 

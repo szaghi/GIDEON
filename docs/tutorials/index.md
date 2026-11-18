@@ -1,6 +1,6 @@
 # Tutorials
 
-Six complete programs, one per tutorial, in `docs/examples/src/`. The code on these pages is that file, included when
+Seven complete programs, one per tutorial, in `docs/examples/src/`. The code on these pages is that file, included when
 the site is built, and the output below it is what the program printed: `bash scripts/run_examples.sh` builds every
 program, runs it and fails when its output differs from `docs/examples/output/<program>.txt`.
 
@@ -12,11 +12,13 @@ program, runs it and fails when its output differs from `docs/examples/output/<p
 | [T4 The order at run time](./run-time-order) | the dispatchers, window bounds as expressions of the order, `GIDEON_NAN`, the cost of choosing per point | `run_time_order.F90` |
 | [T5 Gradient, divergence, curl](./operators-3d) | gathering directional stencils from 3-D arrays; the four 3-D operators against exact values | `operators_3d.F90` |
 | [T6 On the GPU](./gpu) | the kernels inside `!$acc parallel loop`, the OpenACC build, the device against the host | `gpu.F90` |
+| [T7 A compact derivative on a periodic line](./compact-derivative) | a compact operator as a right-side kernel plus a band solved along the line; its order and accuracy against the explicit one | `compact_derivative.F90` |
 
 ```mermaid
 flowchart LR
   T1[T1 FD derivative] --> T2[T2 FV flux difference] --> T3[T3 upwind]
   T1 --> T4[T4 run-time order] --> T5[T5 3-D operators] --> T6[T6 GPU]
+  T1 --> T7[T7 compact derivative]
 ```
 
 ## Prerequisites

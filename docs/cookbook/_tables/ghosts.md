@@ -56,8 +56,18 @@
 | `fv_d5_ul` | 5 / 0 | 6 / 0 | 7 / 0 | 8 / 0 | 9 / 0 |  |  |  |  |  |  |
 | `fv_d6_ur` | 0 / 6 | 0 / 7 | 0 / 8 | 0 / 9 |  |  |  |  |  |  |  |
 | `fv_d6_ul` | 6 / 0 | 7 / 0 | 8 / 0 | 9 / 0 |  |  |  |  |  |  |  |
+| `fv_face_br` |  |  | 1 / 2 |  | 2 / 3 |  | 3 / 4 |  | 4 / 5 |  |  |
+| `fv_face_bl` |  |  | 2 / 1 |  | 3 / 2 |  | 4 / 3 |  | 5 / 4 |  |  |
 | `fv_point_c` |  |  |  | 1 |  | 2 |  | 3 |  | 4 | 5 |
 | `fd_average_c` |  |  |  | 1 |  | 2 |  | 3 |  | 4 | 5 |
+| `fd_face_diss_c` |  | 1 |  | 2 |  | 3 |  | 4 |  | 5 |  |
+| `fv_face_diss_c` |  | 1 |  | 2 |  | 3 |  | 4 |  | 5 |  |
+| `fd_face_diss_br` |  |  | 2 |  | 3 |  | 4 |  | 5 |  |  |
+| `fd_face_diss_bl` |  |  | 2 |  | 3 |  | 4 |  | 5 |  |  |
+| `fv_face_diss_br` |  |  | 2 |  | 3 |  | 4 |  | 5 |  |  |
+| `fv_face_diss_bl` |  |  | 2 |  | 3 |  | 4 |  | 5 |  |  |
+| `fd_filter_c` |  | 1 |  | 2 |  | 3 |  | 4 |  | 5 |  |
+| `fv_filter_c` |  | 1 |  | 2 |  | 3 |  | 4 |  | 5 |  |
 
 **An upwind pair** (both sides of a face or cell, the side chosen per point by the flow)
 

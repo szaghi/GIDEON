@@ -2,11 +2,16 @@
 
 | Test | Mutants it kills | Mutants only it kills |
 |---|---|---|
-| `gideon_test_golden` | 23 | 0 |
-| `gideon_test_order` | 22 | 0 |
-| `gideon_test_properties` | 20 | 0 |
+| `gideon_test_golden` | 30 | 0 |
+| `gideon_test_order` | 29 | 0 |
+| `gideon_test_tables` | 26 | 0 |
+| `gideon_test_properties` | 25 | 0 |
 | `gideon_test_adam` | 19 | 0 |
-| `gideon_test_tables` | 19 | 0 |
+| `gideon_test_lines` | 12 | 0 |
+| `gideon_test_lines_golden` | 12 | 0 |
 | `gideon_test_operators_3d` | 10 | 0 |
+| `gideon_test_split` | 9 | 0 |
+| `gideon_test_solvers` | 6 | 3 |
+| `gideon_test_dispatch` | 5 | 3 |
 | `gideon_test_spectral` | 4 | 0 |
-| `gideon_test_dispatch` | 4 | 2 |
+| `gideon_test_coupling` | 2 | 0 |

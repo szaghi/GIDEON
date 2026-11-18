@@ -12,7 +12,8 @@
 
 > Finite-difference and finite-volume stencil operators for HPC, in modern Fortran: derivatives of order 1 to 6,
 > values and derivatives at faces, conversions between cell averages and point values, centred and upwind, and the
-> 3-D gradient, divergence, curl and Laplacian. The single source of truth for ADAM's FDV operators: one `pure`,
+> 3-D gradient, divergence, curl and Laplacian; flux-form dissipation, filters and compact (Padé) operators with their
+> line solvers. The single source of truth for ADAM's FDV operators: one `pure`,
 > device-callable kernel per operator and order, coefficients generated in exact rational arithmetic and compiled as
 > constants.
 
@@ -28,7 +29,7 @@
 <div>
 <table>
 <tr>
-<td><b>🧮 Every operator, one kernel each</b><br><sub>288 kernels: FD centred face values, node derivatives d1–d6 and face derivatives d1–d5 (the viscous fluxes); FD face values from one side (extrapolation) or upwind-biased (interpolation); FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values. 54 run-time order dispatchers on top. <a href="https://szaghi.github.io/GIDEON/guide/operators">Operators</a> · <a href="https://szaghi.github.io/GIDEON/guide/api">API</a></sub></td>
+<td><b>🧮 Every operator, one kernel each</b><br><sub>332 kernels: FD centred face values, node derivatives d1–d6 and face derivatives d1–d5 (the viscous fluxes); FD face values from one side (extrapolation) or upwind-biased (interpolation); FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells, and upwind-biased; the deconvolution between averages and point values; flux-form dissipation with the upwind–central split; explicit filters. 64 run-time order dispatchers on top. 29 compact operators (Lele's derivatives, compact filters, compact face values centred and upwind-biased) with tridiagonal and pentadiagonal line solvers. <a href="https://szaghi.github.io/GIDEON/guide/compact">Compact operators</a> · <a href="https://szaghi.github.io/GIDEON/guide/operators">Operators</a> · <a href="https://szaghi.github.io/GIDEON/guide/api">API</a></sub></td>
 <td><b>⚡ Called from inside your loops</b><br><sub>Every kernel is <code>pure</code>, <code>!$acc routine seq</code> and <code>!$omp declare target</code>; the rows are compile-time constants, so nothing is set up or copied to the device. 0.17–0.82 of ADAM's cost, on an RTX 4070 and on one CPU core. <a href="https://szaghi.github.io/GIDEON/guide/performance">Performance</a></sub></td>
 </tr>
 <tr>
@@ -36,7 +37,7 @@
 <td><b>🪞 Every upwind operator with its mirror</b><br><sub>Gideon's fleece, a test and its reversed control: each left-side kernel reads the right-side row mirrored, bitwise. The 3-D gradient, divergence, curl and Laplacian, FD and FV, orders 2–10, over directional stencils. <a href="https://szaghi.github.io/GIDEON/guide/conventions">Conventions</a> · <a href="https://szaghi.github.io/GIDEON/verification/properties">Mirrors and symmetries</a></sub></td>
 </tr>
 <tr>
-<td><b>🔬 Verification you can read</b><br><sub>Eleven programs, also the test suite: rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 288 kernels observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, golden values. <a href="https://szaghi.github.io/GIDEON/verification/">Verification</a></sub></td>
+<td><b>🔬 Verification you can read</b><br><sub>Sixteen programs, also the test suite: rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 332 kernels and 29 compact operators observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, the upwind–central split, the line solvers, a compact–WENO coupling at a step, golden values. <a href="https://szaghi.github.io/GIDEON/verification/">Verification</a></sub></td>
 <td><b>🧰 Three compilers, CPU and GPU</b><br><sub>gfortran, nvfortran and ifx, debug and optimised, plus the OpenACC build on the GPU; single, double and quadruple precision; built with FoBiS or fpm. A mutation run catches 30 of 30 planted defects; the tutorials' code is compiled and run in CI. <a href="https://szaghi.github.io/GIDEON/guide/installation">Installation</a> · <a href="https://szaghi.github.io/GIDEON/regression/mutation">Mutation testing</a></sub></td>
 </tr>
 </table>
@@ -54,7 +55,7 @@
 git clone https://github.com/szaghi/GIDEON && cd GIDEON
 fobis fetch                                                # PENF
 fobis build --mode static-gnu                              # libgideon.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh  # 11 programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh  # 16 programs
 ```
 
 as a FoBiS dependency, in the `fobos` of your project (then `fobis fetch && fobis build`):

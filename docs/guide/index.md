@@ -20,7 +20,13 @@ with the upwind branch kept and extended to stencils of 9 cells and the sixth de
 order dispatchers, 40 3-D operators and their 8 dispatchers. Phase 2 adds what ADAM's callers write by hand, on point
 values: the face derivatives d1–d5 (the viscous fluxes), and the face value from one side (extrapolation) or
 upwind-biased (interpolation): 288 kernels, 54 run-time order dispatchers. Bitwise equal to ADAM where ADAM is right, at 0.17–0.82
-of its cost on an RTX 4070 and on one CPU core ([Performance](/guide/performance)). Tested with gfortran 16.2,
+of its cost on an RTX 4070 and on one CPU core ([Performance](/guide/performance)). Roadmap #2 adds the linear
+operators a hybrid scheme is built from on its smooth side: the undivided face differences (flux-form dissipation),
+the FV upwind-biased face values and the dissipation part of every biased value (the upwind–central split, proven
+exact), explicit filters (332 kernels, 64 dispatchers), and the compact operators: Lele's node derivatives, compact
+filters, face values and derivatives from point values and from cell averages, centred and upwind-biased (29), with
+the tridiagonal and pentadiagonal line solvers they need, bounded and periodic, rows replaceable for a compact–WENO
+coupling ([Compact operators](/guide/compact)). Tested with gfortran 16.2,
 nvfortran 26.9 (also on the GPU, OpenACC) and ifx, in single and double precision, and with gfortran in quadruple.
 
 ## How to read this documentation

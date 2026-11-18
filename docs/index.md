@@ -39,7 +39,7 @@ features:
       width: 44
       height: 44
     title: Every operator, one kernel each
-    details: 288 kernels. FD centred face values, node derivatives d1–d6 and face derivatives d1–d5 (the viscous fluxes); FD face values from one side (extrapolation) or upwind-biased (interpolation); FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells; the deconvolution between averages and point values. 54 run-time order dispatchers on top.
+    details: 332 kernels. FD centred face values, node derivatives d1–d6 and face derivatives d1–d5 (the viscous fluxes); FD face values from one side (extrapolation) or upwind-biased (interpolation); FV centred face values, face derivatives d1–d5 and cell-average derivatives d1–d6; FV upwind on right- or left-side stencils of 1 to 9 cells, and upwind-biased; the deconvolution between averages and point values; flux-form dissipation, the upwind–central split, explicit filters. 64 run-time order dispatchers on top. 29 compact operators and their line solvers.
     link: /guide/operators
     linkText: Operators
   - icon:
@@ -75,7 +75,7 @@ features:
       width: 44
       height: 44
     title: Verification you can read
-    details: Eleven programs, also the test suite. Rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 288 kernels observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, golden values.
+    details: Sixteen programs, also the test suite. Rows by their meaning, exactness to the leading error, mirrors, dispatch, ADAM, host against device, the order of all 332 kernels and all 29 compact operators observed in quadruple precision, the 3-D operators, spectral properties with an advection animation, the upwind–central split, the line solvers against a dense solve, a compact–WENO coupling at a step, golden values.
     link: /verification/
     linkText: Verification
   - icon:
@@ -124,7 +124,7 @@ const authors = [
 git clone https://github.com/szaghi/GIDEON && cd GIDEON
 fobis fetch                                                # PENF
 fobis build --mode static-gnu                              # libgideon.a
-fobis build --mode tests-gnu && bash scripts/run_tests.sh  # 11 programs
+fobis build --mode tests-gnu && bash scripts/run_tests.sh  # 16 programs
 ```
 
 ```ini [FoBiS dependency]

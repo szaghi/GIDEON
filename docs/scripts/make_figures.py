@@ -251,7 +251,10 @@ def fig_convergence(r: Report, ink: Ink) -> None:
 SHORT_FAMILY = {'fd_face_c': 'FD face', 'fd_node_c': 'FD node d1-d6', 'fd_facedn_c': 'FD face d1-d5',
                 'fd_face_u': 'FD one-sided face', 'fd_face_b': 'FD biased face', 'fv_face_c': 'FV face',
                 'fv_facedn_c': 'FV face d1-d5', 'fv_cell_c': 'FV cell d1-d6', 'fv_face_u': 'upwind face',
-                'fv_facedn_u': 'upwind face d1-d5', 'fv_cell_u': 'upwind cell d1-d6', 'deconv': 'deconvolution'}
+                'fv_facedn_u': 'upwind face d1-d5', 'fv_cell_u': 'upwind cell d1-d6', 'deconv': 'deconvolution',
+                'fv_face_b': 'FV biased face', 'fd_face_diss': 'FD face difference', 'fv_face_diss': 'FV face difference',
+                'fd_face_bdiss': 'FD dissipation part', 'fv_face_bdiss': 'FV dissipation part',
+                'fd_filter_c': 'FD filter', 'fv_filter_c': 'FV filter'}
 
 
 def fig_orders(r: Report, ink: Ink) -> None:

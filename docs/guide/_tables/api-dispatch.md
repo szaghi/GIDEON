@@ -56,3 +56,13 @@
 | `gideon_fd_face_ul` | `(order, q, f)` | 1, 2, 3, 4, 5, 6, 7, 8, 9 | `q(-(order-1):0)` |
 | `gideon_fd_face_br` | `(order, q, f)` | 3, 5, 7, 9 | `q(2-(order/2+1):order/2+1)` |
 | `gideon_fd_face_bl` | `(order, q, f)` | 3, 5, 7, 9 | `q(-(order/2):order/2)` |
+| `gideon_fd_face_diss_c` | `(order, q, d)` | 2, 4, 6, 8, 10 | `q(1-(order/2):order/2)` |
+| `gideon_fv_face_diss_c` | `(order, q, d)` | 2, 4, 6, 8, 10 | `q(1-(order/2):order/2)` |
+| `gideon_fv_face_br` | `(order, q, f)` | 3, 5, 7, 9 | `q(2-(order/2+1):order/2+1)` |
+| `gideon_fv_face_bl` | `(order, q, f)` | 3, 5, 7, 9 | `q(-(order/2):order/2)` |
+| `gideon_fd_face_diss_br` | `(order, q, d)` | 3, 5, 7, 9 | `q(1-(order/2+1):order/2+1)` |
+| `gideon_fd_face_diss_bl` | `(order, q, d)` | 3, 5, 7, 9 | `q(1-(order/2+1):order/2+1)` |
+| `gideon_fv_face_diss_br` | `(order, q, d)` | 3, 5, 7, 9 | `q(1-(order/2+1):order/2+1)` |
+| `gideon_fv_face_diss_bl` | `(order, q, d)` | 3, 5, 7, 9 | `q(1-(order/2+1):order/2+1)` |
+| `gideon_fd_filter_c` | `(order, q, v)` | 2, 4, 6, 8, 10 | `q(-(order/2):order/2)` |
+| `gideon_fv_filter_c` | `(order, q, v)` | 2, 4, 6, 8, 10 | `q(-(order/2):order/2)` |

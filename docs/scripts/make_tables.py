@@ -7,7 +7,7 @@ mutation run (notes/mutation-run-*.txt, with the mutants of scripts/mutation_tes
 (notes/bench-data). The pages include the tables with <!--@include: ...-->; the directories are excluded from routing
 (docs/.vitepress/config.mts, **/_tables/**).
 
-    docs/verification/_tables/*.md     the verification cases (C1-C6, A1-A3)
+    docs/verification/_tables/*.md     the verification cases (C1-C8, A1-A5)
     docs/regression/_tables/*.md       golden values, mutation testing
 
 Usage: make_tables.py --report DIR   (DIR: the report directory of scripts/run_report.sh, default exe/report)
@@ -45,6 +45,13 @@ FAMILY = {  # family -> (label, order of presentation)
     'fv_facedn_u': ('FV upwind, face derivatives d1-d5', 9),
     'fv_cell_u': ('FV upwind, cell-average derivatives d1-d6', 10),
     'deconv': ('Deconvolution (point value, cell average)', 11),
+    'fv_face_b': ('FV upwind-biased, face value', 12),
+    'fd_face_diss': ('FD undivided face differences (dissipation fluxes)', 13),
+    'fv_face_diss': ('FV undivided face differences (dissipation fluxes)', 14),
+    'fd_face_bdiss': ('FD dissipation parts of the biased face values', 15),
+    'fv_face_bdiss': ('FV dissipation parts of the biased face values', 16),
+    'fd_filter_c': ('FD explicit filters', 17),
+    'fv_filter_c': ('FV explicit filters', 18),
 }
 BUILDS = (('r32', 'gfortran, R4P'), ('r64', 'gfortran, R8P'), ('r128', 'gfortran, R16P'),
           ('oac', 'nvfortran -acc, R8P'))
@@ -129,7 +136,8 @@ def rows_tables(r: Report) -> None:
     checked = next(int(m.group(1)) for f in findings if (m := re.match(r'checked (\d+) ADAM rows', f)))
     om = next(f for f in findings if f.startswith('orders:'))
     bad = [f for f in findings if f.startswith(('MISMATCH', 'NOT GENERATED', 'ORDER'))]
-    mirrors = sum(1 for k in ks if k['bias'] in ('ul', 'bl'))  # every left-side kernel: one-sided and biased
+    # every left-side kernel solved on its own: one-sided and biased (a dissipation part is proven by the split instead)
+    mirrors = sum(1 for k in ks if k['bias'] in ('ul', 'bl') and not k['family'].endswith('bdiss'))
     m = re.match(r'orders: (\d+) rows, smallest margin ([+-][\d.]+) \((\w+), observed ([\d.]+)\)', om)
     write(VT / 'rows-checks.md', table(['Check', 'Result'], [
         ['rows derived (exact rationals)', len(ks)],
@@ -439,7 +447,12 @@ def spectral_tables(r: Report) -> None:
 # ---------------------------------------------------------------------------------------------------------------------
 def golden_tables(r: Report) -> None:
     src = (ROOT / 'src/tests/gideon_test_golden.F90').read_text()
-    read = dict(re.findall(r"GOLDEN = 'src/tests/golden/(\S+)'\s*\n\s*real\(R_P\),\s*parameter :: TOL = (\S+)_R_P", src))
+    pat = r"GOLDEN = 'src/tests/golden/(\S+)'\s*\n\s*real\(R_P\),\s*parameter :: TOL = (\S+)_R_P"
+    read = dict(re.findall(pat, src))
+    reader = dict.fromkeys(read, 'gideon_test_golden')
+    for name in re.findall(pat, (ROOT / 'src/tests/gideon_test_lines_golden.F90').read_text()):  # the compact operators
+        read[name[0]] = name[1]
+        reader[name[0]] = 'gideon_test_lines_golden'
     kind_of = lambda name: 'R4P' if '_r4_' in name else 'R16P' if '_r16_' in name else 'R8P'  # noqa: E731
     tol = {kind_of(name): t for name, t in read.items()}  # the tolerance is the kind's, every version alike
     nst = re.search(r'NST = (\d+)_I4P', src).group(1)
@@ -452,9 +465,9 @@ def golden_tables(r: Report) -> None:
         kind = kind_of(f.name)
         t = tol[kind]
         rows.append([f'`{f.name}`', kind, nvals, f'{writer}, `{opt.group(0) if opt else ""}`', sci(float(t), 0),
-                     'yes' if f.name in read else 'no (kept)'])
+                     f'`{reader[f.name]}`' if f.name in read else 'no (kept)'])
     write(RT / 'golden-files.md', table(['File', 'Kind', 'Values', 'Written by', 'Tolerance (of the magnitude)',
-                                         'Read by the test'], rows))
+                                         'Read by'], rows))
     write(RT / 'golden-count.md', f'{len(r.rows["kernels"])} kernels × {nst} windows = '
           f'{len(r.rows["kernels"]) * int(nst)} values per file.\n')
     brows = []
@@ -500,6 +513,101 @@ def mutation_tables(run: Path, prefix: str = 'mutation') -> None:
     write(RT / f'{prefix}-tests.md', table(['Test', 'Mutants it kills', 'Mutants only it kills'], trows))
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# #2: the split (C7), the line solvers (C8), the compact operators (A4), the coupling (A5), their golden values
+# ---------------------------------------------------------------------------------------------------------------------
+def frac(s: str) -> str:
+    v = Fr(s)
+    return f'${v.numerator}/{v.denominator}$' if v.denominator != 1 else f'${v.numerator}$'
+
+
+def p2_tables(r: Report) -> None:
+    ks = r.rows['kernels']
+    rows = []
+    for k in ks:
+        if k['family'].endswith('bdiss') and k['bias'] == 'bl':
+            rows.append([k['data'], f'`{short(k["name"]).replace("_diss_bl", "_bl")}`',
+                         f'`{k["data"]}_face_c{k["tag"] + 1}`', frac(k['coef']), f'$\\delta^{{{k["n"]}}}$',
+                         f'`{short(k["name"])}`, `{short(k["name"]).replace("_bl", "_br")}`'])
+    write(VT / 'split-identities.md', table(['Data', 'Biased (left)', '= centred', '+ C ×', 'difference',
+                                             'Dissipation part (left, right: −C)'], rows))
+    split = [f for f in r.rows['findings'] if f.startswith('split ')]
+    write(VT / 'split-findings.md', '\n'.join(f'- `{f.split(":", 1)[0]}`: {f.split(":", 1)[1].strip()}'
+                                              for f in split) + '\n')
+    b = []
+    for tag, lab in r.builds():
+        m = re.search(r'(\d+) biased kernels, (\d+) checks, failures (\d+)',
+                      last_line(r.out(tag, 'gideon_test_split'), 'gideon_test_split:'))
+        b.append([lab, *m.groups()])
+    write(VT / 'split-builds.md', table(['Build', 'Biased kernels', 'Checks', 'Failures'], b))
+    # C8: the line solvers
+    b, dev = [], []
+    for tag, lab in r.builds():
+        p = r.out(tag, 'gideon_test_solvers')
+        m = re.search(r'(\d+) checks, failures (\d+)', last_line(p, 'gideon_test_solvers:'))
+        b.append([lab, *m.groups()])
+        for ln in p.read_text().splitlines():
+            d = re.match(r'gideon_test_solvers: device, half-band (\d), periodic (\w): lines bitwise (\d+) of (\d+), '
+                         r'worst error / \(cond max\|x\|\)\s+(\S+)', ln)
+            if d:
+                dev.append([lab, {'1': 'tridiagonal', '2': 'pentadiagonal'}[d.group(1)],
+                            'periodic' if d.group(2) == 'T' else 'bounded', f'{d.group(3)} of {d.group(4)}',
+                            sci(float(d.group(5)))])
+    write(VT / 'solvers-builds.md', table(['Build', 'Checks', 'Failures'], b))
+    write(VT / 'solvers-device.md', table(['Build', 'Band', 'Line', 'Lines bitwise equal to the host',
+                                           'Worst error / (cond max|x|)'], dev))
+    # A4: the compact operators
+    geom = {'node': 'nodes, from point values', 'fdface': 'faces, from point values', 'fvface': 'faces, from cell averages'}
+    rows = []
+    for op in r.rows['compact']:
+        half = max(abs(int(o)) for o in list(op['left']) + list(op['alpha_right'] and ['-1', '1']))
+        band = ' '.join(frac(op['left'][o]) for o in sorted(op['left'], key=int)) if not op['alpha_right'] \
+            else '$\\alpha_f$ 1 $\\alpha_f$'
+        rows.append([f'`{short(op["name"])}`', geom[op['geom']], op['order'],
+                     {1: 'tri', 2: 'penta'}[half], band, f'`q({op["lo"]}:{op["hi"]})`', frac(op['residual_error'])])
+    write(VT / 'lines-operators.md', table(['Operator', 'Unknowns at', 'Order', 'Band', 'Band coefficients',
+                                            'Right window', 'Row residual on $x^{K+1}$'], rows))
+    recalled = [f for f in r.rows['findings'] if f.startswith('lines:') and 'recalled' in f]
+    lo = next(f for f in r.rows['findings'] if f.startswith('lines:') and 'residual orders' in f)
+    write(VT / 'lines-generator.md', '\n'.join(f'- {f.removeprefix("lines: ")}' for f in [lo] + recalled) + '\n')
+    b, dev = [], []
+    for tag, lab in r.builds():
+        p = r.out(tag, 'gideon_test_lines')
+        m = re.search(r'(\d+) compact operators, (\d+) checks, failures (\d+)', last_line(p, 'gideon_test_lines:'))
+        o = re.search(r'(\d+) measured, (\d+) unresolved', p.read_text())
+        b.append([lab, m.group(1), o.group(1), o.group(2), m.group(2), m.group(3)])
+        d = re.search(r'right sides bitwise (\d+) of (\d+), lines bitwise (\d+) of (\d+), worst relative\s+(\S+)',
+                      p.read_text())
+        if d:
+            dev.append([lab, f'{d.group(1)} of {d.group(2)}', f'{d.group(3)} of {d.group(4)}', sci(float(d.group(5)))])
+    write(VT / 'lines-builds.md', table(['Build', 'Operators', 'Orders measured', 'Unresolved', 'Checks', 'Failures'],
+                                        b))
+    write(VT / 'lines-device.md', table(['Build', 'Right sides bitwise equal', 'Lines bitwise equal',
+                                         'Worst difference / bound scale'], dev))
+    # A5: the coupling
+    b = []
+    for tag, lab in r.builds():
+        p = r.out(tag, 'gideon_test_coupling')
+        text = p.read_text()
+        m = re.search(r'(\d+) checks, failures (\d+)', last_line(p, 'gideon_test_coupling:'))
+        cells = []
+        for o in (5, 7):
+            ob = re.search(rf'pbl{o} away from the step, observed orders\s+(\S+)\s+(\S+) at N = (\d+)', text)
+            cells.append(f'{ob.group(1)}, {ob.group(2)} (N = {ob.group(3)})' if ob else 'unresolved')
+        dv = re.findall(r'device, pbl(\d): lines bitwise (\d+) of (\d+)', text)
+        b.append([lab, *cells, '; '.join(f'pbl{a}: {c} of {d}' for a, c, d in dv) or '—', *m.groups()])
+    write(VT / 'coupling-builds.md', table(['Build', 'pbl5, orders away from the step', 'pbl7, orders away from the step',
+                                            'Device lines bitwise equal', 'Checks', 'Failures'], b))
+    # golden values of the compact operators
+    b = []
+    for tag, lab in r.builds():
+        m = re.search(r'(\d+) values, bitwise (\d+), worst relative difference\s+(\S+), failures (\d+)',
+                      last_line(r.out(tag, 'gideon_test_lines_golden'), 'gideon_test_lines_golden:'))
+        b.append([lab, m.group(1), m.group(2), sci(float(m.group(3))), m.group(4)])
+    write(RT / 'golden-lines-builds.md', table(['Build', 'Values', 'Bitwise', 'Worst difference / magnitude',
+                                                'Failures'], b))
+
+
 def current_mutation_run() -> Path:
     """The recorded run of the current mutants: the newest notes/mutation-run-*.txt (by modification order of the names,
     then the file name) that lists exactly the mutants of scripts/mutation_test.py. A run of an older mutant list
@@ -532,6 +640,7 @@ def main() -> int:
     operators3d_tables(r)
     spectral_tables(r)
     golden_tables(r)
+    p2_tables(r)
     run = args.mutation_run or current_mutation_run()
     mutation_tables(run)
     reruns = sorted(r.d.glob('mutation-run-*.txt'))

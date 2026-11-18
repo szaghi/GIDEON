@@ -255,7 +255,7 @@ def check_names(text: str, verbose: bool) -> None:
             continue
         if any(family_regex(n).match(k) for k in known):
             continue
-        if re.match(r'gideon_golden_(r4_|r16_)?v\d+', n) or n in {'gideon_r4', 'gideon_r16'}:
+        if re.match(r'gideon_golden_(lines_)?(r4_|r16_)?v\d+', n) or n in {'gideon_r4', 'gideon_r16'}:
             continue
         missing.append(n)
     report('names', len(found), missing, verbose)

@@ -4,11 +4,11 @@
 |---|---|---|---|---|
 | `row-fd-d1-c6` | `gideon_tables.F90` | `3._R_P/4._R_P` → `0.7501_R_P` | adam, golden, operators_3d, order, tables | 5 |
 | `row-fd-d1-c10-tail` | `gideon_tables.F90` | `1._R_P/1260._R_P` → `1._R_P/1261._R_P` | adam, golden, operators_3d, order, tables | 5 |
-| `row-fv-face-c4` | `gideon_tables.F90` | `7._R_P/12._R_P` → `0.5834_R_P` | adam, golden, operators_3d, order, properties, tables | 6 |
+| `row-fv-face-c4` | `gideon_tables.F90` | `7._R_P/12._R_P` → `0.5834_R_P` | adam, golden, operators_3d, order, properties, split, tables | 7 |
 | `row-fv-uface-3` | `gideon_tables.F90` | `-7._R_P/6._R_P` → `-1.1667_R_P` | adam, golden, order, properties, tables | 5 |
 | `row-fv-point-c6` | `gideon_tables.F90` | `3._R_P/640._R_P` → `3._R_P/641._R_P` | adam, golden, order, properties, tables | 5 |
 | `pair-sign-fd-d2-c4` | `gideon_fd_centred.F90` | `(q(m) + q(-m))` → `(q(m) - q(-m))` | adam, golden, operators_3d, order, properties, spectral, tables | 7 |
-| `pair-offset-fd-face-c8` | `gideon_fd_centred.F90` | `q(m) + q(1-m)` → `q(m) + q(-m)` | adam, golden, order, properties, tables | 5 |
+| `pair-offset-fd-face-c8` | `gideon_fd_centred.F90` | `q(m) + q(1-m)` → `q(m) + q(-m)` | adam, golden, order, properties, split, tables | 6 |
 | `pair-sign-fd-average-c6` | `gideon_deconvolution.F90` | `(q(m) + q(-m))` → `(q(m) - q(-m))` | adam, golden, order, properties, tables | 5 |
 | `flux-face-offset-fv-d1-c6` | `gideon_fv_centred.F90` | `(q(m-1) + q(-m))` → `(q(m) + q(-m))` | adam, golden, operators_3d, order, properties, spectral, tables | 7 |
 | `scale-fd-d3-c4` | `gideon_fd_centred.F90` | `d = d/ds/ds/ds` → `d = d/ds/ds` | adam, golden, order, properties | 4 |
@@ -26,9 +26,32 @@
 | `laplacian-direction` | `gideon_operators_3d.F90` | `call gideon_fv_d2_c6(qz, dxyz(3), dz)` → `call gideon_fv_d2_c6(qy, dxyz(3), dz)` | adam, operators_3d | 2 |
 | `row-fd-face-d1-c4` | `gideon_tables.F90` | `9._R_P/8._R_P` → `1.1251_R_P` | golden, order, tables | 3 |
 | `row-fd-uface-3` | `gideon_tables.F90` | `-5._R_P/4._R_P` → `-1.2501_R_P` | golden, order, properties, tables | 4 |
-| `row-fd-bface-5-tail` | `gideon_tables.F90` | `-5._R_P/128._R_P` → `-5._R_P/127._R_P` | golden, order, properties, tables | 4 |
+| `row-fd-bface-5-tail` | `gideon_tables.F90` | `-5._R_P/128._R_P` → `-5._R_P/127._R_P` | golden, order, properties, split, tables | 5 |
 | `pair-sign-fd-face-d2-c4` | `gideon_fd_centred.F90` | `(q(m) + q(1-m))` → `(q(m) - q(1-m))` | golden, order, properties, tables | 4 |
 | `scale-fd-face-d2-c4` | `gideon_fd_centred.F90` | `d = d/ds/ds` → `d = d/ds` | golden, order, properties | 3 |
 | `mirror-fd-face-ul3` | `gideon_fd_upwind.F90` | `q(1-m)` → `q(m-3)` | golden, order, properties, tables | 4 |
-| `mirror-fd-face-bl5` | `gideon_fd_upwind.F90` | `q(1-m)` → `q(m-1)` | golden, order, properties, tables | 4 |
+| `mirror-fd-face-bl5` | `gideon_fd_upwind.F90` | `q(1-m)` → `q(m-1)` | golden, order, properties, split, tables | 5 |
 | `dispatch-wrong-kernel-bl` | `gideon_dispatch.F90` | `case(5) ; call gideon_fd_face_bl5` → `case(5) ; call gideon_fd_face_bl3` | dispatch | 1 |
+| `row-face-diff-5` | `gideon_tables.F90` | `5._R_P` → `5.001_R_P` | golden, order, split, tables | 4 |
+| `bdiss-sign-fd-br5` | `gideon_dissipation.F90` | `-FD_BDISS_S2*d` → `FD_BDISS_S2*d` | golden, order, properties, split, tables | 5 |
+| `bdiss-constant-fv-3` | `gideon_tables.F90` | `1._R_P/12._R_P` → `1._R_P/11._R_P` | golden, order, split, tables | 4 |
+| `row-fv-bface-5` | `gideon_tables.F90` | `47._R_P/60._R_P` → `0.7834_R_P` | golden, order, properties, split, tables | 5 |
+| `mirror-fv-face-bl5` | `gideon_fv_upwind.F90` | `q(1-m)` → `q(m-1)` | golden, order, properties, split, tables | 5 |
+| `row-filter-c6` | `gideon_tables.F90` | `15._R_P/64._R_P` → `0.2344_R_P` | golden, order, properties, tables | 4 |
+| `pair-sign-fv-filter-c4` | `gideon_filters.F90` | `(q(m) + q(-m))` → `(q(m) - q(-m))` | golden, order, properties, tables | 4 |
+| `dispatch-wrong-kernel-diss` | `gideon_dispatch.F90` | `case(6) ; call gideon_fd_face_diss_c6` → `case(6) ; call gideon_fd_face_diss_c4` | dispatch | 1 |
+| `thomas-pivot` | `gideon_line_solvers.F90` | `p = b - a*w(i-1)` → `p = b + a*w(i-1)` | lines, lines_golden, solvers | 3 |
+| `tri-periodic-column` | `gideon_line_solvers.F90` | `z(n-1) = z(n-1) + c(n-1)` → `z(n-1) = z(n-1) + a(n-1)` | solvers | 1 |
+| `penta-resolve-pivot` | `gideon_line_solvers.F90` | `bp = bp - ap*u1(i-1)` → `bp = bp + ap*u1(i-1)` | lines, lines_golden, solvers | 3 |
+| `penta-border` | `gideon_line_solvers.F90` | `x1 = (r1 - s12*x2)/s11` → `x1 = (r1 + s12*x2)/s11` | lines, lines_golden, solvers | 3 |
+| `masked-diagonal` | `gideon_line_solvers.F90` | `p = merge(1._R_P, b, mask(i))` → `p = b` | solvers | 1 |
+| `masked-offdiagonal` | `gideon_line_solvers.F90` | `ap = ap - merge(0._R_P, e, mask(i))` → `ap = ap - e` | solvers | 1 |
+| `band-fd-d1-p8` | `gideon_tables.F90` | `4._R_P/9._R_P` → `0.4445_R_P` | lines, lines_golden | 2 |
+| `right-fd-d2-p6` | `gideon_tables.F90` | `12._R_P/11._R_P` → `1.0910_R_P` | lines, lines_golden | 2 |
+| `pair-sign-fd-face-d1-p6` | `gideon_compact.F90` | `(q(m) - q(1-m))` → `(q(m) + q(1-m))` | lines, lines_golden | 2 |
+| `scale-fd-d2-p4` | `gideon_compact.F90` | `r = r/ds/ds` → `r = r/ds` | lines, lines_golden | 2 |
+| `filter-alpha-row-p6` | `gideon_tables.F90` | `17._R_P/32._R_P` → `0.5313_R_P` | lines, lines_golden | 2 |
+| `filter-alpha-term-p4` | `gideon_compact.F90` | `alpha*FD_FILTER_P4_ALPHA(m)` → `alpha*FD_FILTER_P4_ALPHA(0)` | lines, lines_golden | 2 |
+| `mirror-fv-face-pbl7` | `gideon_compact.F90` | `q(1-m)` → `q(m-1)` | coupling, lines, lines_golden | 3 |
+| `band-fv-face-pbl5` | `gideon_tables.F90` | `1._R_P/2._R_P` → `0.5001_R_P` | coupling, lines, lines_golden | 3 |
+| `band-fv-face-p6` | `gideon_tables.F90` | `1._R_P/3._R_P` → `0.3334_R_P` | lines, lines_golden | 2 |

@@ -2,7 +2,7 @@
 
 | Build | Values | Bitwise equal | Worst difference / magnitude | Failures |
 |---|---|---|---|---|
-| gfortran, R4P | 2304 | 2304 (100.0 %) | 0 | 0 |
-| gfortran, R8P | 2304 | 2304 (100.0 %) | 0 | 0 |
-| gfortran, R16P | 2304 | 2304 (100.0 %) | 0 | 0 |
-| nvfortran -acc, R8P | 2304 | 1762 (76.5 %) | $1.8\cdot10^{-16}$ | 0 |
+| gfortran, R4P | 2656 | 2656 (100.0 %) | 0 | 0 |
+| gfortran, R8P | 2656 | 2656 (100.0 %) | 0 | 0 |
+| gfortran, R16P | 2656 | 2656 (100.0 %) | 0 | 0 |
+| nvfortran -acc, R8P | 2656 | 2071 (78.0 %) | $3.2\cdot10^{-16}$ | 0 |

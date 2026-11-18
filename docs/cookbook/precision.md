@@ -52,7 +52,7 @@ kind (next section).
 | Test | R8P | R4P | R16P |
 |---|---|---|---|
 | exactness on monomials and the leading error (`gideon_test_tables`), 64 ε | yes | yes | yes |
-| orders observed on a smooth function (`gideon_test_order`) | 119 of 288 kernels | 17 of 288 | **all 288** |
+| orders observed on a smooth function (`gideon_test_order`) | 139 of 332 kernels | 19 of 332 | **all 332** |
 | mirrors and symmetries, dispatch, 3-D operators, host = device | yes | yes | yes (host) |
 | golden values (`src/tests/golden/`) | `gideon_golden_v2.txt`, tolerance $10^{-13}$ | `gideon_golden_r4_v2.txt`, $10^{-5}$ | `gideon_golden_r16_v2.txt`, $10^{-30}$ |
 | equivalence with ADAM (`gideon_test_adam`) | yes | no: ADAM's code is R8P | no |

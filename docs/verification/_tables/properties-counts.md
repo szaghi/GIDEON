@@ -2,7 +2,7 @@
 
 | Property | Kernels | Trials | Comparison |
 |---|---|---|---|
-| left side = $(-1)^n$ right side on mirrored data | 91 | 20 | bitwise |
-| centred kernel on data of the odd symmetry returns 0 | 106 | 20 | bitwise |
-| $k(8q) = 8\,k(q)$, $k(q, 2\,\Delta s) = k(q, \Delta s)/2^n$ | 288 | 20 | bitwise |
-| constant data: 0 for a derivative (pair or flux-difference form), the constant otherwise | 224 derivatives, 64 values | 1 | bitwise (derivatives), 64 eps Σ\|c\| (values) |
+| left side = $(-1)^n$ right side on mirrored data | 103 | 20 | bitwise |
+| centred kernel on data of the odd symmetry returns 0 | 126 | 20 | bitwise |
+| $k(8q) = 8\,k(q)$, $k(q, 2\,\Delta s) = k(q, \Delta s)/2^n$ | 332 | 20 | bitwise |
+| constant data: 0 for a derivative (pair or flux-difference form), the constant otherwise | 250 derivatives, 82 values | 1 | bitwise (derivatives), 64 eps Σ\|c\| (values) |

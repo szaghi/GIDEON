@@ -54,5 +54,15 @@
 | `gideon_fv_d5_ul` | cell averages | d5 averaged over the cell | left side | 1: 6, 2: 7, 3: 8, 4: 9, 5: 10 |
 | `gideon_fv_d6_ur` | cell averages | d6 averaged over the cell | right side | 1: 7, 2: 8, 3: 9, 4: 10 |
 | `gideon_fv_d6_ul` | cell averages | d6 averaged over the cell | left side | 1: 7, 2: 8, 3: 9, 4: 10 |
+| `gideon_fv_face_br` | cell averages | value at the face | biased right | 3: 3, 5: 5, 7: 7, 9: 9 |
+| `gideon_fv_face_bl` | cell averages | value at the face | biased left | 3: 3, 5: 5, 7: 7, 9: 9 |
 | `gideon_fv_point_c` | cell averages | point value at the cell centre | centred | 4: 3, 6: 5, 8: 7, 10: 9, 12: 11 |
 | `gideon_fd_average_c` | point values | cell average | centred | 4: 3, 6: 5, 8: 7, 10: 9, 12: 11 |
+| `gideon_fd_face_diss_c` | point values | undivided difference at the face (the order: of the dissipation) | centred | 2: 2, 4: 4, 6: 6, 8: 8, 10: 10 |
+| `gideon_fv_face_diss_c` | cell averages | undivided difference at the face (the order: of the dissipation) | centred | 2: 2, 4: 4, 6: 6, 8: 8, 10: 10 |
+| `gideon_fd_face_diss_br` | point values | dissipation part of the biased face value (the order: the biased value's) | biased right | 3: 4, 5: 6, 7: 8, 9: 10 |
+| `gideon_fd_face_diss_bl` | point values | dissipation part of the biased face value (the order: the biased value's) | biased left | 3: 4, 5: 6, 7: 8, 9: 10 |
+| `gideon_fv_face_diss_br` | cell averages | dissipation part of the biased face value (the order: the biased value's) | biased right | 3: 4, 5: 6, 7: 8, 9: 10 |
+| `gideon_fv_face_diss_bl` | cell averages | dissipation part of the biased face value (the order: the biased value's) | biased left | 3: 4, 5: 6, 7: 8, 9: 10 |
+| `gideon_fd_filter_c` | point values | filtered value at the node | centred | 2: 3, 4: 5, 6: 7, 8: 9, 10: 11 |
+| `gideon_fv_filter_c` | cell averages | filtered cell average | centred | 2: 3, 4: 5, 6: 7, 8: 9, 10: 11 |

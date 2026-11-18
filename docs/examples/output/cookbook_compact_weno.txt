@@ -1,0 +1,5 @@
+face values of a bump and a square wave on 100 cells; 6 faces flagged by the sensor
+scheme                     overshoot  undershoot  bump error
+explicit bl5                 0.18333     0.18333     0.00007
+compact pbl5                 0.28213     0.28213     0.00001
+compact pbl5, flagged        0.00000     0.00000     0.00001

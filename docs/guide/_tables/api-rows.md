@@ -136,3 +136,81 @@
 | `FD_BFACE_S2` | `(-1:3)` | `gideon_fd_face_br5`, `gideon_fd_face_bl5` |
 | `FD_BFACE_S3` | `(-2:4)` | `gideon_fd_face_br7`, `gideon_fd_face_bl7` |
 | `FD_BFACE_S4` | `(-3:5)` | `gideon_fd_face_br9`, `gideon_fd_face_bl9` |
+| `FACE_DIFF_S1` | `(1:1)` | `gideon_fd_face_diss_c2`, `gideon_fv_face_diss_c2` |
+| `FACE_DIFF_S2` | `(1:2)` | `gideon_fd_face_diss_c4`, `gideon_fv_face_diss_c4`, `gideon_fd_face_diss_br3`, `gideon_fd_face_diss_bl3`, `gideon_fv_face_diss_br3`, `gideon_fv_face_diss_bl3` |
+| `FACE_DIFF_S3` | `(1:3)` | `gideon_fd_face_diss_c6`, `gideon_fv_face_diss_c6`, `gideon_fd_face_diss_br5`, `gideon_fd_face_diss_bl5`, `gideon_fv_face_diss_br5`, `gideon_fv_face_diss_bl5` |
+| `FACE_DIFF_S4` | `(1:4)` | `gideon_fd_face_diss_c8`, `gideon_fv_face_diss_c8`, `gideon_fd_face_diss_br7`, `gideon_fd_face_diss_bl7`, `gideon_fv_face_diss_br7`, `gideon_fv_face_diss_bl7` |
+| `FACE_DIFF_S5` | `(1:5)` | `gideon_fd_face_diss_c10`, `gideon_fv_face_diss_c10`, `gideon_fd_face_diss_br9`, `gideon_fd_face_diss_bl9`, `gideon_fv_face_diss_br9`, `gideon_fv_face_diss_bl9` |
+| `FV_BFACE_S1` | `(0:2)` | `gideon_fv_face_br3`, `gideon_fv_face_bl3` |
+| `FV_BFACE_S2` | `(-1:3)` | `gideon_fv_face_br5`, `gideon_fv_face_bl5` |
+| `FV_BFACE_S3` | `(-2:4)` | `gideon_fv_face_br7`, `gideon_fv_face_bl7` |
+| `FV_BFACE_S4` | `(-3:5)` | `gideon_fv_face_br9`, `gideon_fv_face_bl9` |
+| `FILTER_S1` | `(0:1)` | `gideon_fd_filter_c2`, `gideon_fv_filter_c2` |
+| `FILTER_S2` | `(0:2)` | `gideon_fd_filter_c4`, `gideon_fv_filter_c4` |
+| `FILTER_S3` | `(0:3)` | `gideon_fd_filter_c6`, `gideon_fv_filter_c6` |
+| `FILTER_S4` | `(0:4)` | `gideon_fd_filter_c8`, `gideon_fv_filter_c8` |
+| `FILTER_S5` | `(0:5)` | `gideon_fd_filter_c10`, `gideon_fv_filter_c10` |
+| `FD_BDISS_S1` | scalar | `gideon_fd_face_diss_br3`, `gideon_fd_face_diss_bl3` |
+| `FD_BDISS_S2` | scalar | `gideon_fd_face_diss_br5`, `gideon_fd_face_diss_bl5` |
+| `FD_BDISS_S3` | scalar | `gideon_fd_face_diss_br7`, `gideon_fd_face_diss_bl7` |
+| `FD_BDISS_S4` | scalar | `gideon_fd_face_diss_br9`, `gideon_fd_face_diss_bl9` |
+| `FV_BDISS_S1` | scalar | `gideon_fv_face_diss_br3`, `gideon_fv_face_diss_bl3` |
+| `FV_BDISS_S2` | scalar | `gideon_fv_face_diss_br5`, `gideon_fv_face_diss_bl5` |
+| `FV_BDISS_S3` | scalar | `gideon_fv_face_diss_br7`, `gideon_fv_face_diss_bl7` |
+| `FV_BDISS_S4` | scalar | `gideon_fv_face_diss_br9`, `gideon_fv_face_diss_bl9` |
+| `FD_D1_P4_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_D1_P4_RIGHT` | `(1:1)` | `gideon_fd_d1_p4` |
+| `FD_D1_P6_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_D1_P6_RIGHT` | `(1:2)` | `gideon_fd_d1_p6` |
+| `FD_D1_P8_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_D1_P8_RIGHT` | `(1:2)` | `gideon_fd_d1_p8` |
+| `FD_D1_P10_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_D1_P10_RIGHT` | `(1:3)` | `gideon_fd_d1_p10` |
+| `FD_D2_P4_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_D2_P4_RIGHT` | `(0:1)` | `gideon_fd_d2_p4` |
+| `FD_D2_P6_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_D2_P6_RIGHT` | `(0:2)` | `gideon_fd_d2_p6` |
+| `FD_D2_P8_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_D2_P8_RIGHT` | `(0:2)` | `gideon_fd_d2_p8` |
+| `FD_D2_P10_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_D2_P10_RIGHT` | `(0:3)` | `gideon_fd_d2_p10` |
+| `FD_FILTER_P2_RIGHT` | `(0:1)` | `gideon_fd_filter_p2` |
+| `FD_FILTER_P2_ALPHA` | `(0:1)` | `gideon_fd_filter_p2` |
+| `FD_FILTER_P4_RIGHT` | `(0:2)` | `gideon_fd_filter_p4` |
+| `FD_FILTER_P4_ALPHA` | `(0:2)` | `gideon_fd_filter_p4` |
+| `FD_FILTER_P6_RIGHT` | `(0:3)` | `gideon_fd_filter_p6` |
+| `FD_FILTER_P6_ALPHA` | `(0:3)` | `gideon_fd_filter_p6` |
+| `FD_FILTER_P8_RIGHT` | `(0:4)` | `gideon_fd_filter_p8` |
+| `FD_FILTER_P8_ALPHA` | `(0:4)` | `gideon_fd_filter_p8` |
+| `FD_FILTER_P10_RIGHT` | `(0:5)` | `gideon_fd_filter_p10` |
+| `FD_FILTER_P10_ALPHA` | `(0:5)` | `gideon_fd_filter_p10` |
+| `FD_FACE_P4_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_FACE_P4_RIGHT` | `(1:1)` | `gideon_fd_face_p4` |
+| `FD_FACE_P6_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_FACE_P6_RIGHT` | `(1:2)` | `gideon_fd_face_p6` |
+| `FD_FACE_P8_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_FACE_P8_RIGHT` | `(1:2)` | `gideon_fd_face_p8` |
+| `FD_FACE_P10_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_FACE_P10_RIGHT` | `(1:3)` | `gideon_fd_face_p10` |
+| `FD_FACE_D1_P4_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_FACE_D1_P4_RIGHT` | `(1:1)` | `gideon_fd_face_d1_p4` |
+| `FD_FACE_D1_P6_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FD_FACE_D1_P6_RIGHT` | `(1:2)` | `gideon_fd_face_d1_p6` |
+| `FD_FACE_D1_P8_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_FACE_D1_P8_RIGHT` | `(1:2)` | `gideon_fd_face_d1_p8` |
+| `FD_FACE_D1_P10_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FD_FACE_D1_P10_RIGHT` | `(1:3)` | `gideon_fd_face_d1_p10` |
+| `FV_FACE_P4_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FV_FACE_P4_RIGHT` | `(1:1)` | `gideon_fv_face_p4` |
+| `FV_FACE_P6_LEFT` | `(0:1)` | the caller: the band of the line solve |
+| `FV_FACE_P6_RIGHT` | `(1:2)` | `gideon_fv_face_p6` |
+| `FV_FACE_P8_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FV_FACE_P8_RIGHT` | `(1:2)` | `gideon_fv_face_p8` |
+| `FV_FACE_P10_LEFT` | `(0:2)` | the caller: the band of the line solve |
+| `FV_FACE_P10_RIGHT` | `(1:3)` | `gideon_fv_face_p10` |
+| `FV_FACE_PBR5_LEFT` | `(-1:1)` | the caller: the band of the line solve |
+| `FV_FACE_PBR5_RIGHT` | `(0:2)` | `gideon_fv_face_pbr5`, `gideon_fv_face_pbl5` |
+| `FV_FACE_PBL5_LEFT` | `(-1:1)` | the caller: the band of the line solve |
+| `FV_FACE_PBR7_LEFT` | `(-1:1)` | the caller: the band of the line solve |
+| `FV_FACE_PBR7_RIGHT` | `(-1:3)` | `gideon_fv_face_pbr7`, `gideon_fv_face_pbl7` |
+| `FV_FACE_PBL7_LEFT` | `(-1:1)` | the caller: the band of the line solve |
