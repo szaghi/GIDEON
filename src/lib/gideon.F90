@@ -10,6 +10,7 @@ module gideon
 !<    call gideon_fd_d1_c6(q(i-3:i+3), ds, d)      ! first derivative at node i, centred, order 6, point values
 !<    call gideon_fv_face_ul3(q(i-2:i), f)         ! value at the face i+1/2 from the three cells on its left
 !<    call gideon_fd_face_d1_c4(q(i-1:i+2), ds, d) ! first derivative at the face i+1/2 from point values (viscous)
+!<    call gideon_fd_face_diss_c4(q(i-1:i+2), d)   ! delta^3 at the face i+1/2: the flux of a 4th-order dissipation
 !<    call gideon_fd_d1_c(order, q(i-order/2:i+order/2), ds, d)  ! d1 at node i, the order chosen at run time
 use penf, only : I4P, I8P, R4P, R8P
 use gideon_kind_parameters
@@ -19,6 +20,8 @@ use gideon_fd_upwind
 use gideon_fv_centred
 use gideon_fv_upwind
 use gideon_deconvolution
+use gideon_dissipation
+use gideon_filters
 use gideon_dispatch
 use gideon_operators_3d
 implicit none

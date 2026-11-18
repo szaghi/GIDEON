@@ -369,4 +369,55 @@ real(R_P), parameter :: FD_BFACE_S3(-2:4) = [7._R_P/1024._R_P, -35._R_P/512._R_P
 real(R_P), parameter :: FD_BFACE_S4(-3:5) = [-45._R_P/32768._R_P, 63._R_P/4096._R_P, -735._R_P/8192._R_P, &
                                                 2205._R_P/4096._R_P, 11025._R_P/16384._R_P, -735._R_P/4096._R_P, &
                                                 441._R_P/8192._R_P, -45._R_P/4096._R_P, 35._R_P/32768._R_P]
+!< gideon_fd_face_diss_c2 and gideon_fv_face_diss_c2 (pairs)
+real(R_P), parameter :: FACE_DIFF_S1(1:1) = [1._R_P]
+!< gideon_fd_face_diss_c4 and gideon_fv_face_diss_c4 (pairs)
+real(R_P), parameter :: FACE_DIFF_S2(1:2) = [-3._R_P, 1._R_P]
+!< gideon_fd_face_diss_c6 and gideon_fv_face_diss_c6 (pairs)
+real(R_P), parameter :: FACE_DIFF_S3(1:3) = [10._R_P, -5._R_P, 1._R_P]
+!< gideon_fd_face_diss_c8 and gideon_fv_face_diss_c8 (pairs)
+real(R_P), parameter :: FACE_DIFF_S4(1:4) = [-35._R_P, 21._R_P, -7._R_P, 1._R_P]
+!< gideon_fd_face_diss_c10 and gideon_fv_face_diss_c10 (pairs)
+real(R_P), parameter :: FACE_DIFF_S5(1:5) = [126._R_P, -84._R_P, 36._R_P, -9._R_P, 1._R_P]
+!< gideon_fv_face_br3 (cells 0..2, by offset)
+real(R_P), parameter :: FV_BFACE_S1(0:2) = [1._R_P/3._R_P, 5._R_P/6._R_P, -1._R_P/6._R_P]
+!< gideon_fv_face_br5 (cells -1..3, by offset)
+real(R_P), parameter :: FV_BFACE_S2(-1:3) = [-1._R_P/20._R_P, 9._R_P/20._R_P, 47._R_P/60._R_P, -13._R_P/60._R_P, &
+                                                1._R_P/30._R_P]
+!< gideon_fv_face_br7 (cells -2..4, by offset)
+real(R_P), parameter :: FV_BFACE_S3(-2:4) = [1._R_P/105._R_P, -19._R_P/210._R_P, 107._R_P/210._R_P, &
+                                                319._R_P/420._R_P, -101._R_P/420._R_P, 5._R_P/84._R_P, &
+                                                -1._R_P/140._R_P]
+!< gideon_fv_face_br9 (cells -3..5, by offset)
+real(R_P), parameter :: FV_BFACE_S4(-3:5) = [-1._R_P/504._R_P, 11._R_P/504._R_P, -61._R_P/504._R_P, &
+                                                275._R_P/504._R_P, 1879._R_P/2520._R_P, -641._R_P/2520._R_P, &
+                                                199._R_P/2520._R_P, -41._R_P/2520._R_P, 1._R_P/630._R_P]
+!< gideon_fd_filter_c2 and gideon_fv_filter_c2 (pairs)
+real(R_P), parameter :: FILTER_S1(0:1) = [1._R_P/2._R_P, 1._R_P/4._R_P]
+!< gideon_fd_filter_c4 and gideon_fv_filter_c4 (pairs)
+real(R_P), parameter :: FILTER_S2(0:2) = [5._R_P/8._R_P, 1._R_P/4._R_P, -1._R_P/16._R_P]
+!< gideon_fd_filter_c6 and gideon_fv_filter_c6 (pairs)
+real(R_P), parameter :: FILTER_S3(0:3) = [11._R_P/16._R_P, 15._R_P/64._R_P, -3._R_P/32._R_P, 1._R_P/64._R_P]
+!< gideon_fd_filter_c8 and gideon_fv_filter_c8 (pairs)
+real(R_P), parameter :: FILTER_S4(0:4) = [93._R_P/128._R_P, 7._R_P/32._R_P, -7._R_P/64._R_P, 1._R_P/32._R_P, &
+                                             -1._R_P/256._R_P]
+!< gideon_fd_filter_c10 and gideon_fv_filter_c10 (pairs)
+real(R_P), parameter :: FILTER_S5(0:5) = [193._R_P/256._R_P, 105._R_P/512._R_P, -15._R_P/128._R_P, &
+                                             45._R_P/1024._R_P, -5._R_P/512._R_P, 1._R_P/1024._R_P]
+!< gideon_fd_face_diss_bl3: gideon_fd_face_bl3 = gideon_fd_face_c4 + FD_BDISS_S1 delta^3 (the right-biased: minus).
+real(R_P), parameter :: FD_BDISS_S1 = 1._R_P/16._R_P
+!< gideon_fd_face_diss_bl5: gideon_fd_face_bl5 = gideon_fd_face_c6 + FD_BDISS_S2 delta^5 (the right-biased: minus).
+real(R_P), parameter :: FD_BDISS_S2 = -3._R_P/256._R_P
+!< gideon_fd_face_diss_bl7: gideon_fd_face_bl7 = gideon_fd_face_c8 + FD_BDISS_S3 delta^7 (the right-biased: minus).
+real(R_P), parameter :: FD_BDISS_S3 = 5._R_P/2048._R_P
+!< gideon_fd_face_diss_bl9: gideon_fd_face_bl9 = gideon_fd_face_c10 + FD_BDISS_S4 delta^9 (the right-biased: minus).
+real(R_P), parameter :: FD_BDISS_S4 = -35._R_P/65536._R_P
+!< gideon_fv_face_diss_bl3: gideon_fv_face_bl3 = gideon_fv_face_c4 + FV_BDISS_S1 delta^3 (the right-biased: minus).
+real(R_P), parameter :: FV_BDISS_S1 = 1._R_P/12._R_P
+!< gideon_fv_face_diss_bl5: gideon_fv_face_bl5 = gideon_fv_face_c6 + FV_BDISS_S2 delta^5 (the right-biased: minus).
+real(R_P), parameter :: FV_BDISS_S2 = -1._R_P/60._R_P
+!< gideon_fv_face_diss_bl7: gideon_fv_face_bl7 = gideon_fv_face_c8 + FV_BDISS_S3 delta^7 (the right-biased: minus).
+real(R_P), parameter :: FV_BDISS_S3 = 1._R_P/280._R_P
+!< gideon_fv_face_diss_bl9: gideon_fv_face_bl9 = gideon_fv_face_c10 + FV_BDISS_S4 delta^9 (the right-biased: minus).
+real(R_P), parameter :: FV_BDISS_S4 = -1._R_P/1260._R_P
 endmodule gideon_tables

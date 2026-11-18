@@ -290,6 +290,50 @@
 | `gideon_fd_face_bl7` | point values | value at the face | biased left | 7 | `q(-3:3)` | `gideon_fd_face_bl` |
 | `gideon_fd_face_br9` | point values | value at the face | biased right | 9 | `q(-3:5)` | `gideon_fd_face_br` |
 | `gideon_fd_face_bl9` | point values | value at the face | biased left | 9 | `q(-4:4)` | `gideon_fd_face_bl` |
+| `gideon_fd_face_diss_c2` | point values | undivided difference δ¹ at the face | centred | dissipation 2 | `q(0:1)` | `gideon_fd_face_diss_c` |
+| `gideon_fv_face_diss_c2` | cell averages | undivided difference δ¹ at the face | centred | dissipation 2 | `q(0:1)` | `gideon_fv_face_diss_c` |
+| `gideon_fd_face_diss_c4` | point values | undivided difference δ³ at the face | centred | dissipation 4 | `q(-1:2)` | `gideon_fd_face_diss_c` |
+| `gideon_fv_face_diss_c4` | cell averages | undivided difference δ³ at the face | centred | dissipation 4 | `q(-1:2)` | `gideon_fv_face_diss_c` |
+| `gideon_fd_face_diss_c6` | point values | undivided difference δ⁵ at the face | centred | dissipation 6 | `q(-2:3)` | `gideon_fd_face_diss_c` |
+| `gideon_fv_face_diss_c6` | cell averages | undivided difference δ⁵ at the face | centred | dissipation 6 | `q(-2:3)` | `gideon_fv_face_diss_c` |
+| `gideon_fd_face_diss_c8` | point values | undivided difference δ⁷ at the face | centred | dissipation 8 | `q(-3:4)` | `gideon_fd_face_diss_c` |
+| `gideon_fv_face_diss_c8` | cell averages | undivided difference δ⁷ at the face | centred | dissipation 8 | `q(-3:4)` | `gideon_fv_face_diss_c` |
+| `gideon_fd_face_diss_c10` | point values | undivided difference δ⁹ at the face | centred | dissipation 10 | `q(-4:5)` | `gideon_fd_face_diss_c` |
+| `gideon_fv_face_diss_c10` | cell averages | undivided difference δ⁹ at the face | centred | dissipation 10 | `q(-4:5)` | `gideon_fv_face_diss_c` |
+| `gideon_fv_face_br3` | cell averages | value at the face | biased right | 3 | `q(0:2)` | `gideon_fv_face_br` |
+| `gideon_fv_face_bl3` | cell averages | value at the face | biased left | 3 | `q(-1:1)` | `gideon_fv_face_bl` |
+| `gideon_fv_face_br5` | cell averages | value at the face | biased right | 5 | `q(-1:3)` | `gideon_fv_face_br` |
+| `gideon_fv_face_bl5` | cell averages | value at the face | biased left | 5 | `q(-2:2)` | `gideon_fv_face_bl` |
+| `gideon_fv_face_br7` | cell averages | value at the face | biased right | 7 | `q(-2:4)` | `gideon_fv_face_br` |
+| `gideon_fv_face_bl7` | cell averages | value at the face | biased left | 7 | `q(-3:3)` | `gideon_fv_face_bl` |
+| `gideon_fv_face_br9` | cell averages | value at the face | biased right | 9 | `q(-3:5)` | `gideon_fv_face_br` |
+| `gideon_fv_face_bl9` | cell averages | value at the face | biased left | 9 | `q(-4:4)` | `gideon_fv_face_bl` |
+| `gideon_fd_face_diss_br3` | point values | dissipation part of `gideon_fd_face_br3` | biased right | dissipation 4 | `q(-1:2)` | `gideon_fd_face_diss_br` |
+| `gideon_fd_face_diss_bl3` | point values | dissipation part of `gideon_fd_face_bl3` | biased left | dissipation 4 | `q(-1:2)` | `gideon_fd_face_diss_bl` |
+| `gideon_fd_face_diss_br5` | point values | dissipation part of `gideon_fd_face_br5` | biased right | dissipation 6 | `q(-2:3)` | `gideon_fd_face_diss_br` |
+| `gideon_fd_face_diss_bl5` | point values | dissipation part of `gideon_fd_face_bl5` | biased left | dissipation 6 | `q(-2:3)` | `gideon_fd_face_diss_bl` |
+| `gideon_fd_face_diss_br7` | point values | dissipation part of `gideon_fd_face_br7` | biased right | dissipation 8 | `q(-3:4)` | `gideon_fd_face_diss_br` |
+| `gideon_fd_face_diss_bl7` | point values | dissipation part of `gideon_fd_face_bl7` | biased left | dissipation 8 | `q(-3:4)` | `gideon_fd_face_diss_bl` |
+| `gideon_fd_face_diss_br9` | point values | dissipation part of `gideon_fd_face_br9` | biased right | dissipation 10 | `q(-4:5)` | `gideon_fd_face_diss_br` |
+| `gideon_fd_face_diss_bl9` | point values | dissipation part of `gideon_fd_face_bl9` | biased left | dissipation 10 | `q(-4:5)` | `gideon_fd_face_diss_bl` |
+| `gideon_fv_face_diss_br3` | cell averages | dissipation part of `gideon_fv_face_br3` | biased right | dissipation 4 | `q(-1:2)` | `gideon_fv_face_diss_br` |
+| `gideon_fv_face_diss_bl3` | cell averages | dissipation part of `gideon_fv_face_bl3` | biased left | dissipation 4 | `q(-1:2)` | `gideon_fv_face_diss_bl` |
+| `gideon_fv_face_diss_br5` | cell averages | dissipation part of `gideon_fv_face_br5` | biased right | dissipation 6 | `q(-2:3)` | `gideon_fv_face_diss_br` |
+| `gideon_fv_face_diss_bl5` | cell averages | dissipation part of `gideon_fv_face_bl5` | biased left | dissipation 6 | `q(-2:3)` | `gideon_fv_face_diss_bl` |
+| `gideon_fv_face_diss_br7` | cell averages | dissipation part of `gideon_fv_face_br7` | biased right | dissipation 8 | `q(-3:4)` | `gideon_fv_face_diss_br` |
+| `gideon_fv_face_diss_bl7` | cell averages | dissipation part of `gideon_fv_face_bl7` | biased left | dissipation 8 | `q(-3:4)` | `gideon_fv_face_diss_bl` |
+| `gideon_fv_face_diss_br9` | cell averages | dissipation part of `gideon_fv_face_br9` | biased right | dissipation 10 | `q(-4:5)` | `gideon_fv_face_diss_br` |
+| `gideon_fv_face_diss_bl9` | cell averages | dissipation part of `gideon_fv_face_bl9` | biased left | dissipation 10 | `q(-4:5)` | `gideon_fv_face_diss_bl` |
+| `gideon_fd_filter_c2` | point values | filtered value | centred | 2 | `q(-1:1)` | `gideon_fd_filter_c` |
+| `gideon_fv_filter_c2` | cell averages | filtered cell average | centred | 2 | `q(-1:1)` | `gideon_fv_filter_c` |
+| `gideon_fd_filter_c4` | point values | filtered value | centred | 4 | `q(-2:2)` | `gideon_fd_filter_c` |
+| `gideon_fv_filter_c4` | cell averages | filtered cell average | centred | 4 | `q(-2:2)` | `gideon_fv_filter_c` |
+| `gideon_fd_filter_c6` | point values | filtered value | centred | 6 | `q(-3:3)` | `gideon_fd_filter_c` |
+| `gideon_fv_filter_c6` | cell averages | filtered cell average | centred | 6 | `q(-3:3)` | `gideon_fv_filter_c` |
+| `gideon_fd_filter_c8` | point values | filtered value | centred | 8 | `q(-4:4)` | `gideon_fd_filter_c` |
+| `gideon_fv_filter_c8` | cell averages | filtered cell average | centred | 8 | `q(-4:4)` | `gideon_fv_filter_c` |
+| `gideon_fd_filter_c10` | point values | filtered value | centred | 10 | `q(-5:5)` | `gideon_fd_filter_c` |
+| `gideon_fv_filter_c10` | cell averages | filtered cell average | centred | 10 | `q(-5:5)` | `gideon_fv_filter_c` |
 | `gideon_fd_gradient_c2` | point values, one stencil per axis | gradient | centred | 2 | `(-1:1)` per axis | `gideon_fd_gradient_c` |
 | `gideon_fd_gradient_c4` | point values, one stencil per axis | gradient | centred | 4 | `(-2:2)` per axis | `gideon_fd_gradient_c` |
 | `gideon_fd_gradient_c6` | point values, one stencil per axis | gradient | centred | 6 | `(-3:3)` per axis | `gideon_fd_gradient_c` |

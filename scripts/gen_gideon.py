@@ -34,7 +34,7 @@ import sys
 from dataclasses import dataclass, field
 from decimal import Decimal, getcontext
 from fractions import Fraction as Fr
-from math import factorial
+from math import comb, factorial
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -190,6 +190,15 @@ class Kernel:
     #                                                     biased: br row)
     sumabs: Fr = Fr(0)  # sum of |weights| of the full operator (round-off scale of the tests)
     full: dict[int, Fr] = field(default_factory=dict)  # every weight of the operator by offset (orders check)
+    tag: int = 0  # the number in the name when it is not the order of accuracy (dissipation: its order 2k; the
+    #               dissipation part of a biased row: the biased row's order); 0: the name carries the order
+    undivided: bool = False  # no step argument: an undivided difference, h^n times the n-th derivative
+    coef: Fr = Fr(1)  # undivided kernels: the constant times the difference (the registry divides by it and ds^n)
+
+
+def tok(k: Kernel) -> int:
+    """The number in a kernel's name: the order it is dispatched on."""
+    return k.tag or k.order
 
 
 def check_pairs(row: Row, centre: str) -> tuple[int, dict[int, Fr]]:
@@ -211,7 +220,7 @@ def check_pairs(row: Row, centre: str) -> tuple[int, dict[int, Fr]]:
 
 
 def build() -> list[Kernel]:
-    """Derive every kernel of P1."""
+    """Derive every explicit kernel: P1 (issue #1) and the explicit families of P2 (issue #2)."""
     ks: list[Kernel] = []
 
     def add(k: Kernel) -> None:
@@ -355,7 +364,108 @@ def build() -> list[Kernel]:
             fw = dict(r.weights) if bias == 'br' else {1 - o: w for o, w in r.weights.items()}
             add(Kernel(f'gideon_fd_face_{bias}{r.order}', 'fd_face_b', 'fd', 'face', bias, 0, k, r.order, lo, hi, 0,
                        dict(r.weights), sum(abs(v) for v in r.weights.values()), fw))
+
+    # P2 (issue #2) phases 1 and 2.1, appended: every earlier kernel keeps its order, and its golden values their lines
+    # 1.1 the undivided odd difference at the face, delta^(2k-1): the flux of a dissipation of order 2k. Derived as
+    # the face derivative d(2k-1) from 2k data at h = 1, on point values and on cell averages: the same row (proven),
+    # the binomial one (proven); its order as a derivative approximation (delta/h^n) is 2
+    diff_rows: dict[int, Row] = {}
+    for k in range(1, 6):
+        n = 2 * k - 1
+        offs = list(range(1 - k, k + 1))
+        r = derive('fd', 'face', 'point', n, offs)
+        if derive('fv', 'face', 'point', n, offs).weights != r.weights:
+            raise AssertionError(f'delta^{n}: the cell-average row is not the point-value row')
+        if any(r.weights[1 - k + j] != (-1) ** (n - j) * comb(n, j) for j in range(n + 1)) or r.order != 2:
+            raise AssertionError(f'delta^{n}: not the binomial difference of order 2')
+        diff_rows[k] = r
+        par, half = check_pairs(r, 'face')
+        for data in ('fd', 'fv'):
+            add(Kernel(f'gideon_{data}_face_diss_c{2 * k}', f'{data}_face_diss', data, 'face_diss', 'c', n, k, r.order,
+                       1 - k, k, par, half, sum(abs(v) for v in r.weights.values()), dict(r.weights), tag=2 * k,
+                       undivided=True))
+    # 1.2 fv upwind-biased face values (the linear branch of WENO/TENO): k + 1 cells on one side, k on the other; br
+    # derived, bl derived and proven its mirror (cells [o-1, o] about the face 0: the mirror of cell o is 1 - o)
+    for k in range(1, (max(S_UPWIND) - 1) // 2 + 1):
+        r = derive('fv', 'face', 'point', 0, list(range(1 - k, k + 2)))
+        left = derive('fv', 'face', 'point', 0, list(range(-k, k + 1)))
+        for o in range(1 - k, k + 2):
+            if left.weights[1 - o] != r.weights[o]:
+                raise AssertionError(f'fv biased face k={k}: the left row is not the mirror of the right one')
+        for bias, lo, hi in (('br', 1 - k, k + 1), ('bl', -k, k)):
+            fw = dict(r.weights) if bias == 'br' else {1 - o: w for o, w in r.weights.items()}
+            add(Kernel(f'gideon_fv_face_{bias}{r.order}', 'fv_face_b', 'fv', 'face', bias, 0, k, r.order, lo, hi, 0,
+                       dict(r.weights), sum(abs(v) for v in r.weights.values()), fw))
+    # 1.2 the upwind-central split: every biased face row of order 2k+1 is the centred row of order 2k+2 plus a
+    # multiple of delta^(2k+1), proven here on the full rows; that multiple times delta is the dissipation part
+    for data in ('fd', 'fv'):
+        for kb in [x for x in ks if x.family == f'{data}_face_b']:
+            k = kb.s
+            c = next(x for x in ks if x.family == f'{data}_face_c' and x.s == k + 1)
+            d = diff_rows[k + 1].weights
+            if c.order != kb.order + 1:
+                raise AssertionError(f'{kb.name}: the centred row of the next order is not {c.name}')
+            diff = {o: kb.full.get(o, Fr(0)) - c.full[o] for o in c.full}
+            ratios = {diff[o] / d[o] for o in d}
+            if set(kb.full) - set(c.full) or len(ratios) != 1:
+                raise AssertionError(f'{kb.name} is not {c.name} plus one face difference')
+            coef = ratios.pop()
+            n = 2 * k + 1
+            par, half = check_pairs(diff_rows[k + 1], 'face')
+            add(Kernel(f'gideon_{data}_face_diss_{kb.bias}{kb.order}', f'{data}_face_bdiss', data, 'face_diss', kb.bias,
+                       n, k + 1, 2, -k, k + 1, par, half, sum(abs(v) for v in d.values()), dict(d), tag=kb.order,
+                       undivided=True, coef=coef))
+    # 2.1 explicit centred filters of order 2k: exact on the polynomials of degree below 2k, the odd-even (Nyquist)
+    # mode removed; 2k + 1 data, the same row on point values and on cell averages (proven), and the binomial filter
+    # u - (-1)^k delta^(2k) u / 4^k (checked: a quoted formula, tier A, the derivation is the evidence)
+    for k in range(1, 6):
+        offs = list(range(-k, k + 1))
+        rows: dict[str, Row] = {}
+        for data, place, kind in (('fd', 'node', 'point'), ('fv', 'cell', 'cellavg')):
+            samp = [sampler(data, place, o) for o in offs]
+            tgt = target(kind, 0)
+            a = [[s(j) for s in samp] for j in range(2 * k)] + [[Fr((-1) ** abs(o)) for o in offs]]
+            w = solve(a, [tgt(j) for j in range(2 * k)] + [Fr(0)])
+            apply = lambda j, w=w, samp=samp: sum(wk * s(j) for wk, s in zip(w, samp, strict=True))  # noqa: E731
+            kdeg = exact_degree(apply, tgt, 2 * k + 4)
+            if kdeg != 2 * k - 1:
+                raise AssertionError(f'filter {data} k={k}: exact up to degree {kdeg}, not {2 * k - 1}')
+            rows[data] = Row(dict(zip(offs, w, strict=True)), -k, k, 0, kdeg)
+        if rows['fd'].weights != rows['fv'].weights:
+            raise AssertionError(f'filter k={k}: the cell-average row is not the point-value row')
+        binom = {o: (Fr(1) if o == 0 else Fr(0)) - Fr((-1) ** k * (-1) ** (o + k) * comb(2 * k, o + k), 4 ** k)
+                 for o in offs}
+        if rows['fd'].weights != binom:
+            raise AssertionError(f'filter k={k}: not the binomial filter')
+        r = rows['fd']
+        par, half = check_pairs(r, 'node')
+        for data in ('fd', 'fv'):
+            add(Kernel(f'gideon_{data}_filter_c{2 * k}', f'{data}_filter_c', data, 'filter', 'c', 0, k, r.order, -k, k,
+                       par, half, sum(abs(v) for v in r.weights.values()), dict(r.weights)))
     return ks
+
+
+def split_findings(ks: list[Kernel]) -> list[str]:
+    """1.2's claim on the one-sided rows, measured: is a one-sided face row a centred face row plus one face
+    difference? (The biased rows are, by build(): an assertion.) Returned as findings, never fatal."""
+    out = []
+    for data in ('fd', 'fv'):
+        diffs = {k.s: k.full for k in ks if k.family == f'{data}_face_diss'}
+        cen = {k.s: k.full for k in ks if k.family == f'{data}_face_c'}
+        split, none = [], []
+        for ku in [k for k in ks if k.family == f'{data}_face_u' and k.bias == 'ur']:
+            hit = None
+            for s, c in cen.items():
+                if set(ku.full) - set(c):
+                    continue
+                diff = {o: ku.full.get(o, Fr(0)) - c[o] for o in c}
+                ratios = {diff[o] / diffs[s][o] for o in diffs[s]}
+                if len(ratios) == 1:
+                    hit = f'{ku.name} = gideon_{data}_face_c{2 * s} + ({ratios.pop()}) delta^{2 * s - 1}'
+                    break
+            (split if hit else none).append(hit or ku.name)
+        out.append(f'split {data}: ' + '; '.join(split) + f'; no centred row + one face difference: {", ".join(none)}')
+    return out
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -560,6 +670,13 @@ GEOM = {  # family -> (geometry of the data, target kind) for the test registry
     'fv_facedn_u': ('fvface', 'point'),
     'fv_cell_c': ('fvcell', 'cellavg'),
     'fv_cell_u': ('fvcell', 'cellavg'),
+    'fd_face_diss': ('fdface', 'point'),
+    'fv_face_diss': ('fvface', 'point'),
+    'fv_face_b': ('fvface', 'point'),
+    'fd_face_bdiss': ('fdface', 'point'),
+    'fv_face_bdiss': ('fvface', 'point'),
+    'fd_filter_c': ('fdnode', 'point'),
+    'fv_filter_c': ('fvcell', 'cellavg'),
 }
 GEOM_CODE = {'fdnode': 1, 'fdface': 2, 'fvface': 3, 'fvcell': 4}
 TARGET_CODE = {'point': 1, 'cellavg': 2}
@@ -594,7 +711,18 @@ def row_name(k: Kernel) -> str:
         return f'FV_UFACE_S{k.s}' if k.n == 1 else f'FV_UFACE_D{k.n - 1}_S{k.s}'
     if k.family == 'deconv':
         return f'FV_POINT_S{k.s}' if k.data == 'fv' else f'FD_AVERAGE_S{k.s}'
+    if k.family in ('fd_face_diss', 'fv_face_diss', 'fd_face_bdiss', 'fv_face_bdiss'):
+        return f'FACE_DIFF_S{k.s}'
+    if k.family == 'fv_face_b':
+        return f'FV_BFACE_S{k.s}'
+    if k.family in ('fd_filter_c', 'fv_filter_c'):
+        return f'FILTER_S{k.s}'
     raise ValueError(k.family)
+
+
+def coef_name(k: Kernel) -> str:
+    """Name of the constant of a dissipation part (the left-biased one's; the right-biased kernel negates it)."""
+    return f'{k.data.upper()}_BDISS_S{k.s - 1}'
 
 
 def array_constructor(vals: list[Fr], indent: int) -> str:
@@ -622,9 +750,12 @@ def emit_tables(ks: list[Kernel]) -> str:
         lo = min(k.row)
         vals = [k.row[i] for i in range(lo, max(k.row) + 1)]
         layout = {'c': 'pairs', 'ur': 'cells 1..S, the face nearest first' if k.data == 'fv'
-                  else 'points 1..S, the face nearest first', 'br': f'points {lo}..{max(k.row)}, by offset'}[k.bias]
+                  else 'points 1..S, the face nearest first',
+                  'br': f'{"cells" if k.data == "fv" else "points"} {lo}..{max(k.row)}, by offset'}[k.bias]
         what = f'{k.name} ({layout})'
-        rows[name] = (lo, max(k.row), vals, what)
+        if k.family in ('fd_face_diss', 'fd_filter_c'):  # one row for both data
+            what = f'{k.name} and {k.name.replace("_fd_", "_fv_")} ({layout})'
+        rows.setdefault(name, (lo, max(k.row), vals, what))
     out = [HEADER + '!< GIDEON, the stencil rows: exact rationals, one named constant per row, folded by the compiler.',
            'module gideon_tables',
            '!< GIDEON, the stencil rows: exact rationals, one named constant per row, folded by the compiler.',
@@ -639,6 +770,11 @@ def emit_tables(ks: list[Kernel]) -> str:
         decl = f'real(R_P), parameter :: {name}({lo}:{hi}) = '
         out.append(f'!< {what}')
         out.append(decl + array_constructor(vals, len(decl)))
+    for k in ks:  # the constants of the dissipation parts: bl = c + C delta, br = c - C delta
+        if k.family in ('fd_face_bdiss', 'fv_face_bdiss') and k.bias == 'bl':
+            out.append(f'!< {k.name}: {k.name.replace("_diss_bl", "_bl")} = '
+                       f'gideon_{k.data}_face_c{k.tag + 1} + {coef_name(k)} delta^{k.n} (the right-biased: minus).')
+            out.append(f'real(R_P), parameter :: {coef_name(k)} = {lit(k.coef)}')
     out.append('endmodule gideon_tables')
     return '\n'.join(out) + '\n'
 
@@ -660,7 +796,8 @@ def emit_kernel(k: Kernel) -> str:
     rn = row_name(k)
     s = k.s
     has_ds = k.n >= 1
-    res = {'face': 'f', 'point': 'v', 'average': 'v'}.get(k.op, 'd')
+    res = {'face': 'f', 'point': 'v', 'average': 'v', 'filter': 'v'}.get(k.op, 'd')
+    has_ds = has_ds and not k.undivided
     args = f'(q, ds, {res})' if has_ds else f'(q, {res})'
     data_doc = 'point values' if k.data == 'fd' else 'cell averages'
     where = {'fd_face_c': 'at the face between nodes 0 and 1', 'fd_node_c': 'at node 0',
@@ -673,14 +810,26 @@ def emit_kernel(k: Kernel) -> str:
                 'br': 'upwind-biased, one point more on the right', 'bl': 'upwind-biased, one point more on the left'}[k.bias]
     if k.family == 'fd_face_u':
         bias_doc = 'one-sided (extrapolated), ' + ('right-side stencil' if k.bias == 'ur' else 'left-side stencil')
+    where_face = 'at the face between ' + ('cells' if k.data == 'fv' else 'nodes') + ' 0 and 1'
+    order_doc = f'order {k.order}'
     if k.family == 'deconv':
         title = ('Point value at the centre of cell 0 from cell averages' if k.data == 'fv'
                  else 'Average over cell 0 from point values')
+    elif k.family in ('fd_face_diss', 'fv_face_diss'):
+        title = f'Undivided difference delta^{k.n} {where_face}'
+        order_doc = f'the flux of a dissipation of order {k.tag}'
+    elif k.family in ('fd_face_bdiss', 'fv_face_bdiss'):
+        title = (f'Dissipation part of gideon_{k.data}_face_{k.bias}{k.tag} (that kernel minus '
+                 f'gideon_{k.data}_face_c{k.tag + 1})')
+        order_doc = f'{"" if k.bias == "bl" else "-"}{coef_name(k)} delta^{k.n}'
+    elif k.family in ('fd_filter_c', 'fv_filter_c'):
+        title = ('Value at node 0' if k.data == 'fd' else 'Average over cell 0') + ', filtered, centred'
+        order_doc = f'order {k.order}, the odd-even mode removed'
     else:
         title = f'{ordinal(k.n).capitalize()} {where}, {bias_doc}'
-    doc = f'   !< {title}, order {k.order}, from {data_doc} q({k.lo}:{k.hi}).'
+    doc = f'   !< {title}, {order_doc}, from {data_doc} q({k.lo}:{k.hi}).'
     if len(doc) > 118:
-        doc = f'   !< {title}, order {k.order},\n   !< from {data_doc} q({k.lo}:{k.hi}).'
+        doc = f'   !< {title}, {order_doc},\n   !< from {data_doc} q({k.lo}:{k.hi}).'
     L = [f'   pure subroutine {k.name}{args}', doc,
          f'   real(R_P),    intent(in)  :: q({k.lo}:{k.hi}) !< Data by offset (docs/guide/conventions.md).']
     if has_ds:
@@ -692,11 +841,14 @@ def emit_kernel(k: Kernel) -> str:
     L.append('   integer(I4P)              :: m        !< Counter.')
     L += ['   !$acc routine seq', '   !$omp declare target']
     pm = '+' if k.parity == 1 else '-'
-    if fam in ('fd_face_c', 'fd_facedn_c', 'fv_face_c', 'fv_facedn_c'):
+    if fam in ('fd_face_c', 'fd_facedn_c', 'fv_face_c', 'fv_facedn_c', 'fd_face_diss', 'fv_face_diss',
+               'fd_face_bdiss', 'fv_face_bdiss'):
         L += [f'   {res} = 0._R_P', f'   do m=1, {s}', f'      {res} = {res} + {rn}(m)*(q(m) {pm} q(1-m))', '   enddo']
         if has_ds:
             L.append(f'   {res} = {res}{scale(k.n, k.data)}')  # D4: fd repeated divisions, fv one product
-    elif fam == 'fd_node_c' or fam == 'deconv':
+        if fam in ('fd_face_bdiss', 'fv_face_bdiss'):
+            L.append(f'   {res} = {"" if k.bias == "bl" else "-"}{coef_name(k)}*{res}')
+    elif fam in ('fd_node_c', 'deconv', 'fd_filter_c', 'fv_filter_c'):
         if k.parity == 1:
             L.append(f'   {res} = {rn}(0)*q(0)')
         else:
@@ -714,7 +866,7 @@ def emit_kernel(k: Kernel) -> str:
         if has_ds:
             neg = '-' if (k.bias == 'ul' and k.n % 2) else ''
             L.append(f'   {res} = {neg}{res}{scale(k.n, "fv")}')
-    elif fam == 'fd_face_b':
+    elif fam in ('fd_face_b', 'fv_face_b'):
         acc = 'q(m)' if k.bias == 'br' else 'q(1-m)'
         L += [f'   {res} = 0._R_P', f'   do m={1 - s}, {s + 1}', f'      {res} = {res} + {rn}(m)*{acc}', '   enddo']
     elif fam == 'fv_cell_u':
@@ -737,8 +889,12 @@ MODULES = {  # module -> (families, title)
     'gideon_fd_centred': (('fd_face_c', 'fd_node_c', 'fd_facedn_c'), 'finite differences on point values, centred'),
     'gideon_fd_upwind': (('fd_face_u', 'fd_face_b'), 'finite differences on point values, one-sided and upwind-biased'),
     'gideon_fv_centred': (('fv_face_c', 'fv_facedn_c', 'fv_cell_c'), 'finite volumes on cell averages, centred'),
-    'gideon_fv_upwind': (('fv_face_u', 'fv_facedn_u', 'fv_cell_u'), 'finite volumes on cell averages, upwind'),
+    'gideon_fv_upwind': (('fv_face_u', 'fv_facedn_u', 'fv_cell_u', 'fv_face_b'),
+                         'finite volumes on cell averages, upwind and upwind-biased'),
     'gideon_deconvolution': (('deconv',), 'cell averages and point values, one from the other'),
+    'gideon_dissipation': (('fd_face_diss', 'fv_face_diss', 'fd_face_bdiss', 'fv_face_bdiss'),
+                           'flux-form dissipation: undivided face differences, the dissipation part of a biased value'),
+    'gideon_filters': (('fd_filter_c', 'fv_filter_c'), 'explicit centred filters'),
 }
 
 
@@ -793,10 +949,10 @@ def window_expr(group: list[Kernel]) -> tuple[str, str]:
     """Window bounds of a dispatcher as expressions of `order`, verified against every kernel of the group."""
     if len({k.hi for k in group}) == 1:  # left-side upwind: the upper bound fixed, the lower one grows
         hi = str(group[0].hi)
-        f = _fit([(k.order, -k.lo) for k in group])
+        f = _fit([(tok(k), -k.lo) for k in group])
         lo = f'-({f})' if f else None
     else:
-        hi = _fit([(k.order, k.hi) for k in group])
+        hi = _fit([(tok(k), k.hi) for k in group])
         if hi is None:
             lo = None
         elif all(k.lo == -k.hi for k in group):
@@ -812,7 +968,7 @@ def window_expr(group: list[Kernel]) -> tuple[str, str]:
     if hi is None or lo is None:
         raise AssertionError(f'no window formula for {dispatcher_name(group[0])}')
     for k in group:
-        if (_eval(lo, k.order), _eval(hi, k.order)) != (k.lo, k.hi):
+        if (_eval(lo, tok(k)), _eval(hi, tok(k))) != (k.lo, k.hi):
             raise AssertionError(f'{k.name}: window {k.lo}:{k.hi} is not {lo}:{hi}')
     return lo, hi
 
@@ -826,7 +982,7 @@ def groups(ks: list[Kernel]) -> dict[str, list[Kernel]]:
 
 def bad_order(group: list[Kernel]) -> int:
     """An order with no kernel whose window stays narrow (the dispatch test's NaN case)."""
-    return max(k.order for k in group) + (2 if group[0].bias == 'c' else 1)
+    return max(tok(k) for k in group) + (2 if group[0].bias == 'c' else 1)
 
 
 def emit_dispatch(ks: list[Kernel]) -> str:
@@ -839,7 +995,7 @@ def emit_dispatch(ks: list[Kernel]) -> str:
            '!< GIDEON_NAN, a quiet NaN (error stop is not device code; a silent 0 is what ADAM returned).',
            'use penf, only : I4P, R_P', 'use gideon_kind_parameters, only : GIDEON_NAN',
            'use gideon_fd_centred', 'use gideon_fd_upwind', 'use gideon_fv_centred', 'use gideon_fv_upwind',
-           'use gideon_deconvolution',
+           'use gideon_deconvolution', 'use gideon_dissipation', 'use gideon_filters',
            'implicit none', 'private']
     gs = groups(ks)
     out += [f'public :: {name}' for name in gs]
@@ -847,13 +1003,14 @@ def emit_dispatch(ks: list[Kernel]) -> str:
     for name, group in gs.items():
         lo, hi = window_expr(group)
         k0 = group[0]
-        has_ds = k0.n >= 1
-        res = {'face': 'f', 'point': 'v', 'average': 'v'}.get(k0.op, 'd')
+        has_ds = k0.n >= 1 and not k0.undivided
+        res = {'face': 'f', 'point': 'v', 'average': 'v', 'filter': 'v'}.get(k0.op, 'd')
         args = f'(order, q, ds, {res})' if has_ds else f'(order, q, {res})'
-        orders = ', '.join(str(k.order) for k in group)
+        orders = ', '.join(str(tok(k)) for k in group)
         out += [f'   pure subroutine {name}{args}',
                 f'   !< Run-time order dispatch to {name}<order>, order in {{{orders}}}.',
-                '   integer(I4P), intent(in)  :: order !< Order of accuracy.',
+                '   integer(I4P), intent(in)  :: order !< ' + ('Order of accuracy.' if not k0.tag else
+                                                               'The number in the kernel names.'),
                 f'   real(R_P),    intent(in)  :: q({lo}:{hi}) !< Data by offset, the window of that order.']
         if has_ds:
             out.append('   real(R_P),    intent(in)  :: ds    !< Grid step.')
@@ -861,7 +1018,7 @@ def emit_dispatch(ks: list[Kernel]) -> str:
                 '   !$acc routine seq', '   !$omp declare target', '   select case(order)']
         for k in group:
             call = f'call {k.name}(q, ds, {res})' if has_ds else f'call {k.name}(q, {res})'
-            out.append(f'   case({k.order}) ; {call}')
+            out.append(f'   case({tok(k)}) ; {call}')
         out += [f'   case default ; {res} = GIDEON_NAN', '   endselect', f'   endsubroutine {name}', '']
     out.append('endmodule gideon_dispatch')
     return '\n'.join(out) + '\n'
@@ -984,6 +1141,7 @@ def emit_registry(ks: list[Kernel]) -> str:
         geom, tgt = GEOM.get(k.family, ('fvcell', 'point') if k.data == 'fv' else ('fdnode', 'cellavg'))
         flux = 1 if k.family in ('fv_cell_c', 'fv_cell_u') or (k.family == 'fd_node_c' and k.parity == -1) else 0
         flux = 1 if k.family == 'fd_facedn_c' and k.parity == -1 else flux  # antisymmetric face pairs
+        flux = 1 if k.undivided else flux  # the face differences: antisymmetric pairs
         meta.append((i, k, GEOM_CODE[geom], TARGET_CODE[tgt], flux))
     title = '!< GIDEON tests, the registry of the kernels: their metadata and one routine that applies any of them.'
     out = [HEADER + title, 'module gideon_test_registry', title,
@@ -991,6 +1149,8 @@ def emit_registry(ks: list[Kernel]) -> str:
            '!< geom: 1 point values at x = o (node 0), 2 point values at x = o - 1/2 (face at 0), 3 cell o on [o-1, o]',
            '!< (face at 0), 4 cell o on [o-1/2, o+1/2] (cell 0). target: 1 the n-th derivative at x = 0, 2 its average',
            '!< over cell 0. zero_const: the kernel returns exactly 0 on constant data (pair or flux-difference form).',
+           '!< The undivided kernels (the face differences, the dissipation parts) are applied divided by their constant',
+           '!< and by ds^n: every entry of the registry is then an n-th derivative approximation of its stated order.',
            'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
            'public :: NK, WMAX, kname, kdata, kbias, kgeom, ktarget, kn, korder, klo, khi, kdegree, ksumabs',
            'public :: kzero_const, kerror',
@@ -1029,6 +1189,14 @@ def emit_registry(ks: list[Kernel]) -> str:
     partner = {'ul': ('_ul', '_ur'), 'bl': ('_bl', '_br')}
     arr('kmirror', 'integer(I4P)', [str(idx.get(k.name.replace(*partner[k.bias]), 0)) if k.bias in partner else '0'
                                     for _, k, *_ in meta])
+    def call_of(name: str, k: Kernel, sec: str, order: int | None = None) -> str:
+        """The call of kernel k (or of its dispatcher `name` at `order`), undivided kernels scaled to a derivative."""
+        arg = f'{order}, {sec}' if order is not None else sec
+        if k.undivided:
+            div = f'/({lit(k.coef)})' if k.coef != 1 else ''
+            return f'call {name}({arg}, r) ; r = r{div}/ds**{k.n}'
+        return f'call {name}({arg}, ds, r)' if k.n >= 1 else f'call {name}({arg}, r)'
+
     out += ['contains',
             '   subroutine apply(id, q, ds, r)',
             '   !< Apply kernel `id` to its window of q (offsets klo(id)..khi(id)).',
@@ -1038,8 +1206,7 @@ def emit_registry(ks: list[Kernel]) -> str:
             '   real(R_P),    intent(out) :: r          !< Result.',
             '   select case(id)']
     for i, k, *_ in meta:
-        call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
-        out.append(f'   case({i}) ; {call}')
+        out.append(f'   case({i}) ; {call_of(k.name, k, f"q({k.lo}:{k.hi})")}')
     out += ["   case default ; error stop 'apply: no such kernel'", '   endselect', '   endsubroutine apply', '',
             '   pure subroutine apply_dev(id, q, ds, r)',
             '   !< apply, device-callable: the same calls, GIDEON_NAN for an unknown id (no error stop on a device).',
@@ -1047,8 +1214,7 @@ def emit_registry(ks: list[Kernel]) -> str:
             '   real(R_P),    intent(in)  :: ds', '   real(R_P),    intent(out) :: r',
             '   !$acc routine seq', '   !$omp declare target', '   select case(id)']
     for i, k, *_ in meta:
-        call = f'call {k.name}(q({k.lo}:{k.hi}), ds, r)' if k.n >= 1 else f'call {k.name}(q({k.lo}:{k.hi}), r)'
-        out.append(f'   case({i}) ; {call}')
+        out.append(f'   case({i}) ; {call_of(k.name, k, f"q({k.lo}:{k.hi})")}')
     out += ['   case default ; r = GIDEON_NAN', '   endselect', '   endsubroutine apply_dev', '']
     gs = groups(ks)
     for bad in (False, True):
@@ -1061,10 +1227,9 @@ def emit_registry(ks: list[Kernel]) -> str:
         for i, k, *_ in meta:
             name = dispatcher_name(k)
             lo, hi = window_expr(gs[name])
-            order = bad_order(gs[name]) if bad else k.order
+            order = bad_order(gs[name]) if bad else tok(k)
             sec = f'q({_eval(lo, order)}:{_eval(hi, order)})'
-            call = (f'call {name}({order}, {sec}, ds, r)' if k.n >= 1 else f'call {name}({order}, {sec}, r)')
-            out.append(f'   case({i}) ; {call}')
+            out.append(f'   case({i}) ; {call_of(name, k, sec, order)}')
         out += ["   case default ; error stop 'no such kernel'", '   endselect', f'   endsubroutine {sub}', '']
     out.append('endmodule gideon_test_registry')
     return '\n'.join(out) + '\n'
@@ -1089,6 +1254,11 @@ def parse_emitted_tables(text: str) -> dict[str, list[Fr]]:
         buf = ''
     for st in stmts:
         m = re.search(r'::\s*(\w+)\(\s*-?\d+:\d+\)\s*=\s*\[(.*)\]', st)
+        if m is None:  # a scalar constant
+            m = re.search(r'::\s*(\w+)\s*=\s*()(.*)$', st)
+            num = re.fullmatch(r'\s*(-?\d+)\._R_P(?:/(\d+)\._R_P)?\s*', m.group(3))
+            out[m.group(1)] = [Fr(int(num.group(1)), int(num.group(2) or 1))]
+            continue
         vals = []
         for item in m.group(2).split(','):
             num = re.fullmatch(r'\s*(-?\d+)\._R_P(?:/(\d+)\._R_P)?\s*', item)
@@ -1097,18 +1267,33 @@ def parse_emitted_tables(text: str) -> dict[str, list[Fr]]:
     return out
 
 
+def superscript(n: int) -> str:
+    return ''.join('⁰¹²³⁴⁵⁶⁷⁸⁹'[int(c)] for c in str(n))
+
+
 def emit_docs_table(ks: list[Kernel]) -> str:
     """The kernel table of the operators page (generated, never typed: DOC5)."""
     out = ['<!-- Generated by scripts/gen_gideon.py: do not edit. -->', '',
            '| Kernel | Data | Result | Bias | Order | Window | Run-time dispatcher |',
            '|---|---|---|---|---|---|---|']
-    what = {'face': 'value at the face', 'point': 'point value at the cell centre', 'average': 'cell average'}
+    what = {'face': 'value at the face', 'point': 'point value at the cell centre', 'average': 'cell average',
+            'filter': 'filtered value'}
     for k in ks:
-        res = what.get(k.op) or (f'd{k.n} at the face' if k.op.startswith('face_') else
+        order = k.order
+        if k.family in ('fd_face_diss', 'fv_face_diss'):
+            res, order = f'undivided difference δ{superscript(k.n)} at the face', f'dissipation {k.tag}'
+        elif k.family in ('fd_face_bdiss', 'fv_face_bdiss'):
+            res = f'dissipation part of `gideon_{k.data}_face_{k.bias}{k.tag}`'
+            order = f'dissipation {k.tag + 1}'
+        elif k.family == 'fv_filter_c':
+            res = 'filtered cell average'
+        else:
+            res = None
+        res = res or what.get(k.op) or (f'd{k.n} at the face' if k.op.startswith('face_') else
                                  (f'd{k.n} at the node' if k.data == 'fd' else f'd{k.n} averaged over the cell'))
         data = 'point values' if k.data == 'fd' else 'cell averages'
         bias = {'c': 'centred', 'ur': 'right side', 'ul': 'left side', 'br': 'biased right', 'bl': 'biased left'}[k.bias]
-        out.append(f'| `{k.name}` | {data} | {res} | {bias} | {k.order} | `q({k.lo}:{k.hi})` | '
+        out.append(f'| `{k.name}` | {data} | {res} | {bias} | {order} | `q({k.lo}:{k.hi})` | '
                    f'`{dispatcher_name(k)}` |')
     for name, data, op, order, s in kernels_3d(ks):
         what3 = 'point values' if data == 'fd' else 'cell averages'
@@ -1132,6 +1317,10 @@ def write_sources(ks: list[Kernel]) -> list[str]:
         lo = min(k.row)
         if back[row_name(k)] != [k.row[i] for i in range(lo, max(k.row) + 1)]:
             raise AssertionError(f'emitted row {row_name(k)} is not the derived one')
+    for k in ks:
+        if k.family in ('fd_face_bdiss', 'fv_face_bdiss') and back[coef_name(k)] != [k.coef if k.bias == 'bl'
+                                                                                     else -k.coef]:
+            raise AssertionError(f'emitted constant {coef_name(k)} is not the derived one')
     written = []
     for path, text in files.items():
         if not path.exists() or path.read_text() != text:
@@ -1149,13 +1338,14 @@ def emit_json(ks: list[Kernel], findings: list[str], observed: dict[str, float])
         'findings': findings,
         'kernels': [{
             'name': k.name, 'family': k.family, 'data': k.data, 'op': k.op, 'bias': k.bias, 'n': k.n, 's': k.s,
-            'order': k.order, 'lo': k.lo, 'hi': k.hi, 'dispatcher': dispatcher_name(k),
+            'order': k.order, 'lo': k.lo, 'hi': k.hi, 'dispatcher': dispatcher_name(k), 'tag': tok(k),
+            'undivided': k.undivided, 'coef': str(k.coef),
             'weights': {str(o): str(w) for o, w in sorted(k.full.items())}, 'sumabs': str(k.sumabs),
             'leading_error': str(leading_error(k)), 'observed_order': observed[k.name],
         } for k in ks],
         'operators_3d': [{'name': name, 'data': data, 'op': op, 'order': order, 's': s}
                          for name, data, op, order, s in kernels_3d(ks)],
-        'dispatchers': [{'name': name, 'orders': [k.order for k in g], 'window': list(window_expr(g)),
+        'dispatchers': [{'name': name, 'orders': [tok(k) for k in g], 'window': list(window_expr(g)),
                          'nan_order': bad_order(g)} for name, g in groups(ks).items()],
     }
     return json.dumps(out, indent=1) + '\n'
@@ -1172,7 +1362,7 @@ def main() -> int:
     args = ap.parse_args()
     ks = build()
     observed: dict[str, float] = {}
-    findings = cross_check_adam(ks) + check_orders(ks, observed)
+    findings = cross_check_adam(ks) + split_findings(ks) + check_orders(ks, observed)
     if args.list:
         for k in ks:
             print(f'{k.name:28s} {k.family:12s} n={k.n} s={k.s} order={k.order} window={k.lo}:{k.hi}')
