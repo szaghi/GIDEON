@@ -15,7 +15,11 @@ program gideon_test_solvers
 !<   variable one on that band, bitwise, is within the bounds above, and returns on every masked row exactly the value
 !<   given there;
 !< - device = host: NL lines solved in one `!$acc parallel loop`, one line per thread, against the host, within the
-!<   forward bound (the device contracts multiply-adds differently); bitwise in a build without OpenACC.
+!<   forward bound (the device contracts multiply-adds differently); bitwise in a build without OpenACC;
+!< - factor once, solve many (#2 decision 4a): on every constant band, one `_factor` and three right sides solved with
+!<   it by `_solve`, each within the forward and residual bounds above (multiplied by reciprocals, not divided: not
+!<   bitwise `_const`); on the device, one factor copied in once and NL lines solved with it, against the host within
+!<   the forward bound.
 use, intrinsic :: iso_fortran_env, only : real64, real128
 use, intrinsic :: ieee_arithmetic, only : ieee_value, ieee_quiet_nan
 use penf, only : I4P, R_P
@@ -32,7 +36,8 @@ integer(I4P), parameter :: SIZES_PENTA(NSIZES) = [5, 6, 7, 8, 17, 64]
 real(R_P)    :: bd(-2:2,NMAX), d(NMAX), x(NMAX), xc(NMAX), w1(NMAX), w2(NMAX), w3(NMAX), w4(NMAX), nan
 real(R_P)    :: bdm(-2:2,NMAX), um(NMAX)
 logical      :: mask(NMAX)
-integer(I4P) :: fails, checks, half, is, n, trial, periodic_case, i
+integer(I4P) :: fails, checks, half, is, n, trial, periodic_case, i, k
+real(R_P)    :: fac(6*NMAX) !< A factor: the library lays it out as (n,3) or (n,6), leading dimension n.
 logical      :: periodic
 integer, allocatable :: seed(:)
 integer      :: ns
@@ -62,6 +67,15 @@ do half=1, 2
                fails = fails + 1
                print '(A,I0,A,I0,A,L1)', 'CONST /= VAR: half-band ', half, ', n ', n, ', periodic ', periodic
             endif
+            ! factor once, solve many: three right sides with one factor
+            do k=1, 3
+               if (k > 1) then
+                  call random_number(d(1:n)) ; d(1:n) = 2*d(1:n) - 1
+               endif
+               if (k == 1) call factor_const(half, n, periodic, bd(:,1), fac)
+               call solve_factored(half, n, periodic, bd(:,1), fac, d, xc)
+               call check_dense(half, n, periodic, bd, d, xc)
+            enddo
             ! masked: the constant band, the identity on the masked rows
             call random_number(um(1:n)) ; mask(1:n) = um(1:n) < 0.3_R_P
             bdm = bd
@@ -88,6 +102,7 @@ do half=1, 2
    enddo
 enddo
 call check_device
+call check_device_factored
 print '(A,I0,A,I0)', 'gideon_test_solvers: ', checks, ' checks, failures ', fails
 if (fails > 0) error stop 'gideon_test_solvers: failed'
 print '(A)', 'gideon_test_solvers: ok'
@@ -172,6 +187,49 @@ contains
       endif
    endif
    endsubroutine solve_const
+
+   subroutine factor_const(half, n, periodic, band, fac)
+   !< The factor of a constant band, once.
+   integer(I4P), intent(in)  :: half, n
+   logical,      intent(in)  :: periodic
+   real(R_P),    intent(in)  :: band(-2:2)
+   real(R_P),    intent(out) :: fac(6*NMAX)
+   if (half == 1) then
+      if (periodic) then
+         call gideon_tri_periodic_factor(n, band(-1), band(0), band(1), fac)
+      else
+         call gideon_tri_bounded_factor(n, band(-1), band(0), band(1), fac)
+      endif
+   else
+      if (periodic) then
+         call gideon_penta_periodic_factor(n, band(-2), band(-1), band(0), band(1), band(2), fac)
+      else
+         call gideon_penta_bounded_factor(n, band(-2), band(-1), band(0), band(1), band(2), fac)
+      endif
+   endif
+   endsubroutine factor_const
+
+   subroutine solve_factored(half, n, periodic, band, fac, d, x)
+   !< A line with the factor of factor_const.
+   integer(I4P), intent(in)  :: half, n
+   logical,      intent(in)  :: periodic
+   real(R_P),    intent(in)  :: band(-2:2), fac(6*NMAX), d(NMAX)
+   real(R_P),    intent(out) :: x(NMAX)
+   x = d
+   if (half == 1) then
+      if (periodic) then
+         call gideon_tri_periodic_solve(n, band(-1), band(1), fac, x)
+      else
+         call gideon_tri_bounded_solve(n, band(-1), fac, x)
+      endif
+   else
+      if (periodic) then
+         call gideon_penta_periodic_solve(n, band(-2), band(-1), band(1), band(2), fac, x)
+      else
+         call gideon_penta_bounded_solve(n, band(-2), fac, x)
+      endif
+   endif
+   endsubroutine solve_factored
 
    subroutine solve_masked(half, n, periodic, band, mask, d, x)
    !< The masked solvers: the constant band, the identity on the masked rows.
@@ -334,4 +392,63 @@ contains
       enddo
    enddo
    endsubroutine check_device
+   subroutine check_device_factored
+   !< One factor per constant band, copied in once; NL lines solved with it on the device, against the host.
+   real(R_P), allocatable :: dd(:,:), xd(:,:), xh(:,:)
+   real(R_P)              :: fl(6*NDEV)
+   real(RD)               :: a(NMAX,NMAX), anorm, dom
+   integer(I4P)           :: l, i, hb, pc, nbit
+   logical                :: per
+   allocate(dd(NDEV,NL), xd(NDEV,NL), xh(NDEV,NL))
+   do hb=1, 2
+      do pc=0, 1
+         per = pc == 1
+         call random_band(hb, NDEV, bd)
+         call constant_band(hb, NDEV, bd)
+         call factor_const(hb, NDEV, per, bd(:,1), fac)
+         fl = fac(1:6*NDEV)
+         call random_number(dd) ; dd = 2*dd - 1
+         xd = dd
+         !$acc parallel loop copyin(fl) copy(xd)
+         do l=1, NL
+            if (hb == 1 .and. per) then
+               call gideon_tri_periodic_solve(NDEV, bd(-1,1), bd(1,1), fl, xd(:,l))
+            elseif (hb == 1) then
+               call gideon_tri_bounded_solve(NDEV, bd(-1,1), fl, xd(:,l))
+            elseif (per) then
+               call gideon_penta_periodic_solve(NDEV, bd(-2,1), bd(-1,1), bd(1,1), bd(2,1), fl, xd(:,l))
+            else
+               call gideon_penta_bounded_solve(NDEV, bd(-2,1), fl, xd(:,l))
+            endif
+         enddo
+         call dense(hb, NDEV, per, bd, a)
+         anorm = 0._RD ; dom = huge(1._RD)
+         do i=1, NDEV
+            anorm = max(anorm, sum(abs(a(i,1:NDEV))))
+            dom = min(dom, 2*abs(a(i,i)) - sum(abs(a(i,1:NDEV))))
+         enddo
+         nbit = 0
+         do l=1, NL
+            call solve_factored(hb, NDEV, per, bd(:,1), fac, dd(:,l), x)
+            xh(:,l) = x(1:NDEV)
+            checks = checks + 1
+            if (all(xd(:,l) == xh(:,l))) nbit = nbit + 1
+            if (maxval(abs(xd(:,l) - xh(:,l))) > 64*epsilon(1._R_P)*anorm/dom*maxval(abs(xh(:,l)))) then
+               fails = fails + 1
+               print '(A,I0,A,L1,A,I0)', 'DEVICE FACTORED half-band ', hb, ', periodic ', per, ', line ', l
+            endif
+         enddo
+#if defined _OPENACC
+         print '(A,I0,A,L1,A,I0,A,I0)', 'gideon_test_solvers: device, factored, half-band ', hb, ', periodic ', per, &
+            ': lines bitwise ', nbit, ' of ', NL
+#else
+         checks = checks + 1
+         if (nbit /= NL) then
+            fails = fails + 1
+            print '(A)', 'HOST LOOP NOT BITWISE (factored)'
+         endif
+#endif
+      enddo
+   enddo
+   endsubroutine check_device_factored
 endprogram gideon_test_solvers

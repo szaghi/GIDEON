@@ -1687,6 +1687,271 @@ SOLVER_TEMPLATES = {
 }
 
 
+# factor once, solve many (#2 decision 4a): a constant band's factor depends on the band and the line length only, so
+# the caller computes it once (`_factor`) and solves every line with it (`_solve`): multiplications only per line
+FACTORED = {
+    'tri_factor_rows': ('(m, ld, a, b, c, fac)', '''\
+   !< The bounded tridiagonal factor of rows 1..m into fac(1:m,1:2) of a factor array of leading dimension ld >= m:
+   !< the reciprocal pivots and the upper factor (fac(m,2) = 0).
+   integer(I4P), intent(in)    :: m, ld     !< Rows, leading dimension.
+   real(R_P),    intent(in)    :: a, b, c   !< The band, offsets -1, 0, +1.
+   real(R_P),    intent(inout) :: fac(ld,3) !< The factor.
+   real(R_P)                   :: wp        !< The previous row's upper factor.
+   integer(I4P)                :: i         !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   ! the previous row is carried in a scalar, never read back from fac: nvfortran 26.9 at -O2 and above vectorises a
+   ! row loop that reads fac(i-1,:) as if it had no loop-carried dependence (the pentadiagonal factor came out wrong)
+   fac(1,1) = 1._R_P/b
+   wp = c*fac(1,1)
+   fac(1,2) = wp
+   do i=2, m
+      fac(i,1) = 1._R_P/(b - a*wp)
+      wp = 0._R_P
+      if (i < m) wp = c*fac(i,1)
+      fac(i,2) = wp
+   enddo'''),
+    'gideon_tri_bounded_factor': ('(n, a, b, c, fac)', '''\
+   !< Factor of the constant tridiagonal band [a, b, c] on a bounded line of n >= 2 unknowns, once for every line:
+   !< fac(:,1) the reciprocal pivots, fac(:,2) the upper factor (fac(n,2) = 0). Then gideon_tri_bounded_solve.
+   integer(I4P), intent(in)  :: n        !< Unknowns.
+   real(R_P),    intent(in)  :: a, b, c  !< The band, offsets -1, 0, +1.
+   real(R_P),    intent(out) :: fac(n,3) !< The factor (column 3 unused here: the periodic layout's).
+   integer(I4P)              :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      fac(i,3) = 0._R_P
+   enddo
+   call tri_factor_rows(n, n, a, b, c, fac)'''),
+    'gideon_tri_bounded_solve': ('(n, a, fac, d)', '''\
+   !< Bounded tridiagonal line with the factor of gideon_tri_bounded_factor: d the right side in, the solution out.
+   !< Multiplications only.
+   integer(I4P), intent(in)    :: n        !< Unknowns.
+   real(R_P),    intent(in)    :: a        !< The band's sub-diagonal (the factor holds the rest).
+   real(R_P),    intent(in)    :: fac(n,3) !< The factor.
+   real(R_P),    intent(inout) :: d(n)     !< Right side in, solution out.
+   integer(I4P)                :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d(1) = d(1)*fac(1,1)
+   do i=2, n
+      d(i) = (d(i) - a*d(i-1))*fac(i,1)
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - fac(i,2)*d(i+1)
+   enddo'''),
+    'gideon_tri_periodic_factor': ('(n, a, b, c, fac)', '''\
+   !< Factor of the constant tridiagonal band [a, b, c] on a periodic line of n >= 3 unknowns, once for every line:
+   !< the interior's factor (rows 1..n-1 of columns 1, 2), the column of x(n) solved on the interior (column 3), the
+   !< reciprocal of the Schur complement of x(n) (fac(n,1)). Then gideon_tri_periodic_solve.
+   integer(I4P), intent(in)  :: n        !< Unknowns.
+   real(R_P),    intent(in)  :: a, b, c  !< The band, offsets -1, 0, +1.
+   real(R_P),    intent(out) :: fac(n,3) !< The factor.
+   integer(I4P)              :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      fac(i,1) = 0._R_P ; fac(i,2) = 0._R_P ; fac(i,3) = 0._R_P
+   enddo
+   call tri_factor_rows(n-1, n, a, b, c, fac)
+   fac(1,3) = a
+   fac(n-1,3) = fac(n-1,3) + c
+   call tri_interior_solve(n, a, fac)
+   fac(n,1) = 1._R_P/(b - a*fac(n-1,3) - c*fac(1,3))'''),
+    'tri_interior_solve': ('(n, a, fac)', '''\
+   !< The interior's solve of the border column (column 3), with the interior's factor (columns 1, 2), in place.
+   integer(I4P), intent(in)    :: n        !< Unknowns of the periodic line.
+   real(R_P),    intent(in)    :: a        !< The band's sub-diagonal.
+   real(R_P),    intent(inout) :: fac(n,3) !< The factor; column 3 the border column in, solved out.
+   integer(I4P)                :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   fac(1,3) = fac(1,3)*fac(1,1)
+   do i=2, n-1
+      fac(i,3) = (fac(i,3) - a*fac(i-1,3))*fac(i,1)
+   enddo
+   do i=n-2, 1, -1
+      fac(i,3) = fac(i,3) - fac(i,2)*fac(i+1,3)
+   enddo'''),
+    'gideon_tri_periodic_solve': ('(n, a, c, fac, d)', '''\
+   !< Periodic tridiagonal line with the factor of gideon_tri_periodic_factor: d the right side in, the solution out.
+   !< Multiplications only.
+   integer(I4P), intent(in)    :: n        !< Unknowns.
+   real(R_P),    intent(in)    :: a, c     !< The band's off-diagonals (the factor holds the rest).
+   real(R_P),    intent(in)    :: fac(n,3) !< The factor.
+   real(R_P),    intent(inout) :: d(n)     !< Right side in, solution out.
+   real(R_P)                   :: xn       !< x(n).
+   integer(I4P)                :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d(1) = d(1)*fac(1,1)
+   do i=2, n-1
+      d(i) = (d(i) - a*d(i-1))*fac(i,1)
+   enddo
+   do i=n-2, 1, -1
+      d(i) = d(i) - fac(i,2)*d(i+1)
+   enddo
+   xn = (d(n) - a*d(n-1) - c*d(1))*fac(n,1)
+   do i=1, n-1
+      d(i) = d(i) - fac(i,3)*xn
+   enddo
+   d(n) = xn'''),
+    'penta_factor_rows': ('(m, ld, e, a, b, c, f, fac)', '''\
+   !< The bounded pentadiagonal factor of rows 1..m into fac(1:m,1:4) of a factor array of leading dimension ld >= m:
+   !< the reciprocal pivots, the reduced sub-diagonal, the upper factor (coefficients of x(i+1), x(i+2)).
+   integer(I4P), intent(in)    :: m, ld         !< Rows, leading dimension.
+   real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   real(R_P),    intent(inout) :: fac(ld,6)     !< The factor.
+   real(R_P)                   :: ap, bp, cp    !< The row reduced.
+   real(R_P)                   :: u1, u2, u1p, u2p, u1pp, u2pp !< The upper factor of rows i, i-1, i-2.
+   integer(I4P)                :: i             !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   ! the previous rows are carried in scalars, never read back from fac: nvfortran 26.9 at -O2 and above vectorises a
+   ! row loop that reads fac(i-1,:) and fac(i-2,:) as if it had no loop-carried dependence (rows 2-4 came out unreduced)
+   u1p = 0._R_P ; u2p = 0._R_P ; u1pp = 0._R_P ; u2pp = 0._R_P
+   do i=1, m
+      ap = 0._R_P ; bp = b ; cp = 0._R_P
+      if (i < m) cp = c
+      if (i >= 2) ap = a
+      if (i >= 3) then
+         ap = ap - e*u1pp
+         bp = bp - e*u2pp
+      endif
+      if (i >= 2) then
+         bp = bp - ap*u1p
+         cp = cp - ap*u2p
+      endif
+      fac(i,1) = 1._R_P/bp
+      fac(i,2) = ap
+      u1 = cp*fac(i,1)
+      u2 = 0._R_P
+      if (i < m-1) u2 = f*fac(i,1)
+      fac(i,3) = u1
+      fac(i,4) = u2
+      u1pp = u1p ; u2pp = u2p ; u1p = u1 ; u2p = u2
+   enddo'''),
+    'gideon_penta_bounded_factor': ('(n, e, a, b, c, f, fac)', '''\
+   !< Factor of the constant pentadiagonal band [e, a, b, c, f] on a bounded line of n >= 3 unknowns, once for every
+   !< line: fac(:,1) the reciprocal pivots, fac(:,2) the reduced sub-diagonal, fac(:,3), fac(:,4) the upper factor
+   !< (coefficients of x(i+1), x(i+2) in the reduced row i). Then gideon_penta_bounded_solve.
+   integer(I4P), intent(in)  :: n             !< Unknowns.
+   real(R_P),    intent(in)  :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   real(R_P),    intent(out) :: fac(n,6)      !< The factor (columns 5, 6 unused here: the periodic layout's).
+   integer(I4P)              :: i             !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      fac(i,5) = 0._R_P ; fac(i,6) = 0._R_P
+   enddo
+   call penta_factor_rows(n, n, e, a, b, c, f, fac)'''),
+    'gideon_penta_bounded_solve': ('(n, e, fac, d)', '''\
+   !< Bounded pentadiagonal line with the factor of gideon_penta_bounded_factor: d the right side in, the solution out.
+   !< Multiplications only.
+   integer(I4P), intent(in)    :: n        !< Unknowns.
+   real(R_P),    intent(in)    :: e        !< The band at offset -2 (the factor holds the rest).
+   real(R_P),    intent(in)    :: fac(n,6) !< The factor.
+   real(R_P),    intent(inout) :: d(n)     !< Right side in, solution out.
+   integer(I4P)                :: i        !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d(1) = d(1)*fac(1,1)
+   if (n >= 2) d(2) = (d(2) - fac(2,2)*d(1))*fac(2,1)
+   do i=3, n
+      d(i) = (d(i) - e*d(i-2) - fac(i,2)*d(i-1))*fac(i,1)
+   enddo
+   d(n-1) = d(n-1) - fac(n-1,3)*d(n)
+   do i=n-2, 1, -1
+      d(i) = d(i) - fac(i,3)*d(i+1) - fac(i,4)*d(i+2)
+   enddo'''),
+    'gideon_penta_periodic_factor': ('(n, e, a, b, c, f, fac)', '''\
+   !< Factor of the constant pentadiagonal band [e, a, b, c, f] on a periodic line of n >= 5 unknowns, once for every
+   !< line: the interior's factor (rows 1..n-2 of columns 1-4), the columns of x(n-1) and x(n) solved on the interior
+   !< (columns 5, 6), the border's 2x2 elimination in rows n-1, n of columns 1, 2: 1/s11, 1/(s22 - p21 s12); s12, p21.
+   !< Then gideon_penta_periodic_solve.
+   integer(I4P), intent(in)  :: n             !< Unknowns.
+   real(R_P),    intent(in)  :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   real(R_P),    intent(out) :: fac(n,6)      !< The factor.
+   real(R_P)                 :: s11, s12, s21, s22, p21 !< The border's 2x2 system.
+   integer(I4P)              :: i, m          !< Counter, interior unknowns.
+   !$acc routine seq
+   !$omp declare target
+   m = n - 2
+   do i=1, n
+      fac(i,1) = 0._R_P ; fac(i,2) = 0._R_P ; fac(i,3) = 0._R_P ; fac(i,4) = 0._R_P
+      fac(i,5) = 0._R_P ; fac(i,6) = 0._R_P
+   enddo
+   call penta_factor_rows(m, n, e, a, b, c, f, fac)
+   fac(1,5) = e                 ! row 1 reaches x(-1) = x(n-1) and x(0) = x(n)
+   fac(1,6) = a
+   fac(2,6) = fac(2,6) + e      ! row 2 reaches x(0) = x(n)
+   fac(m-1,5) = fac(m-1,5) + f  ! row n-3 reaches x(n-1)
+   fac(m,5) = fac(m,5) + c      ! row n-2 reaches x(n-1) and x(n)
+   fac(m,6) = fac(m,6) + f
+   call penta_interior_solve(n, e, fac, 5)
+   call penta_interior_solve(n, e, fac, 6)
+   s11 = b - (e*fac(m-1,5) + a*fac(m,5) + f*fac(1,5))
+   s12 = c - (e*fac(m-1,6) + a*fac(m,6) + f*fac(1,6))
+   s21 = a - (e*fac(m,5) + c*fac(1,5) + f*fac(2,5))
+   s22 = b - (e*fac(m,6) + c*fac(1,6) + f*fac(2,6))
+   p21 = s21/s11
+   fac(n-1,1) = 1._R_P/s11
+   fac(n,1) = 1._R_P/(s22 - p21*s12)
+   fac(n-1,2) = s12
+   fac(n,2) = p21'''),
+    'penta_interior_solve': ('(n, e, fac, col)', '''\
+   !< The interior's solve of a border column (column col), with the interior's factor (columns 1-4), in place.
+   integer(I4P), intent(in)    :: n        !< Unknowns of the periodic line.
+   real(R_P),    intent(in)    :: e        !< The band at offset -2.
+   real(R_P),    intent(inout) :: fac(n,6) !< The factor; column col the border column in, solved out.
+   integer(I4P), intent(in)    :: col      !< The column.
+   integer(I4P)                :: i, m     !< Counter, interior unknowns.
+   !$acc routine seq
+   !$omp declare target
+   m = n - 2
+   fac(1,col) = fac(1,col)*fac(1,1)
+   fac(2,col) = (fac(2,col) - fac(2,2)*fac(1,col))*fac(2,1)
+   do i=3, m
+      fac(i,col) = (fac(i,col) - e*fac(i-2,col) - fac(i,2)*fac(i-1,col))*fac(i,1)
+   enddo
+   fac(m-1,col) = fac(m-1,col) - fac(m-1,3)*fac(m,col)
+   do i=m-2, 1, -1
+      fac(i,col) = fac(i,col) - fac(i,3)*fac(i+1,col) - fac(i,4)*fac(i+2,col)
+   enddo'''),
+    'gideon_penta_periodic_solve': ('(n, e, a, c, f, fac, d)', '''\
+   !< Periodic pentadiagonal line with the factor of gideon_penta_periodic_factor: d the right side in, the solution
+   !< out. Multiplications only.
+   integer(I4P), intent(in)    :: n          !< Unknowns.
+   real(R_P),    intent(in)    :: e, a, c, f !< The band's off-diagonals (the factor holds the rest).
+   real(R_P),    intent(in)    :: fac(n,6)   !< The factor.
+   real(R_P),    intent(inout) :: d(n)       !< Right side in, solution out.
+   real(R_P)                   :: r1, r2, x1, x2 !< The border.
+   integer(I4P)                :: i, m       !< Counter, interior unknowns.
+   !$acc routine seq
+   !$omp declare target
+   m = n - 2
+   d(1) = d(1)*fac(1,1)
+   d(2) = (d(2) - fac(2,2)*d(1))*fac(2,1)
+   do i=3, m
+      d(i) = (d(i) - e*d(i-2) - fac(i,2)*d(i-1))*fac(i,1)
+   enddo
+   d(m-1) = d(m-1) - fac(m-1,3)*d(m)
+   do i=m-2, 1, -1
+      d(i) = d(i) - fac(i,3)*d(i+1) - fac(i,4)*d(i+2)
+   enddo
+   r1 = d(n-1) - (e*d(m-1) + a*d(m) + f*d(1))
+   r2 = d(n) - (e*d(m) + c*d(1) + f*d(2))
+   x2 = (r2 - fac(n,2)*r1)*fac(n,1)
+   x1 = (r1 - fac(n-1,2)*x2)*fac(n-1,1)
+   do i=1, m
+      d(i) = d(i) - fac(i,5)*x1 - fac(i,6)*x2
+   enddo
+   d(n-1) = x1
+   d(n) = x2'''),
+}
+
+
 def emit_solvers_docs_table() -> str:
     """The table of every line-solver routine, public and private (generated, never typed: DOC5)."""
     what = {'tri_factor': 'bounded tridiagonal solve, the factor kept (private)',
@@ -1705,6 +1970,20 @@ def emit_solvers_docs_table() -> str:
         for v in ('_const', '_var', '_masked'):
             a = args if v != '_masked' else args.replace(', d, ', ', mask, d, ')
             out.append(f'| `{name}{v}` | {what[name]} | {band[v]} | `{a}` |')
+    fwhat = {'tri_factor_rows': 'the bounded tridiagonal factor of rows 1..m, leading dimension ld (private)',
+             'gideon_tri_bounded_factor': 'factor of a bounded tridiagonal line, once for every line',
+             'gideon_tri_bounded_solve': 'a bounded tridiagonal line with that factor: multiplications only',
+             'gideon_tri_periodic_factor': 'factor of a periodic tridiagonal line, once for every line',
+             'tri_interior_solve': 'the interior solve of the border column, in the factor (private)',
+             'gideon_tri_periodic_solve': 'a periodic tridiagonal line with that factor: multiplications only',
+             'penta_factor_rows': 'the bounded pentadiagonal factor of rows 1..m, leading dimension ld (private)',
+             'gideon_penta_bounded_factor': 'factor of a bounded pentadiagonal line, once for every line',
+             'gideon_penta_bounded_solve': 'a bounded pentadiagonal line with that factor: multiplications only',
+             'gideon_penta_periodic_factor': 'factor of a periodic pentadiagonal line, once for every line',
+             'penta_interior_solve': 'the interior solve of a border column, in the factor (private)',
+             'gideon_penta_periodic_solve': 'a periodic pentadiagonal line with that factor: multiplications only'}
+    for name, (args, _) in FACTORED.items():
+        out.append(f'| `{name}` | {fwhat[name]} | constant, factored once | `{args}` |')
     return '\n'.join(out) + '\n'
 
 
@@ -1729,7 +2008,9 @@ def emit_line_solvers() -> str:
            '!< with the operator\'s per-point kernel, then calls one of these. `_const`: the band a constant (scalars,',
            '!< the compact operators); `_var`: one coefficient per row (arrays); `_masked`: the constant band with the',
            '!< rows where mask(i) replaced by the identity, their right side the value the caller gives (a compact-WENO',
-           '!< hybrid: the compact rows where smooth, the nonlinear face values where flagged; #2 4.1). Every routine',
+           '!< hybrid: the compact rows where smooth, the nonlinear face values where flagged; #2 4.1); `_factor` and',
+           '!< `_solve`: a constant band factored once (its factor depends on the band and the length only) and every',
+           '!< line solved with it, multiplications only (#2 decision 4a). Every routine',
            '!< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller\'s',
            '!< arrays, no allocation. Elimination without pivoting: stable for diagonally dominant and for symmetric',
            '!< positive definite bands (every band of GIDEON\'s is one or the other: gideon_fd_d1_p10\'s is not diagonally',
@@ -1738,6 +2019,7 @@ def emit_line_solvers() -> str:
     pub = [n for n in SOLVER_TEMPLATES if n.startswith('gideon_')]
     variants = ('_const', '_var', '_masked')
     out += [f'public :: {n}{v}' for n in pub for v in variants]
+    out += [f'public :: {n}' for n in FACTORED if n.startswith('gideon_')]
     out.append('contains')
     coef_re = r'\$([a-f])\(([^()]*(?:\([^()]*\))?[^()]*)\)'
     for name, (args, coefs, body) in SOLVER_TEMPLATES.items():
@@ -1761,6 +2043,8 @@ def emit_line_solvers() -> str:
                 text = re.sub(r'(call \w+_masked\([^,]+, (?:e, )?a, b, c, (?:f, )?)', r'\1mask, ', text)
             a = args if v != '_masked' else args.replace(', d, ', ', mask, d, ')
             out += [f'   pure subroutine {name}{v}{a}', wrap_fortran(text), f'   endsubroutine {name}{v}', '']
+    for name, (args, body) in FACTORED.items():  # factor once, solve many: the constant band only
+        out += [f'   pure subroutine {name}{args}', wrap_fortran(body), f'   endsubroutine {name}', '']
     out.append('endmodule gideon_line_solvers')
     return '\n'.join(out) + '\n'
 

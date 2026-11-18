@@ -26,3 +26,15 @@
 | `gideon_penta_periodic_const` | pentadiagonal line, periodic (interior + 2x2 Schur complement) | constant (scalars) | `(n, e, a, b, c, f, d, u1, u2, z1, z2)` |
 | `gideon_penta_periodic_var` | pentadiagonal line, periodic (interior + 2x2 Schur complement) | one coefficient per row (arrays) | `(n, e, a, b, c, f, d, u1, u2, z1, z2)` |
 | `gideon_penta_periodic_masked` | pentadiagonal line, periodic (interior + 2x2 Schur complement) | constant, the rows where `mask(i)` the identity | `(n, e, a, b, c, f, mask, d, u1, u2, z1, z2)` |
+| `tri_factor_rows` | the bounded tridiagonal factor of rows 1..m, leading dimension ld (private) | constant, factored once | `(m, ld, a, b, c, fac)` |
+| `gideon_tri_bounded_factor` | factor of a bounded tridiagonal line, once for every line | constant, factored once | `(n, a, b, c, fac)` |
+| `gideon_tri_bounded_solve` | a bounded tridiagonal line with that factor: multiplications only | constant, factored once | `(n, a, fac, d)` |
+| `gideon_tri_periodic_factor` | factor of a periodic tridiagonal line, once for every line | constant, factored once | `(n, a, b, c, fac)` |
+| `tri_interior_solve` | the interior solve of the border column, in the factor (private) | constant, factored once | `(n, a, fac)` |
+| `gideon_tri_periodic_solve` | a periodic tridiagonal line with that factor: multiplications only | constant, factored once | `(n, a, c, fac, d)` |
+| `penta_factor_rows` | the bounded pentadiagonal factor of rows 1..m, leading dimension ld (private) | constant, factored once | `(m, ld, e, a, b, c, f, fac)` |
+| `gideon_penta_bounded_factor` | factor of a bounded pentadiagonal line, once for every line | constant, factored once | `(n, e, a, b, c, f, fac)` |
+| `gideon_penta_bounded_solve` | a bounded pentadiagonal line with that factor: multiplications only | constant, factored once | `(n, e, fac, d)` |
+| `gideon_penta_periodic_factor` | factor of a periodic pentadiagonal line, once for every line | constant, factored once | `(n, e, a, b, c, f, fac)` |
+| `penta_interior_solve` | the interior solve of a border column, in the factor (private) | constant, factored once | `(n, e, fac, col)` |
+| `gideon_penta_periodic_solve` | a periodic pentadiagonal line with that factor: multiplications only | constant, factored once | `(n, e, a, c, f, fac, d)` |
