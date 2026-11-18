@@ -121,7 +121,7 @@ the advection), keeps every output, and then draws the pages from them with the 
 | `make_tables.py` | the generator's JSON, the test outputs and CSV files, the golden files, the recorded mutation run (`notes/mutation-run-*.txt`), the benchmark data (`notes/bench-data`) | `docs/verification/_tables`, `docs/regression/_tables` |
 | `make_figures.py` | the same | every figure of `docs/public/guide`, `docs/public/verification`, `docs/public/regression`, light and dark |
 | `make_animations.py` | the frames of `gideon_vv_advection` | `docs/public/verification/casts`: WebM, MP4 and a poster per theme (needs ffmpeg) |
-| `make_cookbook_tables.py` | `src/lib/*.F90` only (`--check`: exit 1 when a table is stale) | the tables of the cookbook and of the [API](/guide/api) |
+| `make_cookbook_tables.py` | `src/lib/*.F90` only (`--check`: exit 1 when a table is stale) | the tables of the cookbook and of the [API overview](/api/) (docs/ford.md) |
 
 The figures share two modules: `figure_theme.py`, the light (washi) and dark (smoked bronze) styles, SETH's and
 ADAM's copy with GIDEON's dark tokens ([its identity](https://github.com/szaghi/GIDEON/blob/main/docs/brand/BRAND.md)),

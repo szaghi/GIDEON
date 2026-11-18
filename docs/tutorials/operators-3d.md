@@ -4,7 +4,7 @@
 one contiguous stencil per direction (and per component) out of the 3-D arrays, call the operators, compare with the
 exact values, and observe orders 2, 4 and 6.
 
-**Concepts.** [3-D operators](/guide/api#_3-d-operators) and their place among the [families](/guide/operators#families):
+**Concepts.** [3-D operators](/api/#_3-d-operators) and their place among the [families](/guide/operators#families):
 ADAM's FNL signature, one stencil per direction and component, gathered by the caller. T4 for the run-time order;
 [A2 3-D operators](/verification/operators-3d) for their verification.
 

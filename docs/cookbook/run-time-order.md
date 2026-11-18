@@ -47,4 +47,4 @@ kernels and their 54 dispatchers). On a GPU the hoisted form puts the `!$acc par
 cases, so every case launches its own kernel with its own compile-time row ([On the GPU](/tutorials/gpu)).
 
 **Reference.** The measurement: [Performance](/guide/performance); the dispatchers' NaN contract:
-[Run-time dispatch](/verification/dispatch); every dispatcher with its window: [API](/guide/api).
+[Run-time dispatch](/verification/dispatch); every dispatcher with its window: [API](/api/#run-time-order-dispatchers).

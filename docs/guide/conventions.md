@@ -58,7 +58,7 @@ is a section that leaves the caller's array (`-fcheck=bounds`, `-C`, `-check all
 of a loop. (ADAM's audit item B, a read past the end of an assumed-shape window, was caught inside the kernel: an
 assumed-shape dummy carries the section's length, an explicit-shape one does not.) Write the section as
 `u(i+LO:i+HI)` with the kernel's own `LO` and `HI`, as listed in [Operators](/guide/operators#every-kernel); for a
-dispatcher, with the bounds of its window as expressions of the order ([API](/guide/api#run-time-order-dispatchers)).
+dispatcher, with the bounds of its window as expressions of the order ([API](/api/#run-time-order-dispatchers)).
 The ghost cells a loop needs follow from the window: [Ghost cells for a window](/cookbook/ghosts).
 
 The windows drawn, offsets on the axis, the data each kernel reads and the point of its result:

@@ -3,7 +3,7 @@
 **Goal.** Choose the order when the program runs: what a dispatcher does, where its window bounds come from, what it
 returns for an order without a kernel, what it costs against the kernel, and how to avoid that cost.
 
-**Concepts.** [Run-time order](/guide/conventions#run-time-order) and the [API](/guide/api#run-time-order); the
+**Concepts.** [Run-time order](/guide/conventions#run-time-order) and the [API](/api/#run-time-order-dispatchers); the
 dispatcher of every kernel is in the last column of the table in [Operators](/guide/operators#every-kernel). The
 measured cost: [Performance](/guide/performance#the-run-time-dispatcher-budget-missed). T1 for the kernels.
 

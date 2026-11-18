@@ -8,8 +8,8 @@ Written (all excluded from the site's page list by `**/_tables/**`, included by 
 
     docs/cookbook/_tables/orders.md     the orders of every operator and the points of each window (cookbook/choose)
     docs/cookbook/_tables/ghosts.md     the ghost cells each operator needs, by order (cookbook/ghosts)
-    docs/guide/_tables/api-dispatch.md  the 1-D run-time order dispatchers, their orders and windows (guide/api)
-    docs/guide/_tables/api-rows.md      the named rows of gideon_tables and the kernels reading them (guide/api)
+    docs/guide/_tables/api-dispatch.md  the 1-D run-time order dispatchers, their orders and windows (the API overview, docs/ford.md)
+    docs/guide/_tables/api-rows.md      the named rows of gideon_tables and the kernels reading them (the API overview, docs/ford.md)
 
 Usage (from the repository root):
     python3 docs/scripts/make_cookbook_tables.py           write the tables

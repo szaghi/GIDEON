@@ -51,9 +51,9 @@ def report(check: str, total: int, missing: list[str], verbose: bool) -> None:
 
 
 def pages() -> list[Path]:
-    """Every hand-written page and included table (not docs/ford.md, the API generator's project file)."""
+    """Every hand-written page and included table; docs/ford.md included: its body is the API overview (/api/)."""
     skip = {'api', 'node_modules', '.vitepress', 'public', 'examples', 'brand'}
-    return sorted(p for p in DOCS.rglob('*.md') if not skip & set(p.relative_to(DOCS).parts) and p.name != 'ford.md')
+    return sorted(p for p in DOCS.rglob('*.md') if not skip & set(p.relative_to(DOCS).parts))
 
 
 def text_of(paths: list[Path]) -> str:
@@ -107,6 +107,8 @@ def page_of_link(link: str) -> Path | None:
     candidates = [DOCS / (path.strip('/') + '.md'), DOCS / path.strip('/') / 'index.md']
     if path == '/':
         candidates = [DOCS / 'index.md']
+    if path.rstrip('/') == '/api':
+        candidates = [DOCS / 'ford.md']  # the generated API index, introduced by ford.md's body
     for c in candidates:
         if c.is_file():
             return c
@@ -287,7 +289,8 @@ def check_links(verbose: bool) -> None:
                 missing.append(f'{p.relative_to(ROOT)}: link {link}')
         for inc in re.findall(r'<!--@include:\s*(\S+?)\s*-->', src):
             total += 1
-            if not (p.parent / inc).resolve().is_file():
+            target = DOCS / inc[2:] if inc.startswith('@/') else p.parent / inc  # @/ is the source root (docs/)
+            if not target.resolve().is_file():
                 missing.append(f'{p.relative_to(ROOT)}: include {inc}')
         for snip in re.findall(r'<<<\s*@/(\S+?)(?:\{|\s|$)', src):
             total += 1

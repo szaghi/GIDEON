@@ -36,7 +36,7 @@ or stop where you have what you need.
 3. **[Cookbook](/cookbook/)**: one recipe per task (choose an operator and its order, size the ghost cells, convert
    averages and point values, a fast run-time order, another precision, replace ADAM's calls, add an operator).
    Read the one you need.
-4. **Reference**: every [operator](/guide/operators) with its window and order, the [API](/guide/api),
+4. **Reference**: every [operator](/guide/operators) with its window and order, the [API](/api/),
    [precision](/guide/precision), [the generator](/guide/generator) and [performance](/guide/performance); the
    module pages generated from the sources are under [API](/api/) in the top bar.
 5. **[Verification](/verification/)** and **[Regression](/regression/)**: what is proved about every kernel and how,

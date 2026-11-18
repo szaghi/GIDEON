@@ -85,5 +85,5 @@ and rely on the operations being executed as written. Two compilers reorder them
   at $s = 4, 5$. Strict IEEE and a fixed target (AVX2 + FMA) make every machine compile the same code. The nvfortran libraries and benchmarks keep `-fast` alone: a library built that way computes the same rows
   to round-off, not to the bit.
 
-**Reference.** The kind module: [API](/guide/api#kinds); the tests: [Orders of accuracy](/verification/orders),
+**Reference.** The kind module: [API](/api/#kinds); the tests: [Orders of accuracy](/verification/orders),
 [Golden values](/regression/golden).

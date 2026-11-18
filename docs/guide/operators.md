@@ -47,7 +47,7 @@ exact row of order at least 1 has no kernel: a missing symbol, never a row of ze
 
 The 3-D operators take ADAM's FNL signature: one contiguous stencil per direction and component, gathered by the
 caller (`vy_x` is the y component along x), so no non-contiguous section enters a device routine. They sum the 1-D
-kernels in ADAM's order and reproduce ADAM's values bitwise ([API](/guide/api#_3-d-operators)).
+kernels in ADAM's order and reproduce ADAM's values bitwise ([API](/api/#_3-d-operators)).
 
 ## Every kernel
 

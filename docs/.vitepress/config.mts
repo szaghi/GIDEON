@@ -11,6 +11,9 @@ export default withMermaid({
   description: 'Generated Interpolations and Derivatives, Exact to Order N: finite-difference and finite-volume stencil operators for HPC',
   base: '/GIDEON/',
   srcExclude: ['ford.md', 'brand/**', '**/_tables/**', 'guide/_operators-table.md', 'examples/**'],
+  // VitePress 1.6 prefetches the page of every link in view through link.pathname, which the SVG links of the API's
+  // Mermaid diagrams lack (a TypeError in production; fixed in VitePress 2, vuejs/vitepress#5442)
+  router: { prefetchLinks: false },
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/GIDEON/favicon.svg', media: '(prefers-color-scheme: light)' }],
@@ -87,7 +90,7 @@ export default withMermaid({
         ] },
         { text: 'Reference', collapsed: false, items: [
           { text: 'Operators',     link: '/guide/operators' },
-          { text: 'API',           link: '/guide/api' },
+          { text: 'API',           link: '/api/' },
           { text: 'Precision',     link: '/guide/precision' },
           { text: 'The generator', link: '/guide/generator' },
           { text: 'Performance',   link: '/guide/performance' },

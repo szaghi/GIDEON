@@ -26,7 +26,7 @@ $(3 q_{-2} - 20 q_{-1} + 90 q_0 + 60 q_1 - 5 q_2)/128$, the linear upwind interp
 scheme on point values starts from. The left-side and left-biased kernels are the mirrors of the right ones
 ($o \to 1 - o$), proven by the generator and tested bitwise ([Mirrors and symmetries](/verification/properties)).
 Each has a run-time order dispatcher: `gideon_fd_face_d1_c(order, ...)`, `gideon_fd_face_bl(order, ...)`, …
-([API](/guide/api#run-time-order-dispatchers)).
+([API](/api/#run-time-order-dispatchers)).
 
 ## Which one
 
