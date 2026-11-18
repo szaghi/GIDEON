@@ -1,5 +1,5 @@
 name = "GIDEON"
-version = "0.2.0"
+version = "0.3.0"
 license = "GPL-3.0-or-later OR BSD-2-Clause OR BSD-3-Clause OR MIT"
 author = "Stefano Zaghi"
 maintainer = "stefano.zaghi@gmail.com"

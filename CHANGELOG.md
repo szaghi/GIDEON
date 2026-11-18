@@ -4,6 +4,41 @@ All notable changes to this project are documented here.
 Versions follow [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.0] — 2026-11-18
+### Added
+- **fd**: Face derivatives, one-sided and biased face values from point values
+
+- **dissipation**: Face differences, the upwind-central split and explicit filters
+
+- **solvers**: Tridiagonal and pentadiagonal line solvers, bounded and periodic
+
+- **compact**: Compact first and second derivatives, the band and the right side derived together
+
+- **compact**: Compact filters, their parameter alpha_f at run time
+
+- **compact**: Compact face values and derivatives, centred and upwind-biased
+
+- **solvers**: Masked line solves, the rows of a compact-WENO hybrid replaced
+
+- **solvers**: Factor once, solve many: the constant-band line solves without division
+
+
+### Documentation
+- Phase 2 documented, a recipe for face values from point values
+
+- **api**: One API reference, the generated one, introduced by the overview
+
+- Roadmap #2 documented, the compact operators, the split, the solvers
+
+- The factored solves documented, their mutants, all 56 killed
+
+
+### Performance
+- **bench**: Compact operators against explicit ones of equal order, budget missed
+
+- **bench**: The factored compact solves, budget met
+
+
 ## [0.2.0] — 2026-11-17
 ### Documentation
 - The shell of the refactored documentation, and its audit
