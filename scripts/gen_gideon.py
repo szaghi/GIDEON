@@ -655,6 +655,158 @@ def check_orders(ks: list[Kernel], observed: dict[str, float] | None = None) -> 
     return out
 
 # ---------------------------------------------------------------------------------------------------------------------
+# P2 (issue #2): compact (implicit) line operators, sum_j alpha_j L(u)_(i+j) = (1/h^n) sum_m w_m q_(i+m), the left band
+# and the right stencil derived together by meaning (0.2): the right side a per-point kernel, the band named
+# constants, the solve gideon_line_solvers (D2)
+# ---------------------------------------------------------------------------------------------------------------------
+LINE_GEOM = {'node': ('fd', 'node'), 'fdface': ('fd', 'face'), 'fvface': ('fv', 'face')}  # left location: data
+LINE_GEOM_CODE = {'node': 1, 'fdface': 2, 'fvface': 3}
+
+
+@dataclass
+class LineOp:
+    """One compact operator: its band (left, by offset, 1 at 0), its right stencil (by offset), its order."""
+
+    name: str
+    family: str  # fd_node_p (3.1), fd_filter_p (2.2), fd_face_p, fd_facedn_p (3.2), fv_face_p (3.3)
+    geom: str  # node: point values, the left side at nodes; fdface: point values, at faces; fvface: cell averages
+    op: str  # d1, d2, filter, face, face_d1
+    bias: str  # p (centred), pbr, pbl (upwind-biased)
+    n: int
+    order: int
+    left: dict[int, Fr]
+    right: dict[int, Fr]
+    lo: int
+    hi: int
+    parity: int = 0  # centred right stencils: +1 symmetric pairs, -1 antisymmetric pairs (0: stored by offset)
+    alpha_row: dict[int, Fr] = field(default_factory=dict)  # filters: the right weights' part linear in alpha_f
+    error: Fr = Fr(0)  # residual on x^(K+1) at h = 1 (K the exact degree): non-zero
+
+    @property
+    def half(self) -> int:
+        return max(abs(o) for o in self.left) if self.bias == 'p' or len(self.left) > 1 else 0
+
+    @property
+    def sumabs(self) -> Fr:
+        return sum(abs(v) for v in self.right.values())
+
+
+def line_left_x(geom: str, o: int) -> Fr:
+    """Location of the left unknown at offset o: nodes and faces both at x = o (h = 1), see conventions."""
+    return Fr(o)
+
+
+def line_residual(geom: str, n: int, left: dict[int, Fr], right: dict[int, Fr]):
+    """The row's residual on x^j: sum alpha_o T(x^j at o) - sum w_m L_m(x^j)."""
+    data, place = LINE_GEOM[geom]
+    samp = {m: sampler(data, place, m) for m in right}
+    return lambda j: (sum(a * mono_deriv_point(n, line_left_x(geom, o), j) for o, a in left.items())
+                      - sum(w * samp[m](j) for m, w in right.items()))
+
+
+def derive_implicit(geom: str, n: int, left_offs: list[int], right_offs: list[int]) -> tuple[dict, dict, int]:
+    """The band (alpha_0 = 1) and the right weights solved together for the highest exact degree; returns them and K."""
+    data, place = LINE_GEOM[geom]
+    lo = [o for o in left_offs if o != 0]
+    unknowns = len(lo) + len(right_offs)
+    samp = [sampler(data, place, m) for m in right_offs]
+    tgt = lambda o, j: mono_deriv_point(n, line_left_x(geom, o), j)  # noqa: E731
+    a = [[tgt(o, j) for o in lo] + [-s(j) for s in samp] for j in range(unknowns)]
+    x = solve(a, [-tgt(0, j) for j in range(unknowns)])
+    left = {0: Fr(1)} | dict(zip(lo, x[: len(lo)], strict=True))
+    right = dict(zip(right_offs, x[len(lo):], strict=True))
+    res = line_residual(geom, n, left, right)
+    k = next(j for j in range(unknowns + 12) if res(j) != 0) - 1
+    if k < unknowns - 1:
+        raise AssertionError(f'implicit {geom} d{n} {left_offs} {right_offs}: not exact on its own system')
+    return dict(sorted(left.items())), right, k
+
+
+def line_pairs(geom: str, right: dict[int, Fr]) -> int:
+    """Parity of a centred right stencil about the node (o, -o) or the face (o, 1 - o)."""
+    mir = (lambda o: -o) if geom == 'node' else (lambda o: 1 - o)
+    if all(right[o] == right[mir(o)] for o in right):
+        return 1
+    if all(right[o] == -right[mir(o)] for o in right):
+        return -1
+    raise AssertionError(f'centred right stencil neither symmetric nor antisymmetric: {right}')
+
+
+# coefficients recalled from Lele (1992), tier A: a cross-check that is not evidence; the paper (P) is still to be read
+LELE_RECALLED = {('d1', 4): ([Fr(1, 4)], [Fr(3, 4)]), ('d1', 6): ([Fr(1, 3)], [Fr(7, 9), Fr(1, 36)]),
+                 ('d1', 8): ([Fr(4, 9), Fr(1, 36)], [Fr(20, 27), Fr(25, 216)]),
+                 ('d1', 10): ([Fr(1, 2), Fr(1, 20)], [Fr(17, 24), Fr(101, 600), Fr(1, 600)]),
+                 ('d2', 4): ([Fr(1, 10)], [Fr(6, 5)]), ('d2', 6): ([Fr(2, 11)], [Fr(12, 11), Fr(3, 44)])}
+
+
+def build_lines() -> list[LineOp]:
+    """Derive every compact operator."""
+    out: list[LineOp] = []
+    # 3.1 compact centred first and second derivatives at nodes: tridiagonal orders 4 and 6, pentadiagonal 8 and 10
+    for n in (1, 2):
+        for hb, s in ((1, 1), (1, 2), (2, 2), (2, 3)):  # half-band, half-stencil
+            left, right, k = derive_implicit('node', n, list(range(-hb, hb + 1)), list(range(-s, s + 1)))
+            order = k + 1 - n
+            if order != 2 * (hb + s):
+                raise AssertionError(f'compact d{n} band {hb} s={s}: order {order}, not {2 * (hb + s)}')
+            if any(v == 0 for v in left.values()):
+                raise AssertionError(f'compact d{n} band {hb} s={s}: a zero in the band')
+            op = LineOp(f'gideon_fd_d{n}_p{order}', 'fd_node_p', 'node', f'd{n}', 'p', n, order, left, right, -s, s,
+                        line_pairs('node', right))
+            op.error = line_residual('node', n, left, right)(k + 1)
+            out.append(op)
+    return out
+
+
+def line_findings(ls: list[LineOp]) -> list[str]:
+    """The Lele values recalled (tier A) against the derived rows; the residual orders at 100 digits."""
+    out = []
+    agree = []
+    for op in ls:
+        rec = LELE_RECALLED.get((op.op, op.order)) if op.family == 'fd_node_p' else None
+        if rec is None:
+            continue
+        alphas = [op.left[o] for o in range(1, op.half + 1)]
+        ws = [op.right[m] for m in range(1, len(rec[1]) + 1)]
+        if alphas != rec[0] or ws != rec[1]:
+            out.append(f'MISMATCH {op.name}: derived {alphas} {ws}, Lele as recalled {rec}')
+        else:
+            agree.append(op.name)
+    out.append(f'lines: Lele (1992) as recalled, tier A, agrees: {", ".join(agree)}')
+    # residual order at 100 digits on the generic function g around GX0
+    getcontext().prec = 100
+    worst = None
+    for op in ls:
+        errs = []
+        for h in (Decimal(2) ** -11, Decimal(2) ** -12):
+            acc = Decimal(0)
+            for o, a in op.left.items():
+                acc += Decimal(a.numerator) / Decimal(a.denominator) * g_deriv(op.n, GX0 + o * h)
+            rhs = Decimal(0)
+            for m, w in op.right.items():
+                rhs += Decimal(w.numerator) / Decimal(w.denominator) * line_datum(op.geom, m, h)
+            errs.append(abs(acc - rhs / h**op.n))
+        p = float((errs[0] / errs[1]).ln() / Decimal(2).ln())
+        if worst is None or p - op.order < worst[0]:
+            worst = (p - op.order, op.name, p)
+        if p < op.order - 0.25:
+            out.append(f'ORDER {op.name}: residual order {p:.3f}, design {op.order}')
+    out.append(f'lines: {len(ls)} rows, residual orders at 100 digits, smallest margin {worst[0]:+.3f} ({worst[1]}, '
+               f'observed {worst[2]:.3f})')
+    return out
+
+
+def line_datum(geom: str, m: int, h: Decimal) -> Decimal:
+    """The datum at offset m of g around GX0 (the left unknown 0 at GX0)."""
+    half = Decimal('0.5')
+    if geom == 'node':
+        return g_deriv(0, GX0 + m * h)
+    if geom == 'fdface':
+        return g_deriv(0, GX0 + (m - half) * h)
+    return (g_deriv(-1, GX0 + m * h) - g_deriv(-1, GX0 + (m - 1) * h)) / h
+
+
+# ---------------------------------------------------------------------------------------------------------------------
 # emission: Fortran sources (generated, never hand-edited)
 # ---------------------------------------------------------------------------------------------------------------------
 HEADER = '!< Generated by scripts/gen_gideon.py: do not edit; change the generator and run it again.\n'
@@ -740,7 +892,7 @@ def array_constructor(vals: list[Fr], indent: int) -> str:
     return ('\n' + ' ' * indent).join(lines)
 
 
-def emit_tables(ks: list[Kernel]) -> str:
+def emit_tables(ks: list[Kernel], ls: list[LineOp]) -> str:
     """The rows, one named constant each, stored once (left-upwind and cell kernels read the rows they share)."""
     rows: dict[str, tuple[int, int, list[Fr], str]] = {}
     for k in ks:
@@ -775,6 +927,7 @@ def emit_tables(ks: list[Kernel]) -> str:
             out.append(f'!< {k.name}: {k.name.replace("_diss_bl", "_bl")} = '
                        f'gideon_{k.data}_face_c{k.tag + 1} + {coef_name(k)} delta^{k.n} (the right-biased: minus).')
             out.append(f'real(R_P), parameter :: {coef_name(k)} = {lit(k.coef)}')
+    out += emit_line_tables(ls)
     out.append('endmodule gideon_tables')
     return '\n'.join(out) + '\n'
 
@@ -1282,7 +1435,7 @@ SOLVER_TEMPLATES = {
    enddo'''),
     'gideon_tri_bounded': ('(n, a, b, c, d, w)', 'abc', '''\
    !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
-   !< never read. Thomas' algorithm without pivoting: for diagonally dominant bands. One line per call.
+   !< never read. Thomas' algorithm without pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n    !< Unknowns.
 {DECL}
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -1293,7 +1446,7 @@ SOLVER_TEMPLATES = {
     'gideon_tri_periodic': ('(n, a, b, c, d, w, z)', 'abc', '''\
    !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
    !< x(n+1) = x(1). The interior x(1:n-1) solved as a bounded line for the right side and for the column of x(n)
-   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant bands.
+   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n    !< Unknowns.
 {DECL}
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -1383,7 +1536,7 @@ SOLVER_TEMPLATES = {
     'gideon_penta_bounded': ('(n, e, a, b, c, f, d, u1, u2)', 'eabcf', '''\
    !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
-   !< pivoting: for diagonally dominant bands. One line per call.
+   !< pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n     !< Unknowns.
 {DECL}
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
@@ -1396,7 +1549,7 @@ SOLVER_TEMPLATES = {
    !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
    !< the columns of x(n-1) and x(n) (one factor), then those two from the last two rows (their 2x2 Schur
-   !< complement). For diagonally dominant bands.
+   !< complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n     !< Unknowns.
 {DECL}
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
@@ -1447,8 +1600,9 @@ def emit_line_solvers() -> str:
            '!< with the operator\'s per-point kernel, then calls one of these. `_const`: the band a constant (scalars,',
            '!< the compact operators); `_var`: one coefficient per row (arrays, a band with rows replaced). Every routine',
            '!< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller\'s',
-           '!< arrays, no allocation. Elimination without pivoting: for diagonally dominant bands (every operator of',
-           '!< GIDEON\'s). Generated from one template for both variants; docs/guide/lines.md.',
+           '!< arrays, no allocation. Elimination without pivoting: stable for diagonally dominant and for symmetric',
+           '!< positive definite bands (every band of GIDEON\'s is one or the other: gideon_fd_d1_p10\'s is not diagonally',
+           '!< dominant, its symbol 1 + cos(xi) + cos(2 xi)/10 >= 1/10). Generated from one template for both variants.',
            'use penf, only : I4P, R_P', 'implicit none', 'private']
     pub = [n for n in SOLVER_TEMPLATES if n.startswith('gideon_')]
     out += [f'public :: {n}{v}' for n in pub for v in ('_const', '_var')]
@@ -1465,6 +1619,195 @@ def emit_line_solvers() -> str:
             kind = 'pure subroutine'
             out += [f'   {kind} {name}{v}{args}', text, f'   endsubroutine {name}{v}', '']
     out.append('endmodule gideon_line_solvers')
+    return '\n'.join(out) + '\n'
+
+
+def line_row_names(op: LineOp) -> tuple[str, str]:
+    """Names of a compact operator's band and right row: <NAME>_LEFT, <NAME>_RIGHT."""
+    base = op.name.removeprefix('gideon_').upper()
+    return f'{base}_LEFT', f'{base}_RIGHT'
+
+
+def line_stored_right(op: LineOp) -> tuple[int, int, list[Fr], str]:
+    """The stored right row: pair form for centred stencils (node: index 0 the centre), else by offset."""
+    if op.parity == 0:
+        return op.lo, op.hi, [op.right[o] for o in range(op.lo, op.hi + 1)], 'by offset'
+    if op.geom == 'node':
+        first = 0 if op.parity == 1 else 1
+        return first, op.hi, [op.right[m] for m in range(first, op.hi + 1)], 'pairs (m, -m), index 0 the centre'
+    return 1, op.hi, [op.right[m] for m in range(1, op.hi + 1)], 'pairs (m, 1-m)'
+
+
+def line_stored_left(op: LineOp) -> tuple[int, int, list[Fr], str]:
+    """The stored band: pair form (index j multiplies the unknowns at +-j) when symmetric, else by offset."""
+    if all(op.left.get(-o) == v for o, v in op.left.items()):
+        return 0, op.half, [op.left[j] for j in range(0, op.half + 1)], 'pairs (j, -j), index 0 the diagonal'
+    lo, hi = min(op.left), max(op.left)
+    return lo, hi, [op.left.get(o, Fr(0)) for o in range(lo, hi + 1)], 'by offset'
+
+
+def emit_line_tables(ls: list[LineOp]) -> list[str]:
+    """The bands and the right rows of the compact operators (appended to gideon_tables)."""
+    out = ['!< The compact operators: <NAME>_LEFT the band (the left side), <NAME>_RIGHT the row of the right side.']
+    for op in ls:
+        ln, rn = line_row_names(op)
+        for name, (lo, hi, vals, layout) in ((ln, line_stored_left(op)), (rn, line_stored_right(op))):
+            decl = f'real(R_P), parameter :: {name}({lo}:{hi}) = '
+            out.append(f'!< {op.name}, {"band" if name == ln else "right side"} ({layout})')
+            out.append(decl + array_constructor(vals, len(decl)))
+    return out
+
+
+def emit_line_kernel(op: LineOp) -> str:
+    """The right side of a compact operator at one point: an ordinary kernel (window by offset, the row a constant)."""
+    ln, rn = line_row_names(op)
+    data_doc = 'cell averages' if op.geom == 'fvface' else 'point values'
+    where = {'node': 'node 0', 'fdface': 'the face between nodes 0 and 1', 'fvface': 'the face between cells 0 and 1'}
+    what = {'d1': 'first derivative', 'd2': 'second derivative', 'face': 'value', 'face_d1': 'first derivative',
+            'filter': 'filtered value'}[op.op]
+    bias = {'p': 'centred', 'pbr': 'upwind-biased, one more on the right', 'pbl': 'upwind-biased, one more on the left'}
+    has_ds = op.n >= 1
+    L = [f'   pure subroutine {op.name}(q, {"ds, " if has_ds else ""}r)',
+         f'   !< Right side of the compact {what} at {where[op.geom]}, {bias[op.bias]}, order {op.order}, from',
+         f'   !< {data_doc} q({op.lo}:{op.hi}); the unknowns of the line solve with the band {ln}.',
+         f'   real(R_P),    intent(in)  :: q({op.lo}:{op.hi}) !< Data by offset (docs/guide/conventions.md).']
+    if has_ds:
+        L.append('   real(R_P),    intent(in)  :: ds       !< Grid step.')
+    L += ['   real(R_P),    intent(out) :: r        !< The right side at this point.',
+          '   integer(I4P)              :: m        !< Counter.', '   !$acc routine seq', '   !$omp declare target']
+    pm = '+' if op.parity == 1 else '-'
+    if op.parity != 0 and op.geom == 'node':
+        L.append(f'   r = {rn}(0)*q(0)' if op.parity == 1 else '   r = 0._R_P')
+        L += [f'   do m=1, {op.hi}', f'      r = r + {rn}(m)*(q(m) {pm} q(-m))', '   enddo']
+    elif op.parity != 0:
+        L += ['   r = 0._R_P', f'   do m=1, {op.hi}', f'      r = r + {rn}(m)*(q(m) {pm} q(1-m))', '   enddo']
+    else:
+        L += ['   r = 0._R_P', f'   do m={op.lo}, {op.hi}', f'      r = r + {rn}(m)*q(m)', '   enddo']
+    if has_ds:
+        L.append(f'   r = r{scale(op.n, "fd" if op.geom != "fvface" else "fv")}')
+    L.append(f'   endsubroutine {op.name}')
+    return '\n'.join(L)
+
+
+def emit_compact(ls: list[LineOp]) -> str:
+    title = '!< GIDEON, the compact (implicit) operators: the right side of each, one kernel per point.'
+    out = [HEADER + title, 'module gideon_compact', title, '!<',
+           '!< A compact operator is sum_j alpha_j u_(i+j) = r_i along a line: the band alpha (gideon_tables,',
+           '!< <NAME>_LEFT) on the unknowns, the right side r_i a kernel of the data at point i (this module, the row',
+           '!< <NAME>_RIGHT). The caller computes r on the line with the kernel, then solves with gideon_line_solvers',
+           '!< (periodic lines: the band\'s pairs as the constant band). docs/guide/compact.md.',
+           'use penf, only : I4P, R_P', 'use gideon_tables', 'implicit none', 'private']
+    out += [f'public :: {op.name}' for op in ls]
+    out.append('contains')
+    out += [emit_line_kernel(op) + '\n' for op in ls]
+    out.append('endmodule gideon_compact')
+    return '\n'.join(out) + '\n'
+
+
+def emit_lines_registry(ls: list[LineOp]) -> str:
+    """Test registry of the compact operators: metadata, the right side by id, the periodic line solve by id."""
+    nl = len(ls)
+    title = '!< GIDEON tests, the registry of the compact operators: metadata, right sides and line solves by id.'
+    out = [HEADER + title, 'module gideon_test_lines_registry', title, '!<',
+           '!< lgeom: 1 point values at x = o, the unknowns at nodes; 2 point values at x = o - 1/2, the unknowns at',
+           '!< faces; 3 cell o on [o-1, o], the unknowns at faces. The unknown at offset o sits at x = o (h = 1).',
+           '!< lleft(o, id): the band by offset, the library\'s constants; lerror: the row\'s residual on x^(K+1) at h = 1.',
+           'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
+           'public :: NL, LWMAX, lname, lgeom, ln, lorder, lhalf, llo, lhi, lleft, lerror, lsumabs, lalpha_free',
+           'public :: line_rhs, line_rhs_dev, line_solve',
+           f'integer(I4P), parameter :: NL = {nl} !< Number of compact operators.',
+           'integer(I4P), parameter :: LWMAX = 8 !< Half-width of the windows the tests pass.']
+
+    def arr(name: str, typ: str, vals: list[str]) -> None:
+        decl = f'{typ}, parameter :: {name}(NL) = '
+        lines, cur = [], '['
+        for j, v in enumerate(vals):
+            piece = v + (', ' if j < len(vals) - 1 else ']')
+            if len(cur) + len(piece) + len(decl) > 112:
+                lines.append(cur.rstrip() + ' &')
+                cur = '   ' + piece
+            else:
+                cur += piece
+        lines.append(cur)
+        out.append(decl + ('\n' + ' ' * len(decl)).join(lines))
+
+    arr('lname', 'character(len=24)', [f"'{op.name.removeprefix('gideon_'):24s}'" for op in ls])
+    arr('lgeom', 'integer(I4P)', [str(LINE_GEOM_CODE[op.geom]) for op in ls])
+    arr('ln', 'integer(I4P)', [str(op.n) for op in ls])
+    arr('lorder', 'integer(I4P)', [str(op.order) for op in ls])
+    arr('lhalf', 'integer(I4P)', [str(max(abs(o) for o in op.left)) for op in ls])
+    arr('llo', 'integer(I4P)', [str(op.lo) for op in ls])
+    arr('lhi', 'integer(I4P)', [str(op.hi) for op in ls])
+    arr('lalpha_free', 'logical', ['.true.' if op.alpha_row else '.false.' for op in ls])
+    arr('lsumabs', 'real(R_P)', [f'{float(op.sumabs):.17e}'.replace('e', '_R_P*1e') + '_R_P' for op in ls])
+    arr('lerror', 'real(R_P)', [lit(op.error) for op in ls])
+    vals = []  # the library's band constants themselves, never a copy: a wrong band is a wrong test result
+    for op in ls:
+        ln, _ = line_row_names(op)
+        lo, hi, _, layout = line_stored_left(op)
+        pairs = layout.startswith('pairs')
+        for o in range(-2, 3):
+            idx = abs(o) if pairs else o
+            vals.append(f'{ln}({idx})' if lo <= idx <= hi and o in op.left else '0._R_P')
+    out.append('real(R_P), parameter :: lleft(-2:2,NL) = reshape([ &')
+    cur = ''
+    for j, v in enumerate(vals):
+        piece = v + (', ' if j < len(vals) - 1 else '')
+        if len(cur) + len(piece) > 100:
+            out.append('   ' + cur.rstrip() + ' &')
+            cur = piece
+        else:
+            cur += piece
+    out.append('   ' + cur + '], [5, NL])')
+
+    def calls(dev: bool) -> list[str]:
+        r = []
+        for i, op in enumerate(ls, 1):
+            ds = 'ds, ' if op.n >= 1 else ''
+            r.append(f'   case({i}) ; call {op.name}(q({op.lo}:{op.hi}), {ds}r)')
+        r.append('   case default ; r = GIDEON_NAN' if dev else "   case default ; error stop 'line_rhs: no such operator'")
+        return r
+
+    out += ['contains',
+            '   subroutine line_rhs(id, q, ds, r)',
+            '   !< The right side of operator id at the point of offset 0 of q.',
+            '   integer(I4P), intent(in)  :: id', '   real(R_P),    intent(in)  :: q(-LWMAX:LWMAX)',
+            '   real(R_P),    intent(in)  :: ds', '   real(R_P),    intent(out) :: r', '   select case(id)',
+            *calls(False), '   endselect', '   endsubroutine line_rhs', '',
+            '   pure subroutine line_rhs_dev(id, q, ds, r)',
+            '   !< line_rhs, device-callable (GIDEON_NAN for an unknown id).',
+            '   integer(I4P), intent(in)  :: id', '   real(R_P),    intent(in)  :: q(-LWMAX:LWMAX)',
+            '   real(R_P),    intent(in)  :: ds', '   real(R_P),    intent(out) :: r',
+            '   !$acc routine seq', '   !$omp declare target', '   select case(id)',
+            *calls(True), '   endselect', '   endsubroutine line_rhs_dev', '',
+            '   pure subroutine line_solve(id, n, d, w1, w2, w3, w4)',
+            '   !< Solve the band of operator id on a periodic line of n unknowns, d the right side in, the solution out.',
+            '   integer(I4P), intent(in)    :: id, n', '   real(R_P),    intent(inout) :: d(n)',
+            '   real(R_P),    intent(out)   :: w1(n), w2(n), w3(n), w4(n)',
+            '   !$acc routine seq', '   !$omp declare target',
+            '   w3 = 0._R_P ; w4 = 0._R_P',
+            '   if (lhalf(id) == 1) then',
+            '      call gideon_tri_periodic_const(n, lleft(-1,id), lleft(0,id), lleft(1,id), d, w1, w2)',
+            '   else',
+            '      call gideon_penta_periodic_const(n, lleft(-2,id), lleft(-1,id), lleft(0,id), lleft(1,id), lleft(2,id), &',
+            '                                       d, w1, w2, w3, w4)',
+            '   endif', '   endsubroutine line_solve', '',
+            'endmodule gideon_test_lines_registry']
+    return '\n'.join(out) + '\n'
+
+
+def emit_lines_docs_table(ls: list[LineOp]) -> str:
+    """The table of the compact operators (generated, never typed: DOC5)."""
+    out = ['<!-- Generated by scripts/gen_gideon.py: do not edit. -->', '',
+           '| Right side | Unknowns | Data | Bias | Order | Band | Right window |', '|---|---|---|---|---|---|---|']
+    for op in ls:
+        ln, _ = line_row_names(op)
+        unk = {'d1': 'd1 at the nodes', 'd2': 'd2 at the nodes', 'face': 'values at the faces',
+               'face_d1': 'd1 at the faces', 'filter': 'filtered values at the nodes'}[op.op]
+        data = 'cell averages' if op.geom == 'fvface' else 'point values'
+        bias = {'p': 'centred', 'pbr': 'biased right', 'pbl': 'biased left'}[op.bias]
+        band = {0: 'diagonal', 1: 'tridiagonal', 2: 'pentadiagonal'}[max(abs(o) for o in op.left)]
+        out.append(f'| `{op.name}` | {unk} | {data} | {bias} | {op.order} | {band}, `{ln}` | `q({op.lo}:{op.hi})` |')
     return '\n'.join(out) + '\n'
 
 
@@ -1535,13 +1878,16 @@ def emit_docs_table(ks: list[Kernel]) -> str:
     return '\n'.join(out) + '\n'
 
 
-def write_sources(ks: list[Kernel]) -> list[str]:
-    files = {ROOT / 'src/lib/gideon_tables.F90': emit_tables(ks)}
+def write_sources(ks: list[Kernel], ls: list[LineOp]) -> list[str]:
+    files = {ROOT / 'src/lib/gideon_tables.F90': emit_tables(ks, ls)}
     for mod in MODULES:
         files[ROOT / f'src/lib/{mod}.F90'] = emit_module(mod, ks)
     files[ROOT / 'src/lib/gideon_dispatch.F90'] = emit_dispatch(ks)
     files[ROOT / 'src/lib/gideon_operators_3d.F90'] = emit_operators_3d(ks)
     files[ROOT / 'src/lib/gideon_line_solvers.F90'] = emit_line_solvers()
+    files[ROOT / 'src/lib/gideon_compact.F90'] = emit_compact(ls)
+    files[ROOT / 'src/tests/gideon_test_lines_registry.F90'] = emit_lines_registry(ls)
+    files[ROOT / 'docs/guide/_compact-table.md'] = emit_lines_docs_table(ls)
     files[ROOT / 'src/tests/gideon_test_registry.F90'] = emit_registry(ks)
     files[ROOT / 'docs/guide/_operators-table.md'] = emit_docs_table(ks)
     back = parse_emitted_tables(files[ROOT / 'src/lib/gideon_tables.F90'])
@@ -1555,6 +1901,10 @@ def write_sources(ks: list[Kernel]) -> list[str]:
         if k.family in ('fd_face_bdiss', 'fv_face_bdiss') and back[coef_name(k)] != [k.coef if k.bias == 'bl'
                                                                                      else -k.coef]:
             raise AssertionError(f'emitted constant {coef_name(k)} is not the derived one')
+    for op in ls:
+        for name, (_, _, vals, _) in zip(line_row_names(op), (line_stored_left(op), line_stored_right(op)), strict=True):
+            if back[name] != vals:
+                raise AssertionError(f'emitted row {name} is not the derived one')
     written = []
     for path, text in files.items():
         if not path.exists() or path.read_text() != text:
@@ -1563,7 +1913,7 @@ def write_sources(ks: list[Kernel]) -> list[str]:
     return written
 
 
-def emit_json(ks: list[Kernel], findings: list[str], observed: dict[str, float]) -> str:
+def emit_json(ks: list[Kernel], ls: list[LineOp], findings: list[str], observed: dict[str, float]) -> str:
     """The derived rows as data for the documentation (docs/scripts): every kernel with its window, its weights by
     offset as exact fractions (the full operator: left-side rows mirrored, cell derivatives as flux differences),
     its design order, its order observed at 100 digits, its exact leading error; the 3-D operators; the findings."""
@@ -1581,6 +1931,12 @@ def emit_json(ks: list[Kernel], findings: list[str], observed: dict[str, float])
                          for name, data, op, order, s in kernels_3d(ks)],
         'dispatchers': [{'name': name, 'orders': [tok(k) for k in g], 'window': list(window_expr(g)),
                          'nan_order': bad_order(g)} for name, g in groups(ks).items()],
+        'compact': [{'name': op.name, 'family': op.family, 'geom': op.geom, 'op': op.op, 'bias': op.bias, 'n': op.n,
+                     'order': op.order, 'lo': op.lo, 'hi': op.hi, 'band': line_row_names(op)[0],
+                     'left': {str(o): str(v) for o, v in op.left.items()},
+                     'right': {str(o): str(v) for o, v in sorted(op.right.items())},
+                     'alpha_right': {str(o): str(v) for o, v in sorted(op.alpha_row.items())},
+                     'residual_error': str(op.error)} for op in ls],
     }
     return json.dumps(out, indent=1) + '\n'
 
@@ -1595,23 +1951,24 @@ def main() -> int:
     ap.add_argument('--json', type=Path, metavar='FILE', help='write the rows, windows, orders and findings as JSON')
     args = ap.parse_args()
     ks = build()
+    ls = build_lines()
     observed: dict[str, float] = {}
-    findings = cross_check_adam(ks) + split_findings(ks) + check_orders(ks, observed)
+    findings = cross_check_adam(ks) + split_findings(ks) + check_orders(ks, observed) + line_findings(ls)
     if args.list:
         for k in ks:
             print(f'{k.name:28s} {k.family:12s} n={k.n} s={k.s} order={k.order} window={k.lo}:{k.hi}')
     for f in findings:
         print(f)
-    print(f'{len(ks)} kernels derived')
+    print(f'{len(ks)} kernels derived, {len(ls)} compact operators')
     bad = [f for f in findings if f.startswith(('MISMATCH', 'NOT GENERATED', 'ORDER'))]
     if bad:
         return 1
     if args.json:
         args.json.parent.mkdir(parents=True, exist_ok=True)
-        args.json.write_text(emit_json(ks, findings, observed))
+        args.json.write_text(emit_json(ks, ls, findings, observed))
         print(f'written {args.json}')
     if not args.check:
-        for w in write_sources(ks):
+        for w in write_sources(ks, ls):
             print(f'written {w}')
     return 0
 

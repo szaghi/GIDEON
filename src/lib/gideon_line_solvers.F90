@@ -7,8 +7,9 @@ module gideon_line_solvers
 !< with the operator's per-point kernel, then calls one of these. `_const`: the band a constant (scalars,
 !< the compact operators); `_var`: one coefficient per row (arrays, a band with rows replaced). Every routine
 !< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller's
-!< arrays, no allocation. Elimination without pivoting: for diagonally dominant bands (every operator of
-!< GIDEON's). Generated from one template for both variants; docs/guide/lines.md.
+!< arrays, no allocation. Elimination without pivoting: stable for diagonally dominant and for symmetric
+!< positive definite bands (every band of GIDEON's is one or the other: gideon_fd_d1_p10's is not diagonally
+!< dominant, its symbol 1 + cos(xi) + cos(2 xi)/10 >= 1/10). Generated from one template for both variants.
 use penf, only : I4P, R_P
 implicit none
 private
@@ -111,7 +112,7 @@ contains
 
    pure subroutine gideon_tri_bounded_const(n, a, b, c, d, w)
    !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
-   !< never read. Thomas' algorithm without pivoting: for diagonally dominant bands. One line per call.
+   !< never read. Thomas' algorithm without pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n    !< Unknowns.
    real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -123,7 +124,7 @@ contains
 
    pure subroutine gideon_tri_bounded_var(n, a, b, c, d, w)
    !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
-   !< never read. Thomas' algorithm without pivoting: for diagonally dominant bands. One line per call.
+   !< never read. Thomas' algorithm without pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n    !< Unknowns.
    real(R_P),    intent(in)    :: a(n), b(n), c(n) !< The band by row, offsets -1, 0, +1.
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -136,7 +137,7 @@ contains
    pure subroutine gideon_tri_periodic_const(n, a, b, c, d, w, z)
    !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
    !< x(n+1) = x(1). The interior x(1:n-1) solved as a bounded line for the right side and for the column of x(n)
-   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant bands.
+   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n    !< Unknowns.
    real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -163,7 +164,7 @@ contains
    pure subroutine gideon_tri_periodic_var(n, a, b, c, d, w, z)
    !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
    !< x(n+1) = x(1). The interior x(1:n-1) solved as a bounded line for the right side and for the column of x(n)
-   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant bands.
+   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n    !< Unknowns.
    real(R_P),    intent(in)    :: a(n), b(n), c(n) !< The band by row, offsets -1, 0, +1.
    real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
@@ -328,7 +329,7 @@ contains
    pure subroutine gideon_penta_bounded_const(n, e, a, b, c, f, d, u1, u2)
    !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
-   !< pivoting: for diagonally dominant bands. One line per call.
+   !< pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n     !< Unknowns.
    real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
@@ -342,7 +343,7 @@ contains
    pure subroutine gideon_penta_bounded_var(n, e, a, b, c, f, d, u1, u2)
    !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
-   !< pivoting: for diagonally dominant bands. One line per call.
+   !< pivoting: for diagonally dominant or SPD bands. One line per call.
    integer(I4P), intent(in)    :: n     !< Unknowns.
    real(R_P),    intent(in)    :: e(n), a(n), b(n), c(n), f(n) !< The band by row, offsets -2, -1, 0, +1, +2.
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
@@ -357,7 +358,7 @@ contains
    !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
    !< the columns of x(n-1) and x(n) (one factor), then those two from the last two rows (their 2x2 Schur
-   !< complement). For diagonally dominant bands.
+   !< complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n     !< Unknowns.
    real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
@@ -403,7 +404,7 @@ contains
    !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
    !< the columns of x(n-1) and x(n) (one factor), then those two from the last two rows (their 2x2 Schur
-   !< complement). For diagonally dominant bands.
+   !< complement). For diagonally dominant or SPD bands.
    integer(I4P), intent(in)    :: n     !< Unknowns.
    real(R_P),    intent(in)    :: e(n), a(n), b(n), c(n), f(n) !< The band by row, offsets -2, -1, 0, +1, +2.
    real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.

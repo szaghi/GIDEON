@@ -420,4 +420,38 @@ real(R_P), parameter :: FV_BDISS_S2 = -1._R_P/60._R_P
 real(R_P), parameter :: FV_BDISS_S3 = 1._R_P/280._R_P
 !< gideon_fv_face_diss_bl9: gideon_fv_face_bl9 = gideon_fv_face_c10 + FV_BDISS_S4 delta^9 (the right-biased: minus).
 real(R_P), parameter :: FV_BDISS_S4 = -1._R_P/1260._R_P
+!< The compact operators: <NAME>_LEFT the band (the left side), <NAME>_RIGHT the row of the right side.
+!< gideon_fd_d1_p4, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D1_P4_LEFT(0:1) = [1._R_P, 1._R_P/4._R_P]
+!< gideon_fd_d1_p4, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D1_P4_RIGHT(1:1) = [3._R_P/4._R_P]
+!< gideon_fd_d1_p6, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D1_P6_LEFT(0:1) = [1._R_P, 1._R_P/3._R_P]
+!< gideon_fd_d1_p6, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D1_P6_RIGHT(1:2) = [7._R_P/9._R_P, 1._R_P/36._R_P]
+!< gideon_fd_d1_p8, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D1_P8_LEFT(0:2) = [1._R_P, 4._R_P/9._R_P, 1._R_P/36._R_P]
+!< gideon_fd_d1_p8, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D1_P8_RIGHT(1:2) = [20._R_P/27._R_P, 25._R_P/216._R_P]
+!< gideon_fd_d1_p10, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D1_P10_LEFT(0:2) = [1._R_P, 1._R_P/2._R_P, 1._R_P/20._R_P]
+!< gideon_fd_d1_p10, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D1_P10_RIGHT(1:3) = [17._R_P/24._R_P, 101._R_P/600._R_P, 1._R_P/600._R_P]
+!< gideon_fd_d2_p4, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D2_P4_LEFT(0:1) = [1._R_P, 1._R_P/10._R_P]
+!< gideon_fd_d2_p4, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D2_P4_RIGHT(0:1) = [-12._R_P/5._R_P, 6._R_P/5._R_P]
+!< gideon_fd_d2_p6, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D2_P6_LEFT(0:1) = [1._R_P, 2._R_P/11._R_P]
+!< gideon_fd_d2_p6, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D2_P6_RIGHT(0:2) = [-51._R_P/22._R_P, 12._R_P/11._R_P, 3._R_P/44._R_P]
+!< gideon_fd_d2_p8, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D2_P8_LEFT(0:2) = [1._R_P, 344._R_P/1179._R_P, 23._R_P/2358._R_P]
+!< gideon_fd_d2_p8, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D2_P8_RIGHT(0:2) = [-265._R_P/131._R_P, 320._R_P/393._R_P, 155._R_P/786._R_P]
+!< gideon_fd_d2_p10, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_D2_P10_LEFT(0:2) = [1._R_P, 334._R_P/899._R_P, 43._R_P/1798._R_P]
+!< gideon_fd_d2_p10, right side (pairs (m, -m), index 0 the centre)
+real(R_P), parameter :: FD_D2_P10_RIGHT(0:3) = [-14335._R_P/8091._R_P, 1065._R_P/1798._R_P, 519._R_P/1798._R_P, &
+                                                   79._R_P/16182._R_P]
 endmodule gideon_tables

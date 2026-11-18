@@ -23,6 +23,7 @@ use gideon_deconvolution
 use gideon_dissipation
 use gideon_filters
 use gideon_line_solvers
+use gideon_compact
 use gideon_dispatch
 use gideon_operators_3d
 implicit none
