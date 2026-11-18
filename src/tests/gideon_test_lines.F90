@@ -19,6 +19,10 @@ program gideon_test_lines
 !< Compact filters (alpha_f at run time, band [alpha_f, 1, alpha_f]): L1 at alpha_f = 0, 0.3, 0.45 (the leading
 !< residual lerror + alpha_f lerror_alpha), L2, L4, L5 at alpha_f = AF = 0.45; L4 also: the transfer function is real
 !< and in [0, 1] within the tolerance, and the odd-even mode (-1)^i is removed within it.
+!< Centred operators (L4): the symbol at the unknown is real for an even n, imaginary for an odd one (no dissipation).
+!< Upwind-biased face values from cell averages (pbl, pbr): the right side of pbl on mirrored data equals pbr's, bitwise
+!< (one stored row); their flux difference's modified wavenumber is xi F (F the face's response to a mode), and
+!< Im F <= tol for pbl (dissipative for a flow to the right), >= -tol for pbr (L4).
 !< F = (1 + sum|alpha| / s) / s, s = min over xi of |band symbol|: the round-off of the right side (relative eps) and
 !< the solve's backward error (relative eps to the band, on a solution of size sum|w| max|q| / h^n / s), both through
 !< the inverse band, whose norm is 1/s. (The first version of this test, before any run, had F = 1/s: it omitted the
@@ -35,6 +39,7 @@ integer(I4P)            :: fails, checks
 
 fails = 0 ; checks = 0
 call check_rows
+call check_mirrors
 call check_orders
 call check_symbols
 call check_device
@@ -157,6 +162,29 @@ contains
    enddo
    endsubroutine check_rows
 
+   subroutine check_mirrors
+   !< The right side of a left-biased operator on mirrored data is its right twin's, bitwise (cell o -> 1 - o).
+   real(R_P)    :: q(-LWMAX:LWMAX), qm(-LWMAX:LWMAX), r, rm
+   integer(I4P) :: id, o, trial
+   do trial=1, 20
+      call random_number(q) ; q = q - 0.5_R_P
+      qm = 0._R_P
+      do o=-LWMAX + 1, LWMAX
+         qm(o) = q(1 - o)
+      enddo
+      do id=1, NL
+         if (lmirror(id) == 0) cycle
+         call line_rhs(id, qm, 1._R_P, 0._R_P, rm)
+         call line_rhs(lmirror(id), q, 1._R_P, 0._R_P, r)
+         checks = checks + 1
+         if (rm /= r) then
+            fails = fails + 1
+            print '(A,A,2ES24.16)', 'MIRROR ', trim(lname(id)), rm, r
+         endif
+      enddo
+   enddo
+   endsubroutine check_mirrors
+
    subroutine periodic_data(id, n, h, q)
    !< The data of g on a periodic line of n unknowns, the unknown i at X0 + (i-1) h.
    integer(I4P), intent(in)  :: id, n
@@ -252,7 +280,7 @@ contains
    subroutine check_symbols
    !< L4: the line solve of a Fourier mode is the right symbol over the left one.
    real(R_P)    :: qc(NSYM), qs(NSYM), uc(NSYM), us(NSYM), w(NSYM,4), win(-LWMAX:LWMAX), h, xi, rc, rs, lre, lim
-   real(R_P)    :: pre, pim, tol, x, err, mwre, mwim, sfac
+   real(R_P)    :: pre, pim, tol, x, err, mwim, sfac
    integer(I4P) :: id, kk, i, o
    h = 2*PI/NSYM
    do id=1, NL
@@ -302,18 +330,21 @@ contains
                fails = fails + 1
                print '(A,A,A,I0,2ES12.4)', 'TRANSFER ', trim(lname(id)), ' k = ', kk, pre, pim
             endif
-         elseif (lgeom(id) == 1 .and. (ln(id) == 1 .or. ln(id) == 2)) then
-            ! centred: d1's modified wavenumber -i h (pre + i pim) real, d2's -h^2 (pre + i pim) real
-            sfac = h**ln(id)
-            if (ln(id) == 1) then
-               mwre = sfac*pim ; mwim = -sfac*pre
-            else
-               mwre = -sfac*pre ; mwim = -sfac*pim
-            endif
+         elseif (lbias(id) == 'p  ') then
+            ! centred: the symbol at the unknown real for an even n, imaginary for an odd one (no dissipation)
+            mwim = merge(pim, pre, mod(ln(id), 2) == 0)
             checks = checks + 1
-            if (abs(mwim) > tol*sfac) then
+            if (abs(mwim) > tol) then
                fails = fails + 1
                print '(A,A,A,I0,A,ES10.2)', 'DISSIPATIVE ', trim(lname(id)), ' k = ', kk, ': ', mwim
+            endif
+         else
+            ! upwind-biased face values: Im F <= 0 for pbl (dissipative for a flow to the right), >= 0 for pbr
+            sfac = merge(1._R_P, -1._R_P, lbias(id) == 'pbl')
+            checks = checks + 1
+            if (sfac*pim > tol) then
+               fails = fails + 1
+               print '(A,A,A,I0,A,ES10.2)', 'ANTI-DISSIPATIVE ', trim(lname(id)), ' k = ', kk, ': ', pim
             endif
          endif
       enddo

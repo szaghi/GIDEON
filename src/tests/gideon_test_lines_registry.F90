@@ -11,9 +11,9 @@ use gideon
 implicit none
 private
 public :: NL, LWMAX, lname, lgeom, ln, lorder, lhalf, llo, lhi, lleft, lerror, lsumabs, lalpha_free
-public :: lerror_alpha, lsumabs_alpha
+public :: lerror_alpha, lsumabs_alpha, lbias, lmirror
 public :: line_rhs, line_rhs_dev, line_solve
-integer(I4P), parameter :: NL = 13 !< Number of compact operators.
+integer(I4P), parameter :: NL = 29 !< Number of compact operators.
 integer(I4P), parameter :: LWMAX = 8 !< Half-width of the windows the tests pass.
 character(len=24), parameter :: lname(NL) = ['fd_d1_p4                ', 'fd_d1_p6                ', &
                                                'fd_d1_p8                ', 'fd_d1_p10               ', &
@@ -21,27 +21,64 @@ character(len=24), parameter :: lname(NL) = ['fd_d1_p4                ', 'fd_d1_
                                                'fd_d2_p8                ', 'fd_d2_p10               ', &
                                                'fd_filter_p2            ', 'fd_filter_p4            ', &
                                                'fd_filter_p6            ', 'fd_filter_p8            ', &
-                                               'fd_filter_p10           ']
-integer(I4P), parameter :: lgeom(NL) = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-integer(I4P), parameter :: ln(NL) = [1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0]
-integer(I4P), parameter :: lorder(NL) = [4, 6, 8, 10, 4, 6, 8, 10, 2, 4, 6, 8, 10]
-integer(I4P), parameter :: lhalf(NL) = [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1]
-integer(I4P), parameter :: llo(NL) = [-1, -2, -2, -3, -1, -2, -2, -3, -1, -2, -3, -4, -5]
-integer(I4P), parameter :: lhi(NL) = [1, 2, 2, 3, 1, 2, 2, 3, 1, 2, 3, 4, 5]
+                                               'fd_filter_p10           ', 'fd_face_p4              ', &
+                                               'fd_face_p6              ', 'fd_face_p8              ', &
+                                               'fd_face_p10             ', 'fd_face_d1_p4           ', &
+                                               'fd_face_d1_p6           ', 'fd_face_d1_p8           ', &
+                                               'fd_face_d1_p10          ', 'fv_face_p4              ', &
+                                               'fv_face_p6              ', 'fv_face_p8              ', &
+                                               'fv_face_p10             ', 'fv_face_pbr5            ', &
+                                               'fv_face_pbl5            ', 'fv_face_pbr7            ', &
+                                               'fv_face_pbl7            ']
+integer(I4P), parameter :: lgeom(NL) = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, &
+                                          3, 3, 3, 3, 3]
+character(len=3), parameter :: lbias(NL) = ['p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', &
+                                              'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', &
+                                              'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'p  ', 'pbr', 'pbl', &
+                                              'pbr', 'pbl']
+integer(I4P), parameter :: lmirror(NL) = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                                            0, 0, 0, 26, 0, 28]
+integer(I4P), parameter :: ln(NL) = [1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, &
+                                       0, 0, 0, 0]
+integer(I4P), parameter :: lorder(NL) = [4, 6, 8, 10, 4, 6, 8, 10, 2, 4, 6, 8, 10, 4, 6, 8, 10, 4, 6, 8, 10, 4, &
+                                           6, 8, 10, 5, 5, 7, 7]
+integer(I4P), parameter :: lhalf(NL) = [1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, &
+                                          2, 1, 1, 1, 1]
+integer(I4P), parameter :: llo(NL) = [-1, -2, -2, -3, -1, -2, -2, -3, -1, -2, -3, -4, -5, 0, -1, -1, -2, 0, -1, &
+                                        -1, -2, 0, -1, -1, -2, 0, -1, -1, -2]
+integer(I4P), parameter :: lhi(NL) = [1, 2, 2, 3, 1, 2, 2, 3, 1, 2, 3, 4, 5, 1, 2, 2, 3, 1, 2, 2, 3, 1, 2, 2, &
+                                        3, 2, 1, 3, 2]
 logical, parameter :: lalpha_free(NL) = [.false., .false., .false., .false., .false., .false., .false., &
-                                           .false., .true., .true., .true., .true., .true.]
+                                           .false., .true., .true., .true., .true., .true., .false., .false., &
+                                           .false., .false., .false., .false., .false., .false., .false., &
+                                           .false., .false., .false., .false., .false., .false., .false.]
 real(R_P), parameter :: lsumabs(NL) = [1.50000000000000000_R_P*1e+00_R_P, 1.61111111111111116_R_P*1e+00_R_P, &
                                          1.71296296296296302_R_P*1e+00_R_P, 1.75666666666666660_R_P*1e+00_R_P, &
                                          4.79999999999999982_R_P*1e+00_R_P, 4.63636363636363669_R_P*1e+00_R_P, &
                                          4.04580152671755755_R_P*1e+00_R_P, 3.54344333209739215_R_P*1e+00_R_P, &
                                          1.00000000000000000_R_P*1e+00_R_P, 1.25000000000000000_R_P*1e+00_R_P, &
                                          1.37500000000000000_R_P*1e+00_R_P, 1.45312500000000000_R_P*1e+00_R_P, &
-                                         1.50781250000000000_R_P*1e+00_R_P]
+                                         1.50781250000000000_R_P*1e+00_R_P, 1.33333333333333326_R_P*1e+00_R_P, &
+                                         1.60000000000000009_R_P*1e+00_R_P, 1.82857142857142851_R_P*1e+00_R_P, &
+                                         2.03174603174603163_R_P*1e+00_R_P, 2.18181818181818166_R_P*1e+00_R_P, &
+                                         2.21505376344086002_R_P*1e+00_R_P, 2.20447491786460992_R_P*1e+00_R_P, &
+                                         2.17867735998807754_R_P*1e+00_R_P, 1.50000000000000000_R_P*1e+00_R_P, &
+                                         1.66666666666666674_R_P*1e+00_R_P, 1.94444444444444442_R_P*1e+00_R_P, &
+                                         2.10000000000000009_R_P*1e+00_R_P, 1.66666666666666674_R_P*1e+00_R_P, &
+                                         1.66666666666666674_R_P*1e+00_R_P, 1.75833333333333330_R_P*1e+00_R_P, &
+                                         1.75833333333333330_R_P*1e+00_R_P]
 real(R_P), parameter :: lerror(NL) = [1._R_P, -4._R_P, 16._R_P, -144._R_P, 18._R_P/5._R_P, -184._R_P/11._R_P, &
                                         12640._R_P/131._R_P, -891360._R_P/899._R_P, -1._R_P/2._R_P, &
-                                        3._R_P/2._R_P, -45._R_P/4._R_P, 315._R_P/2._R_P, -14175._R_P/4._R_P]
+                                        3._R_P/2._R_P, -45._R_P/4._R_P, 315._R_P/2._R_P, -14175._R_P/4._R_P, &
+                                        1._R_P/4._R_P, -9._R_P/16._R_P, 9._R_P/4._R_P, -225._R_P/16._R_P, &
+                                        17._R_P/44._R_P, -549._R_P/496._R_P, 621441._R_P/102676._R_P, &
+                                        -211299525._R_P/4616464._R_P, 1._R_P/5._R_P, -4._R_P/7._R_P, &
+                                        16._R_P/9._R_P, -144._R_P/11._R_P, -1._R_P/3._R_P, 1._R_P/3._R_P, &
+                                        3._R_P/2._R_P, -3._R_P/2._R_P]
 real(R_P), parameter :: lerror_alpha(NL) = [0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
-                                              1._R_P, -3._R_P, 45._R_P/2._R_P, -315._R_P, 14175._R_P/2._R_P]
+                                              1._R_P, -3._R_P, 45._R_P/2._R_P, -315._R_P, 14175._R_P/2._R_P, &
+                                              0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
+                                              0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P]
 real(R_P), parameter :: lsumabs_alpha(NL) = [0.00000000000000000_R_P*1e+00_R_P, &
                                                0.00000000000000000_R_P*1e+00_R_P, &
                                                0.00000000000000000_R_P*1e+00_R_P, &
@@ -54,7 +91,23 @@ real(R_P), parameter :: lsumabs_alpha(NL) = [0.00000000000000000_R_P*1e+00_R_P, 
                                                2.00000000000000000_R_P*1e+00_R_P, &
                                                2.12500000000000000_R_P*1e+00_R_P, &
                                                2.25000000000000000_R_P*1e+00_R_P, &
-                                               2.35937500000000000_R_P*1e+00_R_P]
+                                               2.35937500000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P, &
+                                               0.00000000000000000_R_P*1e+00_R_P]
 real(R_P), parameter :: lleft(-2:2,NL) = reshape([ &
    0._R_P, FD_D1_P4_LEFT(1), FD_D1_P4_LEFT(0), FD_D1_P4_LEFT(1), 0._R_P, 0._R_P, FD_D1_P6_LEFT(1), &
    FD_D1_P6_LEFT(0), FD_D1_P6_LEFT(1), 0._R_P, FD_D1_P8_LEFT(2), FD_D1_P8_LEFT(1), FD_D1_P8_LEFT(0), &
@@ -64,7 +117,23 @@ real(R_P), parameter :: lleft(-2:2,NL) = reshape([ &
    FD_D2_P8_LEFT(1), FD_D2_P8_LEFT(0), FD_D2_P8_LEFT(1), FD_D2_P8_LEFT(2), FD_D2_P10_LEFT(2), &
    FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(0), FD_D2_P10_LEFT(1), FD_D2_P10_LEFT(2), 0._R_P, 0._R_P, 0._R_P, &
    0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
-   0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P], [5, NL])
+   0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, 0._R_P, &
+   FD_FACE_P4_LEFT(1), FD_FACE_P4_LEFT(0), FD_FACE_P4_LEFT(1), 0._R_P, 0._R_P, FD_FACE_P6_LEFT(1), &
+   FD_FACE_P6_LEFT(0), FD_FACE_P6_LEFT(1), 0._R_P, FD_FACE_P8_LEFT(2), FD_FACE_P8_LEFT(1), &
+   FD_FACE_P8_LEFT(0), FD_FACE_P8_LEFT(1), FD_FACE_P8_LEFT(2), FD_FACE_P10_LEFT(2), &
+   FD_FACE_P10_LEFT(1), FD_FACE_P10_LEFT(0), FD_FACE_P10_LEFT(1), FD_FACE_P10_LEFT(2), 0._R_P, &
+   FD_FACE_D1_P4_LEFT(1), FD_FACE_D1_P4_LEFT(0), FD_FACE_D1_P4_LEFT(1), 0._R_P, 0._R_P, &
+   FD_FACE_D1_P6_LEFT(1), FD_FACE_D1_P6_LEFT(0), FD_FACE_D1_P6_LEFT(1), 0._R_P, FD_FACE_D1_P8_LEFT(2), &
+   FD_FACE_D1_P8_LEFT(1), FD_FACE_D1_P8_LEFT(0), FD_FACE_D1_P8_LEFT(1), FD_FACE_D1_P8_LEFT(2), &
+   FD_FACE_D1_P10_LEFT(2), FD_FACE_D1_P10_LEFT(1), FD_FACE_D1_P10_LEFT(0), FD_FACE_D1_P10_LEFT(1), &
+   FD_FACE_D1_P10_LEFT(2), 0._R_P, FV_FACE_P4_LEFT(1), FV_FACE_P4_LEFT(0), FV_FACE_P4_LEFT(1), 0._R_P, &
+   0._R_P, FV_FACE_P6_LEFT(1), FV_FACE_P6_LEFT(0), FV_FACE_P6_LEFT(1), 0._R_P, FV_FACE_P8_LEFT(2), &
+   FV_FACE_P8_LEFT(1), FV_FACE_P8_LEFT(0), FV_FACE_P8_LEFT(1), FV_FACE_P8_LEFT(2), &
+   FV_FACE_P10_LEFT(2), FV_FACE_P10_LEFT(1), FV_FACE_P10_LEFT(0), FV_FACE_P10_LEFT(1), &
+   FV_FACE_P10_LEFT(2), 0._R_P, FV_FACE_PBR5_LEFT(-1), FV_FACE_PBR5_LEFT(0), FV_FACE_PBR5_LEFT(1), &
+   0._R_P, 0._R_P, FV_FACE_PBL5_LEFT(-1), FV_FACE_PBL5_LEFT(0), FV_FACE_PBL5_LEFT(1), 0._R_P, 0._R_P, &
+   FV_FACE_PBR7_LEFT(-1), FV_FACE_PBR7_LEFT(0), FV_FACE_PBR7_LEFT(1), 0._R_P, 0._R_P, &
+   FV_FACE_PBL7_LEFT(-1), FV_FACE_PBL7_LEFT(0), FV_FACE_PBL7_LEFT(1), 0._R_P], [5, NL])
 contains
    subroutine line_rhs(id, q, ds, af, r)
    !< The right side of operator id at the point of offset 0 of q (af: alpha_f of a filter, else ignored).
@@ -86,6 +155,22 @@ contains
    case(11) ; call gideon_fd_filter_p6(q(-3:3), af, r)
    case(12) ; call gideon_fd_filter_p8(q(-4:4), af, r)
    case(13) ; call gideon_fd_filter_p10(q(-5:5), af, r)
+   case(14) ; call gideon_fd_face_p4(q(0:1), r)
+   case(15) ; call gideon_fd_face_p6(q(-1:2), r)
+   case(16) ; call gideon_fd_face_p8(q(-1:2), r)
+   case(17) ; call gideon_fd_face_p10(q(-2:3), r)
+   case(18) ; call gideon_fd_face_d1_p4(q(0:1), ds, r)
+   case(19) ; call gideon_fd_face_d1_p6(q(-1:2), ds, r)
+   case(20) ; call gideon_fd_face_d1_p8(q(-1:2), ds, r)
+   case(21) ; call gideon_fd_face_d1_p10(q(-2:3), ds, r)
+   case(22) ; call gideon_fv_face_p4(q(0:1), r)
+   case(23) ; call gideon_fv_face_p6(q(-1:2), r)
+   case(24) ; call gideon_fv_face_p8(q(-1:2), r)
+   case(25) ; call gideon_fv_face_p10(q(-2:3), r)
+   case(26) ; call gideon_fv_face_pbr5(q(0:2), r)
+   case(27) ; call gideon_fv_face_pbl5(q(-1:1), r)
+   case(28) ; call gideon_fv_face_pbr7(q(-1:3), r)
+   case(29) ; call gideon_fv_face_pbl7(q(-2:2), r)
    case default ; error stop 'line_rhs: no such operator'
    endselect
    endsubroutine line_rhs
@@ -112,6 +197,22 @@ contains
    case(11) ; call gideon_fd_filter_p6(q(-3:3), af, r)
    case(12) ; call gideon_fd_filter_p8(q(-4:4), af, r)
    case(13) ; call gideon_fd_filter_p10(q(-5:5), af, r)
+   case(14) ; call gideon_fd_face_p4(q(0:1), r)
+   case(15) ; call gideon_fd_face_p6(q(-1:2), r)
+   case(16) ; call gideon_fd_face_p8(q(-1:2), r)
+   case(17) ; call gideon_fd_face_p10(q(-2:3), r)
+   case(18) ; call gideon_fd_face_d1_p4(q(0:1), ds, r)
+   case(19) ; call gideon_fd_face_d1_p6(q(-1:2), ds, r)
+   case(20) ; call gideon_fd_face_d1_p8(q(-1:2), ds, r)
+   case(21) ; call gideon_fd_face_d1_p10(q(-2:3), ds, r)
+   case(22) ; call gideon_fv_face_p4(q(0:1), r)
+   case(23) ; call gideon_fv_face_p6(q(-1:2), r)
+   case(24) ; call gideon_fv_face_p8(q(-1:2), r)
+   case(25) ; call gideon_fv_face_p10(q(-2:3), r)
+   case(26) ; call gideon_fv_face_pbr5(q(0:2), r)
+   case(27) ; call gideon_fv_face_pbl5(q(-1:1), r)
+   case(28) ; call gideon_fv_face_pbr7(q(-1:3), r)
+   case(29) ; call gideon_fv_face_pbl7(q(-2:2), r)
    case default ; r = GIDEON_NAN
    endselect
    endsubroutine line_rhs_dev

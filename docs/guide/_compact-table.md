@@ -15,3 +15,19 @@
 | `gideon_fd_filter_p6` | filtered values at the nodes | point values | centred | 6 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-3:3)` |
 | `gideon_fd_filter_p8` | filtered values at the nodes | point values | centred | 8 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-4:4)` |
 | `gideon_fd_filter_p10` | filtered values at the nodes | point values | centred | 10 | tridiagonal, `[alpha_f, 1, alpha_f]` | `q(-5:5)` |
+| `gideon_fd_face_p4` | values at the faces | point values | centred | 4 | tridiagonal, `FD_FACE_P4_LEFT` | `q(0:1)` |
+| `gideon_fd_face_p6` | values at the faces | point values | centred | 6 | tridiagonal, `FD_FACE_P6_LEFT` | `q(-1:2)` |
+| `gideon_fd_face_p8` | values at the faces | point values | centred | 8 | pentadiagonal, `FD_FACE_P8_LEFT` | `q(-1:2)` |
+| `gideon_fd_face_p10` | values at the faces | point values | centred | 10 | pentadiagonal, `FD_FACE_P10_LEFT` | `q(-2:3)` |
+| `gideon_fd_face_d1_p4` | d1 at the faces | point values | centred | 4 | tridiagonal, `FD_FACE_D1_P4_LEFT` | `q(0:1)` |
+| `gideon_fd_face_d1_p6` | d1 at the faces | point values | centred | 6 | tridiagonal, `FD_FACE_D1_P6_LEFT` | `q(-1:2)` |
+| `gideon_fd_face_d1_p8` | d1 at the faces | point values | centred | 8 | pentadiagonal, `FD_FACE_D1_P8_LEFT` | `q(-1:2)` |
+| `gideon_fd_face_d1_p10` | d1 at the faces | point values | centred | 10 | pentadiagonal, `FD_FACE_D1_P10_LEFT` | `q(-2:3)` |
+| `gideon_fv_face_p4` | values at the faces | cell averages | centred | 4 | tridiagonal, `FV_FACE_P4_LEFT` | `q(0:1)` |
+| `gideon_fv_face_p6` | values at the faces | cell averages | centred | 6 | tridiagonal, `FV_FACE_P6_LEFT` | `q(-1:2)` |
+| `gideon_fv_face_p8` | values at the faces | cell averages | centred | 8 | pentadiagonal, `FV_FACE_P8_LEFT` | `q(-1:2)` |
+| `gideon_fv_face_p10` | values at the faces | cell averages | centred | 10 | pentadiagonal, `FV_FACE_P10_LEFT` | `q(-2:3)` |
+| `gideon_fv_face_pbr5` | values at the faces | cell averages | biased right | 5 | tridiagonal, `FV_FACE_PBR5_LEFT` | `q(0:2)` |
+| `gideon_fv_face_pbl5` | values at the faces | cell averages | biased left | 5 | tridiagonal, `FV_FACE_PBL5_LEFT` | `q(-1:1)` |
+| `gideon_fv_face_pbr7` | values at the faces | cell averages | biased right | 7 | tridiagonal, `FV_FACE_PBR7_LEFT` | `q(-1:3)` |
+| `gideon_fv_face_pbl7` | values at the faces | cell averages | biased left | 7 | tridiagonal, `FV_FACE_PBL7_LEFT` | `q(-2:2)` |

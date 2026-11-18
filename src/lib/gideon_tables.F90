@@ -480,4 +480,66 @@ real(R_P), parameter :: FD_FILTER_P10_RIGHT(0:5) = [193._R_P/256._R_P, 105._R_P/
 !< gideon_fd_filter_p10, right side, the part times alpha_f (pairs (m, -m), index 0 the centre)
 real(R_P), parameter :: FD_FILTER_P10_ALPHA(0:5) = [63._R_P/128._R_P, 151._R_P/256._R_P, 15._R_P/64._R_P, &
                                                        -45._R_P/512._R_P, 5._R_P/256._R_P, -1._R_P/512._R_P]
+!< gideon_fd_face_p4, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_P4_LEFT(0:1) = [1._R_P, 1._R_P/6._R_P]
+!< gideon_fd_face_p4, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_P4_RIGHT(1:1) = [2._R_P/3._R_P]
+!< gideon_fd_face_p6, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_P6_LEFT(0:1) = [1._R_P, 3._R_P/10._R_P]
+!< gideon_fd_face_p6, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_P6_RIGHT(1:2) = [3._R_P/4._R_P, 1._R_P/20._R_P]
+!< gideon_fd_face_p8, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_P8_LEFT(0:2) = [1._R_P, 2._R_P/5._R_P, 1._R_P/70._R_P]
+!< gideon_fd_face_p8, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_P8_RIGHT(1:2) = [4._R_P/5._R_P, 4._R_P/35._R_P]
+!< gideon_fd_face_p10, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_P10_LEFT(0:2) = [1._R_P, 10._R_P/21._R_P, 5._R_P/126._R_P]
+!< gideon_fd_face_p10, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_P10_RIGHT(1:3) = [5._R_P/6._R_P, 5._R_P/28._R_P, 1._R_P/252._R_P]
+!< gideon_fd_face_d1_p4, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_D1_P4_LEFT(0:1) = [1._R_P, 1._R_P/22._R_P]
+!< gideon_fd_face_d1_p4, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_D1_P4_RIGHT(1:1) = [12._R_P/11._R_P]
+!< gideon_fd_face_d1_p6, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_D1_P6_LEFT(0:1) = [1._R_P, 9._R_P/62._R_P]
+!< gideon_fd_face_d1_p6, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_D1_P6_RIGHT(1:2) = [63._R_P/62._R_P, 17._R_P/186._R_P]
+!< gideon_fd_face_d1_p8, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_D1_P8_LEFT(0:2) = [1._R_P, 6114._R_P/25669._R_P, 183._R_P/51338._R_P]
+!< gideon_fd_face_d1_p8, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_D1_P8_RIGHT(1:2) = [23400._R_P/25669._R_P, 14680._R_P/77007._R_P]
+!< gideon_fd_face_d1_p10, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FD_FACE_D1_P10_LEFT(0:2) = [1._R_P, 96850._R_P/288529._R_P, 9675._R_P/577058._R_P]
+!< gideon_fd_face_d1_p10, right side (pairs (m, 1-m))
+real(R_P), parameter :: FD_FACE_D1_P10_RIGHT(1:3) = [683425._R_P/865587._R_P, 505175._R_P/1731174._R_P, &
+                                                        69049._R_P/8655870._R_P]
+!< gideon_fv_face_p4, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FV_FACE_P4_LEFT(0:1) = [1._R_P, 1._R_P/4._R_P]
+!< gideon_fv_face_p4, right side (pairs (m, 1-m))
+real(R_P), parameter :: FV_FACE_P4_RIGHT(1:1) = [3._R_P/4._R_P]
+!< gideon_fv_face_p6, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FV_FACE_P6_LEFT(0:1) = [1._R_P, 1._R_P/3._R_P]
+!< gideon_fv_face_p6, right side (pairs (m, 1-m))
+real(R_P), parameter :: FV_FACE_P6_RIGHT(1:2) = [29._R_P/36._R_P, 1._R_P/36._R_P]
+!< gideon_fv_face_p8, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FV_FACE_P8_LEFT(0:2) = [1._R_P, 4._R_P/9._R_P, 1._R_P/36._R_P]
+!< gideon_fv_face_p8, right side (pairs (m, 1-m))
+real(R_P), parameter :: FV_FACE_P8_RIGHT(1:2) = [185._R_P/216._R_P, 25._R_P/216._R_P]
+!< gideon_fv_face_p10, band (pairs (j, -j), index 0 the diagonal)
+real(R_P), parameter :: FV_FACE_P10_LEFT(0:2) = [1._R_P, 1._R_P/2._R_P, 1._R_P/20._R_P]
+!< gideon_fv_face_p10, right side (pairs (m, 1-m))
+real(R_P), parameter :: FV_FACE_P10_RIGHT(1:3) = [527._R_P/600._R_P, 17._R_P/100._R_P, 1._R_P/600._R_P]
+!< gideon_fv_face_pbr5, band (by offset)
+real(R_P), parameter :: FV_FACE_PBR5_LEFT(-1:1) = [1._R_P/6._R_P, 1._R_P, 1._R_P/2._R_P]
+!< gideon_fv_face_pbr5, right side (by offset)
+real(R_P), parameter :: FV_FACE_PBR5_RIGHT(0:2) = [5._R_P/9._R_P, 19._R_P/18._R_P, 1._R_P/18._R_P]
+!< gideon_fv_face_pbl5, band (by offset)
+real(R_P), parameter :: FV_FACE_PBL5_LEFT(-1:1) = [1._R_P/2._R_P, 1._R_P, 1._R_P/6._R_P]
+!< gideon_fv_face_pbr7, band (by offset)
+real(R_P), parameter :: FV_FACE_PBR7_LEFT(-1:1) = [1._R_P/4._R_P, 1._R_P, 1._R_P/2._R_P]
+!< gideon_fv_face_pbr7, right side (by offset)
+real(R_P), parameter :: FV_FACE_PBR7_RIGHT(-1:3) = [1._R_P/60._R_P, 53._R_P/80._R_P, 239._R_P/240._R_P, &
+                                                       19._R_P/240._R_P, -1._R_P/240._R_P]
+!< gideon_fv_face_pbl7, band (by offset)
+real(R_P), parameter :: FV_FACE_PBL7_LEFT(-1:1) = [1._R_P/2._R_P, 1._R_P, 1._R_P/4._R_P]
 endmodule gideon_tables

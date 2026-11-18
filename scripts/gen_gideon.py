@@ -738,7 +738,12 @@ def line_pairs(geom: str, right: dict[int, Fr]) -> int:
 LELE_RECALLED = {('d1', 4): ([Fr(1, 4)], [Fr(3, 4)]), ('d1', 6): ([Fr(1, 3)], [Fr(7, 9), Fr(1, 36)]),
                  ('d1', 8): ([Fr(4, 9), Fr(1, 36)], [Fr(20, 27), Fr(25, 216)]),
                  ('d1', 10): ([Fr(1, 2), Fr(1, 20)], [Fr(17, 24), Fr(101, 600), Fr(1, 600)]),
-                 ('d2', 4): ([Fr(1, 10)], [Fr(6, 5)]), ('d2', 6): ([Fr(2, 11)], [Fr(12, 11), Fr(3, 44)])}
+                 ('d2', 4): ([Fr(1, 10)], [Fr(6, 5)]), ('d2', 6): ([Fr(2, 11)], [Fr(12, 11), Fr(3, 44)]),
+                 ('face_d1', 4): ([Fr(1, 22)], [Fr(12, 11)]), ('face_d1', 6): ([Fr(9, 62)], [Fr(63, 62), Fr(17, 186)]),
+                 ('face', 4): ([Fr(1, 6)], [Fr(2, 3)]), ('face', 6): ([Fr(3, 10)], [Fr(3, 4), Fr(1, 20)])}
+# Pirozzoli's (2002) compact upwind face value as recalled, (3/10, 6/10, 1/10) on the faces j-1/2, j+1/2, j+3/2 =
+# (1/30, 19/30, 10/30) on the cells j-1, j, j+1; normalised by the diagonal: tier A, as LELE_RECALLED
+PIROZZOLI_RECALLED = ([Fr(1, 2), Fr(1, 6)], [Fr(1, 18), Fr(19, 18), Fr(5, 9)])
 # Gaitonde & Visbal's (2000) filter coefficients as recalled, a_n(alpha_f) = c + d alpha_f, n = 0..N, their right side
 # sum_n a_n/2 (u(i+n) + u(i-n)); tier A, as LELE_RECALLED
 GV_RECALLED = {2: [(Fr(1, 2), Fr(1)), (Fr(1, 2), Fr(1))],
@@ -795,6 +800,35 @@ def build_lines() -> list[LineOp]:
         op.error, op.alpha_error = e0, line_residual('node', 0, {-1: Fr(1), 0: Fr(1), 1: Fr(1)},
                                                      {o: w0[o] + w1[o] for o in offs})(2 * nn) - e0
         out.append(op)
+    # 3.2 compact face value and face first derivative from point values (staggered); 3.3 compact face value from cell
+    # averages, centred: the unknowns at the faces (face 0 between data 0 and 1), the band on faces -hb..hb
+    for geom, n, fam, opname in (('fdface', 0, 'fd_face_p', 'face'), ('fdface', 1, 'fd_facedn_p', 'face_d1'),
+                                 ('fvface', 0, 'fv_face_p', 'face')):
+        data = 'fv' if geom == 'fvface' else 'fd'
+        for hb, s in ((1, 1), (1, 2), (2, 2), (2, 3)):
+            left, right, k = derive_implicit(geom, n, list(range(-hb, hb + 1)), list(range(1 - s, s + 1)))
+            order = k + 1 - n
+            if order != 2 * (hb + s):
+                raise AssertionError(f'compact {geom} n={n} band {hb} s={s}: order {order}, not {2 * (hb + s)}')
+            op = LineOp(f'gideon_{data}_{opname}_p{order}', fam, geom, opname, 'p', n, order, left, right, 1 - s, s,
+                        line_pairs(geom, right))
+            op.error = line_residual(geom, n, left, right)(k + 1)
+            out.append(op)
+    # 3.3 upwind-biased compact face value from cell averages, the linear branch of a compact-WENO hybrid: a
+    # tridiagonal band with both off-diagonals free, 2k + 1 cells, one more on one side; pbr (cells 1-k..k+1) derived,
+    # pbl (cells -k..k) derived and proven its mirror (cell o -> 1 - o, band offset o -> -o)
+    for kk in (1, 2):
+        lr, rr, k = derive_implicit('fvface', 0, [-1, 0, 1], list(range(1 - kk, kk + 2)))
+        ll, rl, kl = derive_implicit('fvface', 0, [-1, 0, 1], list(range(-kk, kk + 1)))
+        if kl != k or any(ll[o] != lr[-o] for o in lr) or any(rl[1 - m] != w for m, w in rr.items()):
+            raise AssertionError(f'compact biased face k={kk}: pbl is not the mirror of pbr')
+        if abs(lr[-1]) + abs(lr[1]) >= 1:
+            raise AssertionError(f'compact biased face k={kk}: the band is not diagonally dominant')
+        for bias, left, right, lo, hi in (('pbr', lr, rr, 1 - kk, kk + 1), ('pbl', ll, rl, -kk, kk)):
+            op = LineOp(f'gideon_fv_face_{bias}{k + 1}', 'fv_face_pb', 'fvface', 'face', bias, 0, k + 1, left, right,
+                        lo, hi, 0)
+            op.error = line_residual('fvface', 0, left, right)(k + 1)
+            out.append(op)
     return out
 
 
@@ -812,7 +846,13 @@ def line_findings(ls: list[LineOp]) -> list[str]:
             else:
                 agree_gv.append(op.name)
             continue
-        rec = LELE_RECALLED.get((op.op, op.order)) if op.family == 'fd_node_p' else None
+        if op.family == 'fv_face_pb':
+            if op.bias == 'pbl' and op.order == 5:
+                mine = ([op.left[-1], op.left[1]], [op.right[m] for m in (-1, 0, 1)])
+                out.append(f'lines: Pirozzoli (2002) as recalled, tier A, {"agrees" if mine == PIROZZOLI_RECALLED else "DIFFERS"}'
+                           f': {op.name} {[[str(v) for v in x] for x in mine]}')
+            continue
+        rec = LELE_RECALLED.get((op.op, op.order)) if op.family in ('fd_node_p', 'fd_face_p', 'fd_facedn_p') else None
         if rec is None:
             continue
         alphas = [op.left[o] for o in range(1, op.half + 1)]
@@ -1678,7 +1718,7 @@ def emit_line_solvers() -> str:
 def line_row_names(op: LineOp) -> tuple[str, str]:
     """Names of a compact operator's band and right row: <NAME>_LEFT, <NAME>_RIGHT."""
     base = op.name.removeprefix('gideon_').upper()
-    return f'{base}_LEFT', f'{base}_RIGHT'
+    return f'{base}_LEFT', f'{base.replace("_PBL", "_PBR")}_RIGHT'  # a left-biased row: its right twin's, mirrored
 
 
 def line_stored_right(op: LineOp) -> tuple[int, int, list[Fr], str]:
@@ -1705,7 +1745,7 @@ def emit_line_tables(ls: list[LineOp]) -> list[str]:
            '!< compact filters: the band [alpha_f, 1, alpha_f] at run time, the right side <NAME>_RIGHT + alpha_f <NAME>_ALPHA.']
     for op in ls:
         ln, rn = line_row_names(op)
-        rows = [(rn, line_stored_right(op), 'right side')]
+        rows = [] if op.bias == 'pbl' else [(rn, line_stored_right(op), 'right side')]
         if op.alpha_row:
             lo, hi, _, layout = line_stored_right(op)
             rows.append((line_alpha_name(op), (lo, hi, [op.alpha_row[m] for m in range(lo, hi + 1)], layout),
@@ -1734,8 +1774,8 @@ def emit_line_kernel(op: LineOp) -> str:
     has_ds = op.n >= 1
     band = (f'the band {ln}' if not op.alpha_row else 'the band [alpha, 1, alpha]')
     L = [f'   pure subroutine {op.name}(q, {"ds, " if has_ds else ""}{"alpha, " if op.alpha_row else ""}r)',
-         f'   !< Right side of the compact {what} at {where[op.geom]}, {bias[op.bias]}, order {op.order}, from',
-         f'   !< {data_doc} q({op.lo}:{op.hi}); the unknowns of the line solve with {band}.',
+         f'   !< Right side of the compact {what} at {where[op.geom]}, {bias[op.bias]},',
+         f'   !< order {op.order}, from {data_doc} q({op.lo}:{op.hi}); the unknowns of the line solve with {band}.',
          f'   real(R_P),    intent(in)  :: q({op.lo}:{op.hi}) !< Data by offset (docs/guide/conventions.md).']
     if has_ds:
         L.append('   real(R_P),    intent(in)  :: ds       !< Grid step.')
@@ -1753,6 +1793,8 @@ def emit_line_kernel(op: LineOp) -> str:
         L += [f'   do m=1, {op.hi}', f'      r = r + {rn}(m)*(q(m) {pm} q(-m))', '   enddo']
     elif op.parity != 0:
         L += ['   r = 0._R_P', f'   do m=1, {op.hi}', f'      r = r + {rn}(m)*(q(m) {pm} q(1-m))', '   enddo']
+    elif op.bias == 'pbl':  # the right-biased twin's row, mirrored: cell m of the twin is cell 1 - m here
+        L += ['   r = 0._R_P', f'   do m={1 - op.hi}, {1 - op.lo}', f'      r = r + {rn}(m)*q(1-m)', '   enddo']
     else:
         L += ['   r = 0._R_P', f'   do m={op.lo}, {op.hi}', f'      r = r + {rn}(m)*q(m)', '   enddo']
     if has_ds:
@@ -1786,7 +1828,7 @@ def emit_lines_registry(ls: list[LineOp]) -> str:
            '!< lleft(o, id): the band by offset, the library\'s constants; lerror: the row\'s residual on x^(K+1) at h = 1.',
            'use penf, only : I4P, R_P', 'use gideon', 'implicit none', 'private',
            'public :: NL, LWMAX, lname, lgeom, ln, lorder, lhalf, llo, lhi, lleft, lerror, lsumabs, lalpha_free',
-           'public :: lerror_alpha, lsumabs_alpha',
+           'public :: lerror_alpha, lsumabs_alpha, lbias, lmirror',
            'public :: line_rhs, line_rhs_dev, line_solve',
            f'integer(I4P), parameter :: NL = {nl} !< Number of compact operators.',
            'integer(I4P), parameter :: LWMAX = 8 !< Half-width of the windows the tests pass.']
@@ -1806,6 +1848,10 @@ def emit_lines_registry(ls: list[LineOp]) -> str:
 
     arr('lname', 'character(len=24)', [f"'{op.name.removeprefix('gideon_'):24s}'" for op in ls])
     arr('lgeom', 'integer(I4P)', [str(LINE_GEOM_CODE[op.geom]) for op in ls])
+    arr('lbias', 'character(len=3)', [f"'{op.bias:3s}'" for op in ls])
+    idx = {op.name: i for i, op in enumerate(ls, 1)}
+    arr('lmirror', 'integer(I4P)', [str(idx[op.name.replace('_pbl', '_pbr')]) if op.bias == 'pbl' else '0'
+                                    for op in ls])
     arr('ln', 'integer(I4P)', [str(op.n) for op in ls])
     arr('lorder', 'integer(I4P)', [str(op.order) for op in ls])
     arr('lhalf', 'integer(I4P)', [str(op.half) for op in ls])
@@ -1989,7 +2035,7 @@ def write_sources(ks: list[Kernel], ls: list[LineOp]) -> list[str]:
     for op in ls:
         ln, rn = line_row_names(op)
         lo, hi, rvals, _ = line_stored_right(op)
-        checks = [(rn, rvals)]
+        checks = [] if op.bias == 'pbl' else [(rn, rvals)]
         checks.append((line_alpha_name(op), [op.alpha_row[m] for m in range(lo, hi + 1)]) if op.alpha_row
                       else (ln, line_stored_left(op)[2]))
         for name, vals in checks:
