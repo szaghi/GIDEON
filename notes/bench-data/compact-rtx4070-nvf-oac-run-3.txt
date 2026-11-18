@@ -1,0 +1,10 @@
+# compact against explicit, OpenACC (GPU), ns per point, median of 20 passes, 65536 lines of 256
+# case                              ns/point   / explicit of equal order
+explicit fd_d1_c6                     0.0629
+compact fd_d1_p6, right side          0.0542       0.862
+compact fd_d1_p6, solve               0.7422      11.808
+compact fd_d1_p6, both                0.8085      12.863
+explicit fd_d1_c8                     0.0726
+compact fd_d1_p8, both                2.3116      31.840
+explicit fd_filter_c8                 0.0453
+compact fd_filter_p8, both            0.8067      17.820

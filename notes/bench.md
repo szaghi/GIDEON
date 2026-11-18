@@ -42,3 +42,35 @@ of the loop. Recorded, not edited. What it means for a caller: an order known at
 a run-time order (PRISM's `fdv_order`) pays 9–22 % over the kernel, and still about 0.45–0.65 of ADAM's run-time-`s`
 path (1.093 x 0.532 on the GPU, 1.183 x 0.425 with gfortran). A faster dispatch would hoist the choice out of the
 loop: one loop per order in the caller, or a procedure pointer chosen once (not device code). Left to the owner.
+
+# Compact operators against explicit ones (roadmap #2, L6; 2026-11-18)
+
+Program `src/bench/gideon_bench_compact.F90` (modes `bench-compact-nvf-oac`, `bench-compact-nvf`, `bench-compact-gnu`),
+raw outputs `notes/bench-data/compact-*-run-{1..4}.txt`. 2^24 points as 65536 periodic lines of 256, `q(i,l)` (a line
+contiguous: the layout the line solvers take). The explicit operator and a compact right side: one kernel call per
+point (`collapse(2)` on the GPU); the solve: one line per call, one line per thread on the GPU. Same method and
+hardware as above (2 warm-ups, the median of 20 passes, four runs, one core pinned with `taskset -c 2`, GPU1).
+
+Budget, stated before the program was written (L6): `gideon_fd_d1_p6` (right side + `gideon_tri_periodic_const`)
+<= 4 x `gideon_fd_d1_c6` on one core, <= 8 x on the GPU.
+
+| Ratio to the explicit operator of equal order (median of four; range) | one core, gfortran | one core, nvfortran | RTX 4070 |
+|---|---|---|---|
+| fd_d1_p6, right side | 0.93 (0.90–0.94) | 0.95 (0.87–0.96) | 0.88 (0.86–0.90) |
+| fd_d1_p6, solve | 5.73 (5.55–5.77) | 6.25 (4.70–6.48) | 11.59 (10.76–11.92) |
+| **fd_d1_p6, both** (budget 4 / 8) | **6.71** (6.64–6.76) | **7.24** (5.64–7.42) | **12.54** (11.45–12.86) |
+| fd_d1_p8, both (pentadiagonal; vs c8) | 10.89 (10.85–10.93) | 9.76 (6.32–11.94) | 31.81 (31.69–32.21) |
+| fd_filter_p8, both (vs explicit filter c8) | 6.72 (6.70–6.73) | 7.56 (7.20–7.59) | 18.17 (17.82–18.80) |
+
+**Budget missed, on both.** The right sides cost what an explicit kernel costs; the excess is the solve. On a core,
+each row of the periodic tridiagonal solve has dependent divisions (two in the factor, one in the resolve of the
+border column) and three sweeps; on the GPU, one thread per line walks addresses 256 apart: the loads of a warp are
+not coalesced. (nvfortran runs 3 and 4 had a slower explicit c6, 1.9 and 1.4 ns against 1.3: the spread of their
+ratios is the explicit operator's, not the solve's.)
+
+Evidence for the remedy (a scratch prototype, not library code): for a constant band the factor depends on the band
+and the line length only, so it can be computed once and every line solved with multiplications alone. On one
+gfortran core it agrees with `gideon_tri_periodic_const` to 9e-16 and brings `p6` (right side + solve) from 11.4 to
+4.7 ns per point, 2.2–2.8 x `c6`: inside the budget. For the GPU, a layout with the line index fastest (coalesced) or
+a parallel solve (cyclic reduction, D6's second option) is the remedy to measure. Both are API decisions left to the
+owner.

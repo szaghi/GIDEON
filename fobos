@@ -38,6 +38,7 @@ modes = static-gnu shared-gnu
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
         tests-gnu-r16
         bench-nvf-oac bench-nvf bench-gnu
+        bench-compact-nvf-oac bench-compact-nvf bench-compact-gnu
         examples-gnu examples-gnu-r4
 
 [common-variables]
@@ -151,6 +152,21 @@ template  = template-bench template-nvf template-release
 [bench-gnu]
 help      = Benchmark against ADAM, gfortran, one CPU core
 template  = template-bench template-gnu template-release
+
+# the compact operators (right side + line solve) against the explicit ones of equal order (#2, L6)
+[bench-compact-nvf-oac]
+help      = Benchmark of the compact operators, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
+template  = template-bench-compact template-nvf template-release
+cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel
+lflags    = -acc -gpu=$GPU_CC
+
+[bench-compact-nvf]
+help      = Benchmark of the compact operators, nvfortran, one CPU core
+template  = template-bench-compact template-nvf template-release
+
+[bench-compact-gnu]
+help      = Benchmark of the compact operators, gfortran, one CPU core
+template  = template-bench-compact template-gnu template-release
 
 # ── documentation examples: every program of docs/examples/src into exe-examples/, run and checked against
 # docs/examples/output by scripts/run_examples.sh ──
@@ -285,6 +301,12 @@ src       = src/lib/ src/bench/ src/tests/
 build_dir = exe-bench/
 target    = src/bench/gideon_bench_adam.F90
 output    = gideon_bench_adam
+
+[template-bench-compact]
+src       = src/lib/ src/bench/
+build_dir = exe-bench/
+target    = src/bench/gideon_bench_compact.F90
+output    = gideon_bench_compact
 
 [template-examples]
 src       = src/lib/ docs/examples/src/
