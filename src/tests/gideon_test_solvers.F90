@@ -11,6 +11,9 @@ program gideon_test_solvers
 !< - residual, computed in RD: max|A x - d| <= 64 eps (||A|| max|x| + max|d|) (backward stability);
 !< - the coefficients outside a bounded line are never read: the variable variant gets NaN there;
 !< - the constant-band variant equals the variable one on the same band, bitwise (one template, the same operations);
+!< - the masked variant (#2 4.1: the constant band, the identity on the rows of a random mask, ~30 %) equals the
+!<   variable one on that band, bitwise, is within the bounds above, and returns on every masked row exactly the value
+!<   given there;
 !< - device = host: NL lines solved in one `!$acc parallel loop`, one line per thread, against the host, within the
 !<   forward bound (the device contracts multiply-adds differently); bitwise in a build without OpenACC.
 use, intrinsic :: iso_fortran_env, only : real64, real128
@@ -27,7 +30,9 @@ integer(I4P), parameter :: NDEV = 64_I4P      !< Their length.
 integer(I4P), parameter :: SIZES_TRI(NSIZES) = [3, 4, 5, 8, 17, 64]
 integer(I4P), parameter :: SIZES_PENTA(NSIZES) = [5, 6, 7, 8, 17, 64]
 real(R_P)    :: bd(-2:2,NMAX), d(NMAX), x(NMAX), xc(NMAX), w1(NMAX), w2(NMAX), w3(NMAX), w4(NMAX), nan
-integer(I4P) :: fails, checks, half, is, n, trial, periodic_case
+real(R_P)    :: bdm(-2:2,NMAX), um(NMAX)
+logical      :: mask(NMAX)
+integer(I4P) :: fails, checks, half, is, n, trial, periodic_case, i
 logical      :: periodic
 integer, allocatable :: seed(:)
 integer      :: ns
@@ -56,6 +61,27 @@ do half=1, 2
             if (any(xc(1:n) /= x(1:n))) then
                fails = fails + 1
                print '(A,I0,A,I0,A,L1)', 'CONST /= VAR: half-band ', half, ', n ', n, ', periodic ', periodic
+            endif
+            ! masked: the constant band, the identity on the masked rows
+            call random_number(um(1:n)) ; mask(1:n) = um(1:n) < 0.3_R_P
+            bdm = bd
+            do i=1, n
+               if (mask(i)) then
+                  bdm(:,i) = 0._R_P ; bdm(0,i) = 1._R_P
+               endif
+            enddo
+            call solve_var(half, n, periodic, bdm, d, x)
+            call solve_masked(half, n, periodic, bd(:,1), mask, d, xc)
+            call check_dense(half, n, periodic, bdm, d, xc)
+            checks = checks + 2
+            if (any(xc(1:n) /= x(1:n))) then
+               fails = fails + 1
+               print '(A,I0,A,I0,A,L1)', 'MASKED /= VAR: half-band ', half, ', n ', n, ', periodic ', periodic
+            endif
+            if (any(mask(1:n) .and. xc(1:n) /= d(1:n))) then
+               fails = fails + 1
+               print '(A,I0,A,I0,A,L1)', 'MASKED ROW NOT THE VALUE GIVEN: half-band ', half, ', n ', n, &
+                                         ', periodic ', periodic
             endif
          enddo
       enddo
@@ -146,6 +172,28 @@ contains
       endif
    endif
    endsubroutine solve_const
+
+   subroutine solve_masked(half, n, periodic, band, mask, d, x)
+   !< The masked solvers: the constant band, the identity on the masked rows.
+   integer(I4P), intent(in)  :: half, n
+   logical,      intent(in)  :: periodic, mask(NMAX)
+   real(R_P),    intent(in)  :: band(-2:2), d(NMAX)
+   real(R_P),    intent(out) :: x(NMAX)
+   x = d
+   if (half == 1) then
+      if (periodic) then
+         call gideon_tri_periodic_masked(n, band(-1), band(0), band(1), mask, x, w1, w2)
+      else
+         call gideon_tri_bounded_masked(n, band(-1), band(0), band(1), mask, x, w1)
+      endif
+   else
+      if (periodic) then
+         call gideon_penta_periodic_masked(n, band(-2), band(-1), band(0), band(1), band(2), mask, x, w1, w2, w3, w4)
+      else
+         call gideon_penta_bounded_masked(n, band(-2), band(-1), band(0), band(1), band(2), mask, x, w1, w2)
+      endif
+   endif
+   endsubroutine solve_masked
 
    subroutine dense(half, n, periodic, bd, a)
    !< The dense matrix of the band (indices modulo n on a periodic line), in RD.

@@ -5,7 +5,9 @@ module gideon_line_solvers
 !<
 !< The solve of a compact (implicit) operator A x = r along one line: the caller computes the right side r
 !< with the operator's per-point kernel, then calls one of these. `_const`: the band a constant (scalars,
-!< the compact operators); `_var`: one coefficient per row (arrays, a band with rows replaced). Every routine
+!< the compact operators); `_var`: one coefficient per row (arrays); `_masked`: the constant band with the
+!< rows where mask(i) replaced by the identity, their right side the value the caller gives (a compact-WENO
+!< hybrid: the compact rows where smooth, the nonlinear face values where flagged; #2 4.1). Every routine
 !< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller's
 !< arrays, no allocation. Elimination without pivoting: stable for diagonally dominant and for symmetric
 !< positive definite bands (every band of GIDEON's is one or the other: gideon_fd_d1_p10's is not diagonally
@@ -15,12 +17,16 @@ implicit none
 private
 public :: gideon_tri_bounded_const
 public :: gideon_tri_bounded_var
+public :: gideon_tri_bounded_masked
 public :: gideon_tri_periodic_const
 public :: gideon_tri_periodic_var
+public :: gideon_tri_periodic_masked
 public :: gideon_penta_bounded_const
 public :: gideon_penta_bounded_var
+public :: gideon_penta_bounded_masked
 public :: gideon_penta_periodic_const
 public :: gideon_penta_periodic_var
+public :: gideon_penta_periodic_masked
 contains
    pure subroutine tri_factor_const(n, a, b, c, d, w)
    !< Bounded tridiagonal solve (Thomas), the factor kept in w for tri_resolve_const: rows 1..n of
@@ -70,6 +76,31 @@ contains
    enddo
    endsubroutine tri_factor_var
 
+   pure subroutine tri_factor_masked(n, a, b, c, mask, d, w)
+   !< Bounded tridiagonal solve (Thomas), the factor kept in w for tri_resolve_masked: rows 1..n of
+   !< a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), a(1) and c(n) never read; d: the right side in, x out.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+   real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch: the factor.
+   real(R_P)                   :: p    !< Pivot.
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   w(1) = merge(0._R_P, c, mask(1))/merge(1._R_P, b, mask(1))
+   d(1) = d(1)/merge(1._R_P, b, mask(1))
+   do i=2, n
+      p = merge(1._R_P, b, mask(i)) - merge(0._R_P, a, mask(i))*w(i-1)
+      w(i) = 0._R_P
+      if (i < n) w(i) = merge(0._R_P, c, mask(i))/p
+      d(i) = (d(i) - merge(0._R_P, a, mask(i))*d(i-1))/p
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - w(i)*d(i+1)
+   enddo
+   endsubroutine tri_factor_masked
+
    pure subroutine tri_resolve_const(n, a, b, c, d, w)
    !< Bounded tridiagonal solve of another right side with the factor w of tri_factor_const (the same operations).
    integer(I4P), intent(in)    :: n    !< Unknowns.
@@ -110,6 +141,27 @@ contains
    enddo
    endsubroutine tri_resolve_var
 
+   pure subroutine tri_resolve_masked(n, a, b, c, mask, d, w)
+   !< Bounded tridiagonal solve of another right side with the factor w of tri_factor_masked (the same operations).
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+   real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(in)    :: w(n) !< The factor.
+   real(R_P)                   :: p    !< Pivot.
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   d(1) = d(1)/merge(1._R_P, b, mask(1))
+   do i=2, n
+      p = merge(1._R_P, b, mask(i)) - merge(0._R_P, a, mask(i))*w(i-1)
+      d(i) = (d(i) - merge(0._R_P, a, mask(i))*d(i-1))/p
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - w(i)*d(i+1)
+   enddo
+   endsubroutine tri_resolve_masked
+
    pure subroutine gideon_tri_bounded_const(n, a, b, c, d, w)
    !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
    !< never read. Thomas' algorithm without pivoting: for diagonally dominant or SPD bands. One line per call.
@@ -133,6 +185,19 @@ contains
    !$omp declare target
    call tri_factor_var(n, a, b, c, d, w)
    endsubroutine gideon_tri_bounded_var
+
+   pure subroutine gideon_tri_bounded_masked(n, a, b, c, mask, d, w)
+   !< Tridiagonal line, bounded: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 2), a(1) and c(n)
+   !< never read. Thomas' algorithm without pivoting: for diagonally dominant or SPD bands. One line per call.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+   real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch.
+   !$acc routine seq
+   !$omp declare target
+   call tri_factor_masked(n, a, b, c, mask, d, w)
+   endsubroutine gideon_tri_bounded_masked
 
    pure subroutine gideon_tri_periodic_const(n, a, b, c, d, w, z)
    !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
@@ -187,6 +252,35 @@ contains
    enddo
    d(n) = xn
    endsubroutine gideon_tri_periodic_var
+
+   pure subroutine gideon_tri_periodic_masked(n, a, b, c, mask, d, w, z)
+   !< Tridiagonal line, periodic: a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) = d(i), i = 1..n (n >= 3), x(0) = x(n),
+   !< x(n+1) = x(1). The interior x(1:n-1) solved as a bounded line for the right side and for the column of x(n)
+   !< (one factor), then x(n) from the last row (its Schur complement). For diagonally dominant or SPD bands.
+   integer(I4P), intent(in)    :: n    !< Unknowns.
+   real(R_P),    intent(in)    :: a, b, c !< The band, offsets -1, 0, +1.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n) !< Right side in, solution out.
+   real(R_P),    intent(out)   :: w(n) !< Scratch.
+   real(R_P),    intent(out)   :: z(n) !< Scratch.
+   real(R_P)                   :: xn   !< x(n).
+   integer(I4P)                :: i    !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      z(i) = 0._R_P
+   enddo
+   z(1) = merge(0._R_P, a, mask(1))
+   z(n-1) = z(n-1) + merge(0._R_P, c, mask(n-1))
+   call tri_factor_masked(n-1, a, b, c, mask, d, w)
+   call tri_resolve_masked(n-1, a, b, c, mask, z, w)
+   xn = (d(n) - merge(0._R_P, a, mask(n))*d(n-1) - merge(0._R_P, c, mask(n))*d(1))/(merge(1._R_P, b, mask(n)) - &
+      merge(0._R_P, a, mask(n))*z(n-1) - merge(0._R_P, c, mask(n))*z(1))
+   do i=1, n-1
+      d(i) = d(i) - z(i)*xn
+   enddo
+   d(n) = xn
+   endsubroutine gideon_tri_periodic_masked
 
    pure subroutine penta_factor_const(n, e, a, b, c, f, d, u1, u2)
    !< Bounded pentadiagonal solve (Gaussian elimination without pivoting), the factor kept in u1, u2 for
@@ -264,6 +358,45 @@ contains
    enddo
    endsubroutine penta_factor_var
 
+   pure subroutine penta_factor_masked(n, e, a, b, c, f, mask, d, u1, u2)
+   !< Bounded pentadiagonal solve (Gaussian elimination without pivoting), the factor kept in u1, u2 for
+   !< penta_resolve_masked: rows 1..n of e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i), the
+   !< coefficients outside the line never read.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+   real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch: the factor, coefficient of x(i+1) in the reduced row i.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch: the factor, coefficient of x(i+2) in the reduced row i.
+   real(R_P)                   :: ap, bp, cp !< The row reduced.
+   integer(I4P)                :: i     !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      ap = 0._R_P ; bp = merge(1._R_P, b, mask(i)) ; cp = 0._R_P
+      if (i < n) cp = merge(0._R_P, c, mask(i))
+      if (i >= 2) ap = merge(0._R_P, a, mask(i))
+      if (i >= 3) then
+         ap = ap - merge(0._R_P, e, mask(i))*u1(i-2)
+         bp = bp - merge(0._R_P, e, mask(i))*u2(i-2)
+         d(i) = d(i) - merge(0._R_P, e, mask(i))*d(i-2)
+      endif
+      if (i >= 2) then
+         bp = bp - ap*u1(i-1)
+         cp = cp - ap*u2(i-1)
+         d(i) = d(i) - ap*d(i-1)
+      endif
+      u1(i) = cp/bp
+      u2(i) = 0._R_P
+      if (i < n-1) u2(i) = merge(0._R_P, f, mask(i))/bp
+      d(i) = d(i)/bp
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - u1(i)*d(i+1)
+      if (i < n-1) d(i) = d(i) - u2(i)*d(i+2)
+   enddo
+   endsubroutine penta_factor_masked
+
    pure subroutine penta_resolve_const(n, e, a, b, c, f, d, u1, u2)
    !< Bounded pentadiagonal solve of another right side with the factor u1, u2 of penta_factor_const.
    integer(I4P), intent(in)    :: n     !< Unknowns.
@@ -326,6 +459,38 @@ contains
    enddo
    endsubroutine penta_resolve_var
 
+   pure subroutine penta_resolve_masked(n, e, a, b, c, f, mask, d, u1, u2)
+   !< Bounded pentadiagonal solve of another right side with the factor u1, u2 of penta_factor_masked.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+   real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(in)    :: u1(n) !< The factor.
+   real(R_P),    intent(in)    :: u2(n) !< The factor.
+   real(R_P)                   :: ap, bp !< The row reduced.
+   integer(I4P)                :: i     !< Counter.
+   !$acc routine seq
+   !$omp declare target
+   do i=1, n
+      ap = 0._R_P ; bp = merge(1._R_P, b, mask(i))
+      if (i >= 2) ap = merge(0._R_P, a, mask(i))
+      if (i >= 3) then
+         ap = ap - merge(0._R_P, e, mask(i))*u1(i-2)
+         bp = bp - merge(0._R_P, e, mask(i))*u2(i-2)
+         d(i) = d(i) - merge(0._R_P, e, mask(i))*d(i-2)
+      endif
+      if (i >= 2) then
+         bp = bp - ap*u1(i-1)
+         d(i) = d(i) - ap*d(i-1)
+      endif
+      d(i) = d(i)/bp
+   enddo
+   do i=n-1, 1, -1
+      d(i) = d(i) - u1(i)*d(i+1)
+      if (i < n-1) d(i) = d(i) - u2(i)*d(i+2)
+   enddo
+   endsubroutine penta_resolve_masked
+
    pure subroutine gideon_penta_bounded_const(n, e, a, b, c, f, d, u1, u2)
    !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
@@ -354,6 +519,21 @@ contains
    call penta_factor_var(n, e, a, b, c, f, d, u1, u2)
    endsubroutine gideon_penta_bounded_var
 
+   pure subroutine gideon_penta_bounded_masked(n, e, a, b, c, f, mask, d, u1, u2)
+   !< Pentadiagonal line, bounded: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
+   !< i = 1..n (n >= 3), the coefficients reaching outside the line never read. Gaussian elimination without
+   !< pivoting: for diagonally dominant or SPD bands. One line per call.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+   real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch.
+   !$acc routine seq
+   !$omp declare target
+   call penta_factor_masked(n, e, a, b, c, f, mask, d, u1, u2)
+   endsubroutine gideon_penta_bounded_masked
+
    pure subroutine gideon_penta_periodic_const(n, e, a, b, c, f, d, u1, u2, z1, z2)
    !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
    !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
@@ -366,7 +546,7 @@ contains
    real(R_P),    intent(out)   :: u2(n) !< Scratch.
    real(R_P),    intent(out)   :: z1(n) !< Scratch.
    real(R_P),    intent(out)   :: z2(n) !< Scratch.
-   real(R_P)                   :: s11, s12, s21, s22, r1, r2, det, x1, x2 !< The border's 2x2 system.
+   real(R_P)                   :: s11, s12, s21, s22, r1, r2, p21, x1, x2 !< The border's 2x2 system.
    integer(I4P)                :: i, m  !< Counter, interior unknowns.
    !$acc routine seq
    !$omp declare target
@@ -390,9 +570,11 @@ contains
    s12 = c - (e*z2(m-1) + a*z2(m) + f*z2(1))
    s21 = a - (e*z1(m) + c*z1(1) + f*z1(2))
    s22 = b - (e*z2(m) + c*z2(1) + f*z2(2))
-   det = s11*s22 - s12*s21
-   x1 = (r1*s22 - s12*r2)/det
-   x2 = (s11*r2 - s21*r1)/det
+   ! elimination on the border, the first row the pivot (the Schur complement of a dominant band is dominant): a
+   ! border row replaced by the identity returns its value exactly (Cramer's rule would round it)
+   p21 = s21/s11
+   x2 = (r2 - p21*r1)/(s22 - p21*s12)
+   x1 = (r1 - s12*x2)/s11
    do i=1, m
       d(i) = d(i) - z1(i)*x1 - z2(i)*x2
    enddo
@@ -412,7 +594,7 @@ contains
    real(R_P),    intent(out)   :: u2(n) !< Scratch.
    real(R_P),    intent(out)   :: z1(n) !< Scratch.
    real(R_P),    intent(out)   :: z2(n) !< Scratch.
-   real(R_P)                   :: s11, s12, s21, s22, r1, r2, det, x1, x2 !< The border's 2x2 system.
+   real(R_P)                   :: s11, s12, s21, s22, r1, r2, p21, x1, x2 !< The border's 2x2 system.
    integer(I4P)                :: i, m  !< Counter, interior unknowns.
    !$acc routine seq
    !$omp declare target
@@ -436,14 +618,70 @@ contains
    s12 = c(n-1) - (e(n-1)*z2(m-1) + a(n-1)*z2(m) + f(n-1)*z2(1))
    s21 = a(n) - (e(n)*z1(m) + c(n)*z1(1) + f(n)*z1(2))
    s22 = b(n) - (e(n)*z2(m) + c(n)*z2(1) + f(n)*z2(2))
-   det = s11*s22 - s12*s21
-   x1 = (r1*s22 - s12*r2)/det
-   x2 = (s11*r2 - s21*r1)/det
+   ! elimination on the border, the first row the pivot (the Schur complement of a dominant band is dominant): a
+   ! border row replaced by the identity returns its value exactly (Cramer's rule would round it)
+   p21 = s21/s11
+   x2 = (r2 - p21*r1)/(s22 - p21*s12)
+   x1 = (r1 - s12*x2)/s11
    do i=1, m
       d(i) = d(i) - z1(i)*x1 - z2(i)*x2
    enddo
    d(n-1) = x1
    d(n) = x2
    endsubroutine gideon_penta_periodic_var
+
+   pure subroutine gideon_penta_periodic_masked(n, e, a, b, c, f, mask, d, u1, u2, z1, z2)
+   !< Pentadiagonal line, periodic: e(i) x(i-2) + a(i) x(i-1) + b(i) x(i) + c(i) x(i+1) + f(i) x(i+2) = d(i),
+   !< i = 1..n (n >= 5), indices modulo n. The interior x(1:n-2) solved as a bounded line for the right side and for
+   !< the columns of x(n-1) and x(n) (one factor), then those two from the last two rows (their 2x2 Schur
+   !< complement). For diagonally dominant or SPD bands.
+   integer(I4P), intent(in)    :: n     !< Unknowns.
+   real(R_P),    intent(in)    :: e, a, b, c, f !< The band, offsets -2, -1, 0, +1, +2.
+   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: the value given).
+   real(R_P),    intent(inout) :: d(n)  !< Right side in, solution out.
+   real(R_P),    intent(out)   :: u1(n) !< Scratch.
+   real(R_P),    intent(out)   :: u2(n) !< Scratch.
+   real(R_P),    intent(out)   :: z1(n) !< Scratch.
+   real(R_P),    intent(out)   :: z2(n) !< Scratch.
+   real(R_P)                   :: s11, s12, s21, s22, r1, r2, p21, x1, x2 !< The border's 2x2 system.
+   integer(I4P)                :: i, m  !< Counter, interior unknowns.
+   !$acc routine seq
+   !$omp declare target
+   m = n - 2
+   do i=1, n
+      z1(i) = 0._R_P ; z2(i) = 0._R_P
+   enddo
+   z1(1) = merge(0._R_P, e, mask(1))             ! row 1 reaches x(-1) = x(n-1) and x(0) = x(n)
+   z2(1) = merge(0._R_P, a, mask(1))
+   z2(2) = z2(2) + merge(0._R_P, e, mask(2))     ! row 2 reaches x(0) = x(n)
+   z1(m-1) = z1(m-1) + merge(0._R_P, f, mask(m-1)) ! row n-3 reaches x(n-1)
+   z1(m) = z1(m) + merge(0._R_P, c, mask(m))     ! row n-2 reaches x(n-1) and x(n)
+   z2(m) = z2(m) + merge(0._R_P, f, mask(m))
+   call penta_factor_masked(m, e, a, b, c, f, mask, d, u1, u2)
+   call penta_resolve_masked(m, e, a, b, c, f, mask, z1, u1, u2)
+   call penta_resolve_masked(m, e, a, b, c, f, mask, z2, u1, u2)
+   ! row n-1 reaches x(n-3), x(n-2) and x(n+1) = x(1); row n reaches x(n-2), x(n+1) = x(1) and x(n+2) = x(2)
+   r1 = d(n-1) - (merge(0._R_P, e, mask(n-1))*d(m-1) + merge(0._R_P, a, mask(n-1))*d(m) + merge(0._R_P, f, &
+      mask(n-1))*d(1))
+   r2 = d(n) - (merge(0._R_P, e, mask(n))*d(m) + merge(0._R_P, c, mask(n))*d(1) + merge(0._R_P, f, mask(n))*d(2))
+   s11 = merge(1._R_P, b, mask(n-1)) - (merge(0._R_P, e, mask(n-1))*z1(m-1) + merge(0._R_P, a, mask(n-1))*z1(m) + &
+      merge(0._R_P, f, mask(n-1))*z1(1))
+   s12 = merge(0._R_P, c, mask(n-1)) - (merge(0._R_P, e, mask(n-1))*z2(m-1) + merge(0._R_P, a, mask(n-1))*z2(m) + &
+      merge(0._R_P, f, mask(n-1))*z2(1))
+   s21 = merge(0._R_P, a, mask(n)) - (merge(0._R_P, e, mask(n))*z1(m) + merge(0._R_P, c, mask(n))*z1(1) + &
+      merge(0._R_P, f, mask(n))*z1(2))
+   s22 = merge(1._R_P, b, mask(n)) - (merge(0._R_P, e, mask(n))*z2(m) + merge(0._R_P, c, mask(n))*z2(1) + &
+      merge(0._R_P, f, mask(n))*z2(2))
+   ! elimination on the border, the first row the pivot (the Schur complement of a dominant band is dominant): a
+   ! border row replaced by the identity returns its value exactly (Cramer's rule would round it)
+   p21 = s21/s11
+   x2 = (r2 - p21*r1)/(s22 - p21*s12)
+   x1 = (r1 - s12*x2)/s11
+   do i=1, m
+      d(i) = d(i) - z1(i)*x1 - z2(i)*x2
+   enddo
+   d(n-1) = x1
+   d(n) = x2
+   endsubroutine gideon_penta_periodic_masked
 
 endmodule gideon_line_solvers

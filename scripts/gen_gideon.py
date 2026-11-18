@@ -1650,7 +1650,7 @@ SOLVER_TEMPLATES = {
    real(R_P),    intent(out)   :: u2(n) !< Scratch.
    real(R_P),    intent(out)   :: z1(n) !< Scratch.
    real(R_P),    intent(out)   :: z2(n) !< Scratch.
-   real(R_P)                   :: s11, s12, s21, s22, r1, r2, det, x1, x2 !< The border's 2x2 system.
+   real(R_P)                   :: s11, s12, s21, s22, r1, r2, p21, x1, x2 !< The border's 2x2 system.
    integer(I4P)                :: i, m  !< Counter, interior unknowns.
    !$acc routine seq
    !$omp declare target
@@ -1674,9 +1674,11 @@ SOLVER_TEMPLATES = {
    s12 = $c(n-1) - ($e(n-1)*z2(m-1) + $a(n-1)*z2(m) + $f(n-1)*z2(1))
    s21 = $a(n) - ($e(n)*z1(m) + $c(n)*z1(1) + $f(n)*z1(2))
    s22 = $b(n) - ($e(n)*z2(m) + $c(n)*z2(1) + $f(n)*z2(2))
-   det = s11*s22 - s12*s21
-   x1 = (r1*s22 - s12*r2)/det
-   x2 = (s11*r2 - s21*r1)/det
+   ! elimination on the border, the first row the pivot (the Schur complement of a dominant band is dominant): a
+   ! border row replaced by the identity returns its value exactly (Cramer's rule would round it)
+   p21 = s21/s11
+   x2 = (r2 - p21*r1)/(s22 - p21*s12)
+   x1 = (r1 - s12*x2)/s11
    do i=1, m
       d(i) = d(i) - z1(i)*x1 - z2(i)*x2
    enddo
@@ -1685,32 +1687,59 @@ SOLVER_TEMPLATES = {
 }
 
 
+def wrap_fortran(text: str, width: int = 118) -> str:
+    """Break statements longer than width at a space, with free-form continuation lines (comments untouched)."""
+    out = []
+    for line in text.split('\n'):
+        indent = ' ' * (len(line) - len(line.lstrip()) + 3)
+        while len(line) > width and not line.lstrip().startswith('!'):
+            cut = line.rfind(' ', 0, width - 2)
+            out.append(line[:cut] + ' &')
+            line = indent + line[cut + 1:]
+        out.append(line)
+    return '\n'.join(out)
+
+
 def emit_line_solvers() -> str:
     """The line solvers: tridiagonal and pentadiagonal, bounded and periodic, constant band and variable coefficients."""
     title = '!< GIDEON, the line solvers: tridiagonal and pentadiagonal, bounded and periodic lines.'
     out = [HEADER + title, 'module gideon_line_solvers', title, '!<',
            '!< The solve of a compact (implicit) operator A x = r along one line: the caller computes the right side r',
            '!< with the operator\'s per-point kernel, then calls one of these. `_const`: the band a constant (scalars,',
-           '!< the compact operators); `_var`: one coefficient per row (arrays, a band with rows replaced). Every routine',
+           '!< the compact operators); `_var`: one coefficient per row (arrays); `_masked`: the constant band with the',
+           '!< rows where mask(i) replaced by the identity, their right side the value the caller gives (a compact-WENO',
+           '!< hybrid: the compact rows where smooth, the nonlinear face values where flagged; #2 4.1). Every routine',
            '!< is pure and device-callable: one line per call (on a GPU, one line per thread), the scratch the caller\'s',
            '!< arrays, no allocation. Elimination without pivoting: stable for diagonally dominant and for symmetric',
            '!< positive definite bands (every band of GIDEON\'s is one or the other: gideon_fd_d1_p10\'s is not diagonally',
            '!< dominant, its symbol 1 + cos(xi) + cos(2 xi)/10 >= 1/10). Generated from one template for both variants.',
            'use penf, only : I4P, R_P', 'implicit none', 'private']
     pub = [n for n in SOLVER_TEMPLATES if n.startswith('gideon_')]
-    out += [f'public :: {n}{v}' for n in pub for v in ('_const', '_var')]
+    variants = ('_const', '_var', '_masked')
+    out += [f'public :: {n}{v}' for n in pub for v in variants]
     out.append('contains')
+    coef_re = r'\$([a-f])\(([^()]*(?:\([^()]*\))?[^()]*)\)'
     for name, (args, coefs, body) in SOLVER_TEMPLATES.items():
-        for v in ('_const', '_var'):
-            decl = (f'   real(R_P),    intent(in)    :: {", ".join(coefs)} !< The band, offsets '
-                    f'{"-1, 0, +1" if coefs == "abc" else "-2, -1, 0, +1, +2"}.' if v == '_const' else
-                    f'   real(R_P),    intent(in)    :: {", ".join(c + "(n)" for c in coefs)} !< The band by row, offsets '
-                    f'{"-1, 0, +1" if coefs == "abc" else "-2, -1, 0, +1, +2"}.')
+        for v in variants:
+            offs = '-1, 0, +1' if coefs == 'abc' else '-2, -1, 0, +1, +2'
+            if v == '_var':
+                decl = f'   real(R_P),    intent(in)    :: {", ".join(c + "(n)" for c in coefs)} !< The band by row, offsets {offs}.'
+            else:
+                decl = f'   real(R_P),    intent(in)    :: {", ".join(coefs)} !< The band, offsets {offs}.'
+            if v == '_masked':
+                decl += ('\n   logical,      intent(in)    :: mask(n) !< Rows replaced by the identity (their right side: '
+                         'the value given).')
             text = body.replace('{DECL}', decl).replace('{V}', v)
-            text = re.sub(r'\$([a-f])\(([^()]*(?:\([^()]*\))?[^()]*)\)', (lambda m: f'{m.group(1)}({m.group(2)})')
-                          if v == '_var' else (lambda m: m.group(1)), text)
-            kind = 'pure subroutine'
-            out += [f'   {kind} {name}{v}{args}', text, f'   endsubroutine {name}{v}', '']
+            if v == '_var':
+                text = re.sub(coef_re, lambda m: f'{m.group(1)}({m.group(2)})', text)
+            elif v == '_const':
+                text = re.sub(coef_re, lambda m: m.group(1), text)
+            else:  # the constant band, the identity on the masked rows
+                text = re.sub(coef_re, lambda m: (f'merge({"1" if m.group(1) == "b" else "0"}._R_P, {m.group(1)}, '
+                                                   f'mask({m.group(2)}))'), text)
+                text = re.sub(r'(call \w+_masked\([^,]+, (?:e, )?a, b, c, (?:f, )?)', r'\1mask, ', text)
+            a = args if v != '_masked' else args.replace(', d, ', ', mask, d, ')
+            out += [f'   pure subroutine {name}{v}{a}', wrap_fortran(text), f'   endsubroutine {name}{v}', '']
     out.append('endmodule gideon_line_solvers')
     return '\n'.join(out) + '\n'
 
