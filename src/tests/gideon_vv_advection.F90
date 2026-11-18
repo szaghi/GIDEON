@@ -2,7 +2,9 @@
 program gideon_vv_advection
 !< GIDEON verification (A3): linear advection of a wave packet with centred and upwind first derivatives.
 !<
-!< u_t + u_x = 0 on the periodic [0, 1), N = 128 cells, cell averages advanced by RK4 at CFL 0.25 for two periods,
+!< u_t + u_x = 0 on the periodic [0, 1), N = 128 cells, cell averages advanced by RK4 at CFL 0.25 for two periods (the
+!< time integrator is SELAH's: the stepper with SCHEME_RK4 in the Butcher form, on the rank-1 field; GIDEON is the
+!< source of the space operators, SELAH of the time operators, SELAH issue #2),
 !< the derivative du/dx averaged over each cell given by a GIDEON kernel: gideon_fv_d1_c2 and gideon_fv_d1_c4
 !< (centred), gideon_fv_d1_ul2 (upwind for this flow, the stencil on the left side). The packet
 !< u0 = exp(-((x - 1/2)/0.07)^2) sin(16 pi x) has its carrier at xi = k h = pi/8: there the centred kernels disperse
@@ -21,15 +23,20 @@ program gideon_vv_advection
 !< not a re-implementation.
 use penf, only : I4P, R8P, R_P
 use gideon
+use selah, only : stepper, box, box_interior, SCHEME_RK4, FORM_BUTCHER
 implicit none
 integer(I4P), parameter :: N = 128, G = 5, NK = 3, PERIODS = 2, EVERY = 8
 real(R_P),    parameter :: CFL = 0.25_R_P, H = 1._R_P/N, DT = CFL*H
 real(R_P),    parameter :: X0 = 0.5_R_P, SIGMA = 0.07_R_P
 real(R_P),    parameter :: PI = 3.14159265358979323846264338327950288_R_P
 character(*), parameter :: NAMES(NK) = ['fv_d1_c2 ', 'fv_d1_c4 ', 'fv_d1_ul2']
-real(R_P)    :: u(N), u0(N), k1(N), k2(N), k3(N), k4(N), ex(N), xc(N)
+real(R_P), target  :: u(N)
+real(R_P)          :: u0(N), ex(N), xc(N)
+real(R_P), pointer :: us(:), r(:)
+type(stepper)      :: st
+type(box)          :: bx
 real(R_P)    :: mass0, energy0, energy, energy_prev, err(NK), energy_end(NK), t
-integer(I4P) :: kk, step, nsteps, i, fails, uf
+integer(I4P) :: kk, step, nsteps, i, fails, uf, k
 character(4096) :: report_dir
 integer      :: rlen
 logical      :: report
@@ -43,6 +50,9 @@ enddo
 call averages(0._R_P, u0)
 mass0 = sum(u0) ; energy0 = sum(u0**2)
 nsteps = nint(PERIODS/DT)
+! the field u(1:N) with no ghost cells (the residual wraps the indices): its box is the whole field
+bx = box_interior(lb=[1_I4P], ub=[N], ngc=0_I4P, components=.false.)
+call st%initialize(SCHEME_RK4, FORM_BUTCHER, lb=[1_I4P], ub=[N], components=.false.)
 do kk=1, NK
    u = u0
    energy_prev = energy0
@@ -54,11 +64,19 @@ do kk=1, NK
       write(uf, '(*(1X,ES24.16E3))') real(t, R8P), real(u, R8P), real(u0, R8P)
    endif
    do step=1, nsteps
-      call rhs(kk, u, k1)
-      call rhs(kk, u + 0.5_R_P*DT*k1, k2)
-      call rhs(kk, u + 0.5_R_P*DT*k2, k3)
-      call rhs(kk, u + DT*k3, k4)
-      u = u + DT*(k1 + 2*k2 + 2*k3 + k4)/6
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, DT, u)
+         if (st%stage_state_is_q(k)) then
+            us => u
+         else
+            call st%stage_state_view(us)
+         endif
+         call st%rhs_register_view(r)
+         call rhs(kk, us, r)
+         call st%end_stage(k, bx, DT, u)
+      enddo
+      call st%finish_step(bx, DT, u)
       t = step*DT
       energy = sum(u**2)
       if (energy > energy_prev*(1 + 1.e3_R_P*epsilon(1._R_P))) then
@@ -92,6 +110,7 @@ if (err(2) >= err(1)) then
    fails = fails + 1
    print '(A)', 'FOURTH ORDER NOT BETTER THAN SECOND'
 endif
+call st%destroy
 if (fails > 0) error stop 'gideon_vv_advection: failed'
 print '(A)', 'gideon_vv_advection: ok'
 contains

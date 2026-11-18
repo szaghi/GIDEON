@@ -140,6 +140,9 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $FP_NVF
 lflags    = -acc -gpu=$GPU_CC
+# gideon_vv_advection is a host program whose time integrator is SELAH's: SELAH's kernels compiled with -acc need its
+# device build (-DDEV_OAC, device registers), which a host field cannot use; the device tests are gideon_test_device
+exclude   = src/tests/gideon_vv_advection.F90
 
 [tests-intel]
 help      = Tests, ifx, optimised (fortran-toolchains matrix: family intel)
@@ -250,6 +253,9 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, 
 template  = template-r4-tests template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $FP_NVF
 lflags    = -acc -gpu=$GPU_CC
+# the R4P exclusions (ADAM's code) and gideon_vv_advection (as tests-nvf-oac)
+exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
+            src/tests/gideon_vv_advection.F90
 
 [tests-intel-r4]
 help      = Tests, ifx, optimised, single precision (R_P = R4P)
