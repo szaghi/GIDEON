@@ -1,0 +1,14 @@
+# compact against explicit, one CPU core, ns per point, median of 20 passes, 65536 lines of 256
+# case                                  ns/point   / explicit of equal order
+explicit fd_d1_c6                         1.7007
+compact fd_d1_p6, right side              1.6160       0.950
+compact fd_d1_p6, solve                  10.0333       5.900
+compact fd_d1_p6, both                   11.6802       6.868
+explicit fd_d1_c8                         1.9309
+compact fd_d1_p8, both                   20.1382      10.429
+explicit fd_filter_c8                     1.7529
+compact fd_filter_p8, both               11.7459       6.701
+compact fd_d1_p6, factored solve          3.3469       1.968
+compact fd_d1_p6, both, factored          5.0050       2.943
+compact fd_d1_p8, both, factored          5.4603       2.828
+compact fd_filter_p8, both, fact          5.4845       3.129

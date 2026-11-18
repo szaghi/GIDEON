@@ -74,3 +74,26 @@ gfortran core it agrees with `gideon_tri_periodic_const` to 9e-16 and brings `p6
 4.7 ns per point, 2.2–2.8 x `c6`: inside the budget. For the GPU, a layout with the line index fastest (coalesced) or
 a parallel solve (cyclic reduction, D6's second option) is the remedy to measure. Both are API decisions left to the
 owner.
+
+## The band factored once (roadmap #2, decision 4a; 2026-11-18)
+
+`gideon_bench_compact` cases 9–12: the same solves with the band factored once (`gideon_{tri,penta}_periodic_factor`,
+outside the timed loop: once per band and line length) and every line solved by `gideon_{tri,penta}_periodic_solve`,
+multiplications only. Raw outputs `notes/bench-data/compact2-*-run-{1..4}.txt` (cases 1–8 measured again in the same
+runs; the earlier `compact-*` files are kept). In the gfortran runs the label of case 12 prints cut at 32 characters
+(the constructor's length; fixed after the runs, the numbers are unaffected).
+
+| Ratio to the explicit operator of equal order (median of four; range) | one core, gfortran | one core, nvfortran | RTX 4070 |
+|---|---|---|---|
+| fd_d1_p6, solve with `_const` | 5.86 (5.56–6.21) | 5.76 (5.50–6.87) | 11.80 (11.16–11.98) |
+| fd_d1_p6, factored solve | 1.96 (1.93–1.99) | 1.70 (1.47–1.86) | 3.95 (3.75–4.07) |
+| fd_d1_p6, both with `_const` | 6.85 (6.46–6.97) | 6.79 (6.48–8.35) | 12.68 (12.01–12.82) |
+| **fd_d1_p6, both, factored** (budget 4 / 8) | **2.96** (2.91–3.05) | **2.71** (2.38–2.92) | **4.81** (4.54–4.95) |
+| fd_d1_p8, both with `_const` / factored | 10.30 / 2.81 | 10.06 / 2.87 | 33.06 / 3.36 |
+| fd_filter_p8, both with `_const` / factored | 6.56 / 2.96 | 6.93 / 2.75 | 19.08 / 7.39 |
+
+**Budget met, on both**, with the factored solve: p6 = 2.71–2.96 x c6 on one core, 4.81 x on the GPU. The factor
+removes every division from the per-line work and, on the GPU, every read of a per-line scratch array (one factor in
+the cache serves all threads): the pentadiagonal p8 gains most, 33 -> 3.4 x. The loads of the line itself are still
+not coalesced (one line per thread, a line contiguous); a line-index-fastest layout is the next measurement, with no
+budget pending.
