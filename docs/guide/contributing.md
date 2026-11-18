@@ -28,6 +28,9 @@ is welcome. The project follows a KISS (Keep It Simple and Stupid) philosophy.
    bash scripts/run_examples.sh                                        # the code of the tutorials and the cookbook
    python3 scripts/check_docs.py                                       # the pages against the code
    ```
+   The tests need `fobis fetch` to have cloned SELAH and FUNDAL too. A test that advances a solution in time takes
+   its integrator from SELAH, never a hand-written step: GIDEON is the source of the space operators, SELAH of the
+   time operators (SELAH issue #2).
    A change of the generator or the kernels regenerates the sources (`python3 scripts/gen_gideon.py`) and the pages'
    data (`scripts/run_report.sh`, [Verification](/verification/#from-the-data-to-the-pages)); a new kernel family also
    a golden file version ([Add an operator](/cookbook/new-operator)).

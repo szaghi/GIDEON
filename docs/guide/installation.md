@@ -1,7 +1,9 @@
 # Installation
 
 GIDEON is a Fortran 2018 library with one dependency, [PENF](https://github.com/szaghi/PENF) (the kinds), compiled
-from its sources by the same build. Three ways to build it: FoBiS (the project's build tool, every mode below), fpm,
+from its sources by the same build. Its tests have two more: [SELAH](https://github.com/szaghi/SELAH), the source of
+the time integrators a test needs (GIDEON implements space operators only), and [FUNDAL](https://github.com/szaghi/FUNDAL),
+which SELAH uses. The library modes do not compile them. Three ways to build it: FoBiS (the project's build tool, every mode below), fpm,
 or the installer script of a release.
 
 ## Toolchains
@@ -22,7 +24,7 @@ hand.
 
 ```bash
 git clone https://github.com/szaghi/GIDEON && cd GIDEON
-fobis fetch                        # PENF, into src/third_party/
+fobis fetch                        # PENF, and for the tests FUNDAL and SELAH, into src/third_party/
 fobis build                        # the first mode, static-gnu: lib/gnu/static/libgideon.a
 fobis build --mode tests-gnu && bash scripts/run_tests.sh
 ```
@@ -59,7 +61,9 @@ Every program of `src/tests/` into `exe/` (`exe-r4/`, `exe-r16/` for the other k
 | `tests-intel` | the suite, ifx (CI matrix: family intel) | `-O3 -standard-semantics -std18 -fp-model=precise` |
 | `tests-intel-debug` | all run-time checks | debug profile: `-O0 -g -check all -traceback -warn all`, `-fp-model=precise` |
 | `tests-gnu-r4`, `tests-gnu-debug-r4`, `tests-nvf-r4`, `tests-nvf-oac-r4`, `tests-intel-r4` | the same in single precision, into `exe-r4/` (without the ADAM comparison) | `-D_R_P_IS_R4P` |
-| `tests-gnu-r16` | quadruple precision, host only, into `exe-r16/`: the orders of every kernel | `-DPENF_R16P -D_R_P_IS_R16P` |
+| `tests-gnu-r16` | quadruple precision, host only, into `exe-r16/`: the orders of every kernel (without `gideon_vv_advection`: SELAH has no R16P build) | `-DPENF_R16P -D_R_P_IS_R16P` |
+
+Every test mode adds FUNDAL's include directory (SELAH's kernels include `fundal.H`) and `-DFUNDAL_NO_MPI`.
 
 Why `-Kieee -tp=haswell` and `-fp-model=precise`: the tests compare values bitwise, and both compilers otherwise
 reorder the arithmetic, nvfortran differently on each CPU that compiles ([Single and quadruple precision](/cookbook/precision#the-flags-of-the-bitwise-checks)).

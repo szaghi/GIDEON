@@ -21,10 +21,15 @@ check = fobis fetch
         fobis build --mode tests-gnu
         bash scripts/run_tests.sh
 
-# PENF is compiled from its sources by the compiler of the mode (no per-compiler PENF build to keep in step)
+# PENF is compiled from its sources by the compiler of the mode (no per-compiler PENF build to keep in step).
+# FUNDAL and SELAH serve the tests only (SELAH issue #2: the time integrators of the tests come from SELAH, the one
+# source of the time operators): the library modes build gideon.F90's tree, which uses neither. fobis fetch is not
+# recursive, so SELAH's own dependencies (PENF, FUNDAL) are listed here
 [dependencies]
 deps_dir = src/third_party
 PENF     = https://github.com/szaghi/PENF :: branch=master
+FUNDAL   = https://github.com/szaghi/FUNDAL :: branch=main
+SELAH    = https://github.com/szaghi/SELAH :: branch=main
 
 [modes]
 # the first mode is the default (fobis build, scripts/install.sh): the library any gfortran can build
@@ -43,6 +48,8 @@ modes = static-gnu shared-gnu
 
 [common-variables]
 $EXDIRS = PENF/src/tests/ PENF/src/third_party/ PENF/scripts/ PENF/docs/
+          FUNDAL/src/tests/ FUNDAL/src/examples/ FUNDAL/docs/ FUNDAL/compilers_proofs/ FUNDAL/scripts/
+          SELAH/src/tests/ SELAH/src/bench/ SELAH/src/third_party/ SELAH/docs/ SELAH/scripts/ SELAH/notes/
 $STD_GNU = -std=f2018
 $STD_INT = -standard-semantics -std18
 # ifx's default fp-model (fast=1) reassociates inlined arithmetic: the pair form's exact symmetries and the bitwise
@@ -65,6 +72,10 @@ $GPU_CC = cc89
 
 [varset:cc90]
 $GPU_CC = cc90
+
+# CNR-IAC medooza's A30 nodes: their drivers (545, 575) cannot run CUDA 13, so cc80 with CUDA 12.9 (as SELAH's)
+[varset:iac]
+$GPU_CC = cc80,cuda12.9
 
 # ── library modes ────────────────────────────────────────────────────────────
 [static-gnu]
@@ -317,19 +328,26 @@ preproc = -D_R_P_IS_R4P
 
 [template-r4-tests]
 template  = template-r4
+# the left template wins: template-r4's preproc would drop template-tests' -DFUNDAL_NO_MPI
+preproc   = -D_R_P_IS_R4P -DFUNDAL_NO_MPI
 build_dir = exe-r4/
 # ADAM's code and the comparison with it are R8P only
 exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
 
 [template-r16-tests]
-preproc   = -DPENF_R16P -D_R_P_IS_R16P
+preproc   = -DPENF_R16P -D_R_P_IS_R16P -DFUNDAL_NO_MPI
 build_dir = exe-r16/
-# ADAM's code and the comparison with it are R8P only
+# ADAM's code and the comparison with it are R8P only; gideon_vv_advection takes its time integrator from SELAH,
+# which refuses R16P (SELAH issue #2, decision D2): the quadruple-precision mode verifies the operators' orders
 exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
+            src/tests/gideon_vv_advection.F90
 
 [template-tests]
 src       = src/lib/ src/tests/
 build_dir = exe/
+# SELAH's kernels include FUNDAL's fundal.H; FUNDAL's MPI handler is compiled empty (the tests are per rank)
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI
 
 # ── rules ────────────────────────────────────────────────────────────────────
 [rule-makecoverage]
