@@ -57,13 +57,16 @@ Every program of `src/tests/` into `exe/` (`exe-r4/`, `exe-r16/` for the other k
 | `tests-gnu-coverage` | coverage instrumentation (rule `makecoverage`) | coverage profile: `-O0 -g --coverage` |
 | `tests-nvf` | the suite, nvfortran, CPU (CI matrix: family nvf) | `-O4 -fast -Kieee -tp=haswell` |
 | `tests-nvf-debug` | all run-time checks | debug profile: `-O0 -g -C -traceback -Minfo=all`, `-Kieee -tp=haswell` |
-| `tests-nvf-oac` | the suite with the device test on the GPU (without `gideon_vv_advection`, a host program whose integrator, SELAH's, would need SELAH's device build) | `-acc -gpu=cc89 -Minfo=accel -Kieee -tp=haswell` |
+| `tests-nvf-oac` | the suite with the device test on the GPU; `gideon_vv_advection`, a host program, links SELAH built for the host (`static-selah-nvf`) | `-acc -gpu=cc89 -Minfo=accel -Kieee -tp=haswell` |
 | `tests-intel` | the suite, ifx (CI matrix: family intel) | `-O3 -standard-semantics -std18 -fp-model=precise` |
 | `tests-intel-debug` | all run-time checks | debug profile: `-O0 -g -check all -traceback -warn all`, `-fp-model=precise` |
 | `tests-gnu-r4`, `tests-gnu-debug-r4`, `tests-nvf-r4`, `tests-nvf-oac-r4`, `tests-intel-r4` | the same in single precision, into `exe-r4/` (without the ADAM comparison) | `-D_R_P_IS_R4P` |
+| `static-selah-nvf`, `static-selah-nvf-r4` | [SELAH](https://szaghi.github.io/SELAH/)'s library from `src/third_party/SELAH`, nvfortran, host (no `-acc`), into `lib/nvf/`: built by the two OpenACC test modes (FoBiS `dependon`), whose host program `gideon_vv_advection` steps with it | `-Kieee -tp=haswell` |
 | `tests-gnu-r16` | quadruple precision, host only, into `exe-r16/`: the orders of every kernel (without `gideon_vv_advection`: SELAH has no R16P build) | `-DPENF_R16P -D_R_P_IS_R16P` |
 
-Every test mode adds FUNDAL's include directory (SELAH's kernels include `fundal.H`) and `-DFUNDAL_NO_MPI`.
+Every test mode adds FUNDAL's include directory (SELAH's kernels include `fundal.H`) and `-DFUNDAL_NO_MPI`. The two
+OpenACC modes do not compile SELAH themselves: under `-acc` SELAH's directives need its device build, whose registers
+are device memory, and `gideon_vv_advection`'s field is host memory; they link SELAH's host library instead.
 
 Why `-Kieee -tp=haswell` and `-fp-model=precise`: the tests compare values bitwise, and both compilers otherwise
 reorder the arithmetic, nvfortran differently on each CPU that compiles ([Single and quadruple precision](/cookbook/precision#the-flags-of-the-bitwise-checks)).

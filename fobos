@@ -37,7 +37,7 @@ modes = static-gnu shared-gnu
         static-nvf shared-nvf
         static-intel shared-intel
         tests-gnu tests-gnu-debug tests-gnu-coverage
-        tests-nvf tests-nvf-debug tests-nvf-oac
+        tests-nvf tests-nvf-debug tests-nvf-oac static-selah-nvf static-selah-nvf-r4
         tests-intel tests-intel-debug
         static-gnu-r4 shared-gnu-r4 static-nvf-r4 shared-nvf-r4 static-intel-r4 shared-intel-r4
         tests-gnu-r4 tests-gnu-debug-r4 tests-nvf-r4 tests-nvf-oac-r4 tests-intel-r4
@@ -135,14 +135,43 @@ help      = Tests, nvfortran, all checks on
 template  = template-tests template-nvf template-debug
 cflags    = -c $FP_NVF
 
+[static-selah-nvf]
+help      = SELAH's static library from src/third_party/SELAH, nvfortran, optimised, host (no -acc): the time integrator
+            of the OpenACC tests, whose fields are host memory
+template  = template-nvf template-release
+target    = src/third_party/SELAH/src/lib/selah.F90
+mklib     = static
+output    = libselah.a
+build_dir = lib/nvf/static-selah/
+cflags    = -c $FP_NVF
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI
+# off: FoBiS 3.8 reads a dependon's module directory from its output, and the heritage notice would be read with it
+cflags_heritage = False
+
+[static-selah-nvf-r4]
+help      = SELAH's static library from src/third_party/SELAH, nvfortran, optimised, host (no -acc), R4P: the time integrator
+            of the OpenACC tests in single precision, whose fields are host memory
+template  = template-nvf template-release
+target    = src/third_party/SELAH/src/lib/selah.F90
+mklib     = static
+output    = libselah.a
+build_dir = lib/nvf/static-selah-r4/
+cflags    = -c $FP_NVF
+include   = src/third_party/FUNDAL/src/lib/
+preproc   = -DFUNDAL_NO_MPI -D_R_P_IS_R4P
+# off: FoBiS 3.8 reads a dependon's module directory from its output, and the heritage notice would be read with it
+cflags_heritage = False
+
 [tests-nvf-oac]
 help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC
 template  = template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $FP_NVF
 lflags    = -acc -gpu=$GPU_CC
-# gideon_vv_advection is a host program whose time integrator is SELAH's: SELAH's kernels compiled with -acc need its
-# device build (-DDEV_OAC, device registers), which a host field cannot use; the device tests are gideon_test_device
-exclude   = src/tests/gideon_vv_advection.F90
+# the time integrator of the programs that use it: SELAH built for the host (their fields are host memory),
+# linked; under -acc without its device build SELAH's directives would not compile (FUNDAL's host branch)
+dependon  = fobos:static-selah-nvf
+exclude_dirs = $EXDIRS src/third_party/SELAH/ src/third_party/FUNDAL/
 
 [tests-intel]
 help      = Tests, ifx, optimised (fortran-toolchains matrix: family intel)
@@ -255,9 +284,14 @@ help      = Tests, nvfortran, OpenACC on the GPU of compute capability $GPU_CC, 
 template  = template-r4-tests template-tests template-nvf template-release
 cflags    = -c -acc -gpu=$GPU_CC -Minfo=accel $FP_NVF
 lflags    = -acc -gpu=$GPU_CC
-# the R4P exclusions (ADAM's code) and gideon_vv_advection (as tests-nvf-oac)
-exclude   = src/tests/adam_fdv_operators_library.F90 src/tests/adam_fnl_fdv_operators_library.F90 src/tests/gideon_test_adam.F90
-            src/tests/gideon_vv_advection.F90
+# the R4P exclusions: ADAM's code
+exclude   = src/tests/adam_fdv_operators_library.F90
+            src/tests/adam_fnl_fdv_operators_library.F90
+            src/tests/gideon_test_adam.F90
+# the time integrator of the programs that use it: SELAH built for the host (their fields are host memory),
+# linked; under -acc without its device build SELAH's directives would not compile (FUNDAL's host branch)
+dependon  = fobos:static-selah-nvf-r4
+exclude_dirs = $EXDIRS src/third_party/SELAH/ src/third_party/FUNDAL/
 
 [tests-intel-r4]
 help      = Tests, ifx, optimised, single precision (R_P = R4P)
