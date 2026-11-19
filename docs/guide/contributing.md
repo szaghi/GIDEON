@@ -30,7 +30,7 @@ is welcome. The project follows a KISS (Keep It Simple and Stupid) philosophy.
    ```
    The tests need `fobis fetch` to have cloned SELAH and FUNDAL too. A test that advances a solution in time takes
    its integrator from SELAH, never a hand-written step: GIDEON is the source of the space operators, SELAH of the
-   time operators (SELAH issue #2).
+   time operators (SELAH issue #2); `python3 scripts/check_separation.py` checks it, and CI runs it.
    A change of the generator or the kernels regenerates the sources (`python3 scripts/gen_gideon.py`) and the pages'
    data (`scripts/run_report.sh`, [Verification](/verification/#from-the-data-to-the-pages)); a new kernel family also
    a golden file version ([Add an operator](/cookbook/new-operator)).
