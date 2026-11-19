@@ -29,7 +29,7 @@ $\delta^3$ = `gideon_fv_face_diss_c4`; the switch $\varepsilon_2$, $\varepsilon_
 
 ## Code
 
-A smooth bump and a square wave advected once around a periodic line ($u_t + u_x = 0$, 100 cells, SSP-RK3, CFL 0.4),
+A smooth bump and a square wave advected once around a periodic line ($u_t + u_x = 0$, 100 cells, SSP-RK3 from [SELAH](https://szaghi.github.io/SELAH/), CFL 0.4),
 with four face values: the central `c6`; `c6` plus the whole dissipation of `bl5` (that is `bl5`); the same with the
 dissipation scaled by a sensor (the normalised second difference of the averages, four times, clipped at 1); and JST
 on the central `c2` (Jameson's $k_2 = 1/2$, $k_4 = 1/32$):

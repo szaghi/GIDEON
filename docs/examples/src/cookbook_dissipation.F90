@@ -1,15 +1,19 @@
 program cookbook_dissipation
 !< Cookbook: dissipation dialled by a sensor. A smooth bump and a square wave advected once around a periodic line
-!< (u_t + u_x = 0, cell averages, SSP-RK3) with four face values: centred of order 6; the centred one plus the dissipation part of the
+!< (u_t + u_x = 0, cell averages, SSP-RK3: SELAH's) with four face values: centred of order 6; the centred one plus the dissipation part of the
 !< upwind-biased bl5 (that is bl5 itself); the same with the dissipation scaled by a sensor; and Jameson-Schmidt-Turkel's
 !< blend of the second and fourth face differences on the centred value of order 2.
 use gideon
+use selah, only : stepper, box, box_interior, SCHEME_SSP_33, FORM_SHU_OSHER_2R   ! the time integrator: SELAH's
 implicit none
 integer(I4P), parameter :: N = 100, G = 3       ! cells, ghost cells
 real(R_P),    parameter :: CFL = 0.4_R_P
 character(*), parameter :: NAMES(4) = [character(16) :: 'central c6', 'biased bl5', 'sensor c6 + s d', 'JST on c2']
-real(R_P)    :: u(1-G:N+G), u0(N), u1(N), un(N), x, h, dt, mass0
-integer(I4P) :: scheme, i, step, nsteps
+real(R_P)    :: u(1-G:N+G), u0(N), x, h, dt, mass0
+real(R_P), pointer :: r(:)
+integer(I4P) :: scheme, i, step, nsteps, k
+type(stepper) :: st
+type(box)     :: bx
 
 h = 1._R_P/N
 dt = CFL*h
@@ -21,21 +25,25 @@ do i=1, N ! a Gaussian bump on [0, 1/2), a square wave on [0.6, 0.85]: cell aver
 enddo
 print '(A)', 'a bump and a square wave advected once around 100 cells, CFL 0.4, SSP-RK3'
 print '(A)', 'scheme           bump error  square overshoot  undershoot  mass conserved'
+bx = box_interior(lb=[1_I4P-G], ub=[N+G], ngc=G, components=.false.)    ! the cells 1..N of u(1-G:N+G)
+call st%initialize(SCHEME_SSP_33, FORM_SHU_OSHER_2R, lb=[1_I4P-G], ub=[N+G], components=.false.)
 do scheme=1, 4
    u(1:N) = u0
    mass0 = sum(u0)
-   do step=1, nsteps                              ! SSP-RK3 (Shu-Osher)
-      u1 = u(1:N)
-      call update(scheme, u, dt, un)
-      u(1:N) = un
-      call update(scheme, u, dt, un)
-      u(1:N) = 0.75_R_P*u1 + 0.25_R_P*un
-      call update(scheme, u, dt, un)
-      u(1:N) = u1/3 + 2*un/3
+   do step=1, nsteps                              ! SSP-RK3: SELAH's SCHEME_SSP_33, the stage state is u itself
+      call st%begin_step(bx, u)
+      do k=1, st%stages()
+         call st%begin_stage(k, bx, dt, u)
+         call st%rhs_register_view(r)
+         call residual(scheme, u, r(1:N))
+         call st%end_stage(k, bx, dt, u)
+      enddo
+      call st%finish_step(bx, dt, u)
    enddo
    print '(A16,F11.5,F18.5,F12.5,L16)', NAMES(scheme), sum(abs(u(1:N/2) - u0(1:N/2)))*h, &
       maxval(u(N/2+1:N)) - 1, max(0._R_P, -minval(u(N/2+1:N))), abs(sum(u(1:N)) - mass0) < 1.e-12_R_P*N
 enddo
+call st%destroy
 contains
    pure function bump_average(a, b) result(v)
    !< The average over [a, b] of exp(-((x - 1/4)/0.06)^2), a 5-point Gauss-Legendre rule (exact to 1e-14 here).
@@ -48,12 +56,11 @@ contains
    v = sum(WG*exp(-(((a + b)/2 + (b - a)/2*XG - 0.25_R_P)/0.06_R_P)**2))/2
    endfunction bump_average
 
-   subroutine update(scheme, u, dt, unew)
-   !< One forward Euler step of the flux difference: unew = u - dt/h (f(i+1/2) - f(i-1/2)).
+   subroutine residual(scheme, u, res)
+   !< The residual of the flux difference: res = -(f(i+1/2) - f(i-1/2))/h, the face values GIDEON's.
    integer(I4P), intent(in)    :: scheme
    real(R_P),    intent(inout) :: u(1-G:N+G)
-   real(R_P),    intent(in)    :: dt
-   real(R_P),    intent(out)   :: unew(N)
+   real(R_P),    intent(out)   :: res(N)
    real(R_P)                   :: f(0:N), c, d, s, d1, d3, e2, e4, nu(0:N+1)
    integer(I4P)                :: i
    u(1-G:0) = u(N-G+1:N) ; u(N+1:N+G) = u(1:G)   ! periodic ghosts
@@ -80,7 +87,7 @@ contains
       endselect
    enddo
    do i=1, N
-      unew(i) = u(i) - dt/h*(f(i) - f(i-1))
+      res(i) = -(f(i) - f(i-1))/h
    enddo
-   endsubroutine update
+   endsubroutine residual
 endprogram cookbook_dissipation
